@@ -1,0 +1,8 @@
+{
+  "projectId": "cdddf5cf-8bec-446e-b5a4-6133034bec91",
+  "createdAt": 1768803651548,
+  "startupCommands": [
+    "cd client; npm install; npm run dev",
+    "cd server; npm install; npm run dev"
+  ]
+}
