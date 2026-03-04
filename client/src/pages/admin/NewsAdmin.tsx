@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import api from '../../lib/api';
+import resolveMediaUrl from '../../lib/media';
 import DOMPurify from 'dompurify';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
@@ -278,7 +279,7 @@ const NewsAdmin = () => {
                                 {items.map(item => (
                                     <div key={item._id} className="flex items-center justify-between p-3 border border-[var(--border-color)] rounded-xl">
                                         <div className="flex items-center gap-3">
-                                            {item.image ? <img src={item.image.startsWith('/uploads') ? item.image : item.image} alt="" className="w-16 h-12 object-cover" /> : <div className="w-16 h-12 bg-[var(--bg-tertiary)]" />}
+                                            {item.image ? <img src={resolveMediaUrl(item.image)} alt="" className="w-16 h-12 object-cover" /> : <div className="w-16 h-12 bg-[var(--bg-tertiary)]" />}
                                             <div>
                                                 <div className="font-medium text-[var(--text-primary)]">{item.title}</div>
                                                 <div className="text-xs text-[var(--text-muted)]">{item.publishedAt ? new Date(item.publishedAt).toLocaleString() : new Date(item.createdAt).toLocaleString()} • Priority: {item.priority || 0}</div>

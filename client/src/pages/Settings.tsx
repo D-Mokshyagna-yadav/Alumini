@@ -65,9 +65,39 @@ const Settings = () => {
     );
 
     return (
-        <div className="max-w-[1128px] mx-auto px-4 py-8 flex gap-6">
-            {/* Sidebar */}
-            <div className="w-[300px] flex-shrink-0">
+        <div className="max-w-[1128px] mx-auto px-3 sm:px-4 py-4 sm:py-8 flex flex-col lg:flex-row gap-4 lg:gap-6">
+            {/* Mobile Tab Bar */}
+            <div className="lg:hidden">
+                <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl overflow-hidden">
+                    <div className="flex items-center gap-3 p-3 border-b border-[var(--border-color)]">
+                        <div className="w-10 h-10 bg-[var(--accent)] flex items-center justify-center overflow-hidden rounded-full flex-shrink-0">
+                            <Avatar src={user?.avatar} iconSize={18} />
+                        </div>
+                        <div className="min-w-0">
+                            <h2 className="font-semibold text-sm text-[var(--text-primary)] truncate">{user?.name || 'User'}</h2>
+                            <p className="text-xs text-[var(--text-muted)] truncate">{user?.email || ''}</p>
+                        </div>
+                    </div>
+                    <div className="flex overflow-x-auto scrollbar-hide">
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${activeTab === tab.id
+                                    ? 'border-b-2 border-[var(--accent)] text-[var(--text-primary)] bg-[var(--bg-tertiary)]'
+                                    : 'border-b-2 border-transparent text-[var(--text-secondary)]'
+                                    }`}
+                            >
+                                <tab.icon size={16} />
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Desktop Sidebar */}
+            <div className="hidden lg:block w-[300px] flex-shrink-0">
                 <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl overflow-hidden sticky top-24">
                     <div className="p-4 border-b border-[var(--border-color)]">
                         <div className="relative w-16 h-16 mx-auto mb-3">
@@ -97,7 +127,7 @@ const Settings = () => {
             </div>
 
             {/* Main Content */}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
                 <motion.div
                     key={activeTab}
                     initial={{ opacity: 0, y: 10 }}

@@ -1043,8 +1043,8 @@ const Profile = () => {
                 )}
                 {/* Unconnect confirmation modal */}
                 {showUnconnectModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 modal-overlay">
-                        <div className="bg-[var(--bg-secondary)] p-6 w-[420px] rounded-2xl shadow-lg modal-content">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 modal-overlay px-4">
+                        <div className="bg-[var(--bg-secondary)] p-6 w-full max-w-[420px] rounded-2xl shadow-lg modal-content">
                             <h3 className="text-lg font-semibold text-[var(--text-primary)]">Remove connection</h3>
                             <p className="text-sm text-[var(--text-muted)] mt-2">Are you sure you want to remove this connection? This cannot be undone.</p>
                             <div className="mt-4 flex justify-end gap-3">
@@ -1287,7 +1287,7 @@ const ExperienceModal = ({ experience, onClose, onSave }: { experience: Experien
                         <label className="text-sm font-medium text-[var(--text-secondary)]">Location</label>
                         <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g., Bangalore, India" className="w-full mt-1 px-4 py-2.5 bg-[var(--bg-tertiary)] border border-[var(--border-color)] focus:border-[var(--accent)] focus:outline-none" />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="text-sm font-medium text-[var(--text-secondary)]">Start Date *</label>
                             <input type="month" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full mt-1 px-4 py-2.5 bg-[var(--bg-tertiary)] border border-[var(--border-color)] focus:border-[var(--accent)] focus:outline-none" />
@@ -1362,7 +1362,7 @@ const EducationModal = ({ education, onClose, onSave }: { education: Education |
                         <label className="text-sm font-medium text-[var(--text-secondary)]">Field of Study</label>
                         <input value={field} onChange={(e) => setField(e.target.value)} placeholder="e.g., Computer Science" className="w-full mt-1 px-4 py-2.5 bg-[var(--bg-tertiary)] border border-[var(--border-color)] focus:border-[var(--accent)] focus:outline-none" />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="text-sm font-medium text-[var(--text-secondary)]">Start Year</label>
                             <input type="number" value={startYear} onChange={(e) => setStartYear(parseInt(e.target.value))} className="w-full mt-1 px-4 py-2.5 bg-[var(--bg-tertiary)] border border-[var(--border-color)] focus:border-[var(--accent)] focus:outline-none" />

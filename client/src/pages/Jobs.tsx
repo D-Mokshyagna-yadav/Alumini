@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
+import resolveMediaUrl from '../lib/media';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -351,7 +352,7 @@ const Jobs = () => {
                                         const up = await api.post('/upload/job-image', fd, {
                                             headers: { 'Content-Type': 'multipart/form-data' }
                                         });
-                                        imageUrl = up.data.url || up.data.relative;
+                                        imageUrl = up.data.relative || up.data.url;
                                     }
 
                                     // normalize requirements into array
@@ -731,7 +732,7 @@ const Jobs = () => {
                             <div className="flex gap-3">
                                 <div className="w-20 h-20 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                                     {job.image ? (
-                                        <img src={job.image} alt={job.company} className="w-full h-full object-cover" />
+                                        <img src={resolveMediaUrl(job.image)} alt={job.company} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center bg-[var(--accent)] text-[var(--bg-primary)] font-semibold text-lg">
                                             {job.company ? job.company.split(' ').map(s => s[0]).slice(0,2).join('') : <Building2 size={28} className="text-[var(--bg-primary)]" />}

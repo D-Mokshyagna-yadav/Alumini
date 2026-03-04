@@ -264,11 +264,15 @@ const Messages = () => {
         };
     }, [user, selectedConvo]);
 
-    const apiOrigin = import.meta.env.VITE_API_ORIGIN || 'http://localhost:5000';
     const normalizeMediaUrl = (url: string) => {
-        if (!url) return url;
-        if (url.startsWith('/uploads')) return `${apiOrigin}${url}`;
-        return url;
+        if (!url) return '';
+        // Strip full URLs to relative paths so Vite proxy serves them
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            try { return new URL(url).pathname; } catch { return url; }
+        }
+        if (url.startsWith('/uploads')) return url;
+        if (url.startsWith('uploads/')) return `/${url}`;
+        return `/uploads/${url}`;
     };
 
     useEffect(() => {
@@ -564,11 +568,11 @@ const Messages = () => {
     };
 
     return (
-        <div className="max-w-[1200px] mx-auto px-4 py-6">
+        <div className="max-w-[1200px] mx-auto px-2 sm:px-4 py-2 sm:py-6">
             <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 overflow-hidden h-[calc(100vh-120px)] shadow-md shadow-black/10 rounded-2xl"
+                className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 overflow-hidden h-[calc(100vh-8rem)] sm:h-[calc(100vh-120px)] shadow-md shadow-black/10 rounded-2xl"
             >
                 <div className="flex h-full">
                     {/* Conversations List */}

@@ -366,7 +366,7 @@ const Saved = () => {
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 p-12 text-center shadow-md"
+                            className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 p-6 sm:p-12 text-center shadow-md"
                         >
                             <div className="w-16 h-16 mx-auto mb-4 bg-[var(--accent)]/10 flex items-center justify-center">
                                 <Bookmark size={32} className="text-[var(--accent)]" />

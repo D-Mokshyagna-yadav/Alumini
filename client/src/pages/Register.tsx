@@ -212,7 +212,7 @@ const Register = () => {
                             <form onSubmit={(e) => { e.preventDefault(); handleNext(); }} className="space-y-5">
 <div>
                                       <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">I am a *</label>
-                                      <div className="grid grid-cols-3 gap-3">
+                                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                           {['alumni', 'student', 'teacher'].map((r) => (
                                               <button key={r} type="button" onClick={() => setFormData({ ...formData, role: r })} className={`py-3 px-4 border-2 rounded-xl font-medium transition-all capitalize ${formData.role === r ? 'border-[var(--accent)] bg-[var(--accent)]/5 text-[var(--accent)]' : 'border-[var(--border-color)]/40 text-[var(--text-secondary)] hover:border-[var(--text-muted)]'}`}>
                                                   {r === 'student' ? 'Current Student' : r === 'teacher' ? 'Teacher' : 'Alumni'}
@@ -222,7 +222,7 @@ const Register = () => {
                                   </div>
 
                                 {formData.role !== 'teacher' && (
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                                                 {formData.role === 'student' ? 'Expected Graduation Year *' : 'Graduation Year *'}

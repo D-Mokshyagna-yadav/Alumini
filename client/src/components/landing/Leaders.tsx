@@ -16,7 +16,7 @@ const Leaders = ({ data }: { data?: any }) => {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.5 }}
-                        className="bg-[var(--card-bg)] backdrop-blur-xl p-8 rounded-2xl border border-[var(--border-color)] shadow-sm hover:shadow-md transition-shadow duration-200 relative"
+                        className="bg-[var(--card-bg)] backdrop-blur-xl p-5 sm:p-8 rounded-2xl border border-[var(--border-color)] shadow-sm hover:shadow-md transition-shadow duration-200 relative"
                     >
                         <div className="absolute -top-4 left-6 w-10 h-10 bg-[var(--accent)] flex items-center justify-center text-[var(--bg-primary)] text-xl font-serif rounded-lg shadow-sm">&ldquo;</div>
                         <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1 mt-2">Dr. M.V. Ramana Rao</h3>
@@ -32,7 +32,7 @@ const Leaders = ({ data }: { data?: any }) => {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.5, delay: 0.1 }}
-                        className="bg-[var(--card-bg)] backdrop-blur-xl p-8 rounded-2xl border border-[var(--border-color)] shadow-sm hover:shadow-md transition-shadow duration-200 relative"
+                        className="bg-[var(--card-bg)] backdrop-blur-xl p-5 sm:p-8 rounded-2xl border border-[var(--border-color)] shadow-sm hover:shadow-md transition-shadow duration-200 relative"
                     >
                         <div className="absolute -top-4 right-6 w-10 h-10 bg-[var(--accent)] flex items-center justify-center text-[var(--bg-primary)] text-xl font-serif rounded-lg shadow-sm">&ldquo;</div>
                         <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1 mt-2">Dr. T. Vamsee Kiran</h3>

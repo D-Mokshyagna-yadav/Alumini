@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../lib/api';
+import resolveMediaUrl from '../lib/media';
 import { useConfirm } from '../context/ConfirmContext';
 import { Edit3, Trash2, RotateCcw } from 'lucide-react';
 
@@ -56,7 +57,7 @@ const MyEvents = () => {
 
     const openEdit = (ev: any) => {
         setEditing({ ...ev });
-        setBannerPreview(ev.bannerImage || null);
+        setBannerPreview(ev.bannerImage ? resolveMediaUrl(ev.bannerImage) : null);
         setBannerFile(null);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -69,7 +70,7 @@ const MyEvents = () => {
                 const form = new FormData();
                 form.append('banner', bannerFile);
                 const up = await api.post('/upload/event-banner', form, { headers: { 'Content-Type': 'multipart/form-data' } });
-                bannerUrl = up.data.url;
+                bannerUrl = up.data.relative || up.data.url;
             }
 
             const payload = {

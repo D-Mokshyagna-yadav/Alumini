@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import resolveMediaUrl from '../../lib/media';
 
 const alumni = [
     {
@@ -66,7 +67,7 @@ const NotableAlumni = ({ data }: { data?: any[] }) => {
                         >
                             <div className="relative h-64 overflow-hidden">
                                 <img
-                                    src={alum.image}
+                                    src={resolveMediaUrl(alum.image)}
                                     alt={alum.name}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                 />

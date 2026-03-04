@@ -101,7 +101,7 @@ const Contact = () => {
                     ))}
                 </motion.div>
 
-                <div className="grid lg:grid-cols-5 gap-12">
+                <div className="grid lg:grid-cols-5 gap-6 lg:gap-12">
                     {/* Contact Info Panel */}
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
@@ -109,7 +109,7 @@ const Contact = () => {
                         transition={{ delay: 0.2 }}
                         className="lg:col-span-2 relative"
                     >
-                        <div className="bg-[var(--accent)] text-[var(--bg-primary)] p-8 h-full relative overflow-hidden rounded-2xl">
+                        <div className="bg-[var(--accent)] text-[var(--bg-primary)] p-5 sm:p-8 h-full relative overflow-hidden rounded-2xl">
                             {/* Background pattern */}
                             <div className="absolute inset-0 opacity-[0.06]">
                                 <div className="absolute inset-0" style={{
@@ -124,7 +124,7 @@ const Contact = () => {
                                     We're here to help
                                 </div>
                                 
-                                <h2 className="text-3xl font-bold mb-4">Let's Start a Conversation</h2>
+                                <h2 className="text-2xl sm:text-3xl font-bold mb-4">Let's Start a Conversation</h2>
                                 <p className="text-[var(--bg-primary)]/80 mb-8 leading-relaxed">
                                     Whether you have a question about the alumni network, events, or anything else, our team is ready to answer all your questions.
                                 </p>
@@ -159,7 +159,7 @@ const Contact = () => {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3 }}
                         onSubmit={handleSubmit}
-                        className="lg:col-span-3 bg-[var(--bg-secondary)]/60 backdrop-blur-sm p-8 shadow-sm border border-[var(--border-color)]/30 rounded-2xl"
+                        className="lg:col-span-3 bg-[var(--bg-secondary)]/60 backdrop-blur-sm p-4 sm:p-8 shadow-sm border border-[var(--border-color)]/30 rounded-2xl"
                     >
                         <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Send us a Message</h3>
                         

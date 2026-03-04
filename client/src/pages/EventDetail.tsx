@@ -147,7 +147,7 @@ const EventDetail = () => {
                 const form = new FormData();
                 form.append('banner', editBannerFile);
                 const up = await api.post('/upload/event-banner', form, { headers: { 'Content-Type': 'multipart/form-data' } });
-                bannerUrl = up.data.url;
+                bannerUrl = up.data.relative || up.data.url;
             }
             const payload: any = {};
             if (editForm.title) payload.title = editForm.title;
@@ -301,7 +301,7 @@ const EventDetail = () => {
             {/* Hero Banner */}
             <div className="relative w-full bg-black overflow-hidden flex justify-center">
                 {event.bannerImage ? (
-                    <img src={resolveMediaUrl(event.bannerImage)} alt={event.title} className="w-full lg:w-[70%] h-[400px] md:h-[450px] lg:h-[500px] object-cover" />
+                    <img src={resolveMediaUrl(event.bannerImage)} alt={event.title} className="w-full lg:w-[70%] h-[250px] sm:h-[350px] md:h-[450px] lg:h-[500px] object-cover" />
                 ) : (
                     <div className="w-full h-64 md:h-80 lg:h-96 bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-secondary)] flex items-center justify-center">
                         <Calendar className="text-[var(--text-muted)]" size={64} />
@@ -633,7 +633,7 @@ const EventDetail = () => {
                                     className="w-full p-2.5 bg-[var(--bg-tertiary)] border border-[var(--border-color)] focus:border-[var(--accent)] focus:outline-none text-[var(--text-primary)] text-sm"
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Date</label>
                                     <input

@@ -440,7 +440,7 @@ const AdminDashboard = () => {
                 const form = new FormData();
                 form.append('banner', eventBanner);
                 const up = await api.post('/upload/event-banner', form, { headers: { 'Content-Type': 'multipart/form-data' } });
-                bannerUrl = up.data.url;
+                bannerUrl = up.data.relative || up.data.url;
             }
             const payload = { title: newEvent.title, description: newEvent.description, date: newEvent.date, time: newEvent.time, venue: newEvent.location, bannerImage: bannerUrl };
             const res = await api.post('/events', payload);
@@ -464,7 +464,7 @@ const AdminDashboard = () => {
                 const fd = new FormData();
                 fd.append('image', jobImage);
                 const up = await api.post('/upload/job-image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-                imageUrl = up.data.url || up.data.relative;
+                imageUrl = up.data.relative || up.data.url;
             }
             const requirementsArr = jobRequirements.split(',').map(s => s.trim()).filter(Boolean);
             const payload = { ...newJob, image: imageUrl, requirements: requirementsArr, salary: newJob.salary || undefined };
@@ -516,7 +516,7 @@ const AdminDashboard = () => {
                 const fd = new FormData();
                 fd.append('image', newsImage);
                 const up = await api.post('/upload/news-image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-                imageUrl = up.data.url || up.data.relative;
+                imageUrl = up.data.relative || up.data.url;
             }
             const payload: any = { ...newsForm, publishedAt: new Date().toISOString() };
             if (imageUrl) payload.image = imageUrl;
@@ -787,9 +787,9 @@ const AdminDashboard = () => {
     return (
         <div className="min-h-screen bg-[var(--bg-primary)] py-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between mb-8">
-                    <h1 className="text-3xl font-heading font-bold text-[var(--text-primary)]">Admin Dashboard</h1>
-                    <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+                    <h1 className="text-xl sm:text-3xl font-heading font-bold text-[var(--text-primary)]">Admin Dashboard</h1>
+                    <div className="flex items-center gap-2 flex-wrap">
                         {activeTab === 'posts' && (
                             <Button onClick={() => setShowCreatePostModal(true)} className="flex items-center gap-2">
                                 <Plus size={18} /> Create Post
@@ -1080,7 +1080,7 @@ const AdminDashboard = () => {
                                             <div className="flex items-center gap-4 flex-1 min-w-0">
                                                 <div className="w-16 h-16 bg-[var(--bg-tertiary)] flex items-center justify-center flex-shrink-0 overflow-hidden">
                                                     {album.coverImage || album.images?.[0]?.url ? (
-                                                        <img src={album.coverImage || album.images[0].url} alt={album.title} className="w-full h-full object-cover" />
+                                                        <img src={resolveMediaUrl(album.coverImage || album.images[0].url)} alt={album.title} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <ImageIcon size={24} className="text-[var(--text-muted)]" />
                                                     )}
@@ -1113,7 +1113,7 @@ const AdminDashboard = () => {
                                                                 <span className="text-xs text-[var(--text-muted)]">VID</span>
                                                             </div>
                                                         ) : (
-                                                            <img src={media.url} alt="" className="w-full h-full object-cover" />
+                                                            <img src={resolveMediaUrl(media.url)} alt="" className="w-full h-full object-cover" />
                                                         )}
                                                         <button
                                                             onClick={() => handleDeleteMedia(album.id, media.id)}
@@ -1244,7 +1244,7 @@ const AdminDashboard = () => {
                                                 </div>
                                             </div>
                                             {expandedUser === user._id && (
-                                                <div className="mt-4 ml-15 pl-4 border-l-2 border-[var(--border-color)] grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                                <div className="mt-4 ml-4 sm:ml-15 pl-4 border-l-2 border-[var(--border-color)] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                                     <div><span className="text-[var(--text-muted)]">Role:</span> <span className="text-[var(--text-primary)] capitalize">{user.role}</span></div>
                                                     <div><span className="text-[var(--text-muted)]">Status:</span> <span className="text-[var(--text-primary)] capitalize">{user.status}</span></div>
                                                     <div><span className="text-[var(--text-muted)]">Phone:</span> <span className="text-[var(--text-primary)]">{user.phone || 'N/A'}</span></div>
@@ -1391,7 +1391,7 @@ const AdminDashboard = () => {
                                         <input value={newJob.location} onChange={e => setNewJob({ ...newJob, location: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div>
                                         <label className="block text-sm text-[var(--text-muted)] mb-1">Type</label>
                                         <select value={newJob.type} onChange={e => setNewJob({ ...newJob, type: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]">
@@ -1517,9 +1517,9 @@ const AdminDashboard = () => {
                                             {previewPost.media.map((m: any, idx: number) => (
                                                 <div key={idx}>
                                                     {m.type === 'video' ? (
-                                                        <video src={m.url?.startsWith('/') ? m.url : `/uploads/${m.url}`} controls className="w-full max-h-[360px]" />
+                                                        <video src={resolveMediaUrl(m.url)} controls className="w-full max-h-[360px]" />
                                                     ) : (
-                                                        <img src={m.url?.startsWith('/') ? m.url : `/uploads/${m.url}`} alt="" className="w-full max-h-[360px] object-cover" />
+                                                        <img src={resolveMediaUrl(m.url)} alt="" className="w-full max-h-[360px] object-cover" />
                                                     )}
                                                 </div>
                                             ))}

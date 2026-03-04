@@ -39,7 +39,7 @@ const About = () => {
             {/* Introduction - The Metamorphosis */}
             <section className="py-20 bg-[var(--bg-secondary)]">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid md:grid-cols-2 gap-16 items-center">
+                    <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
                         <motion.div
                             initial={{ opacity: 0, x: -30 }}
                             whileInView={{ opacity: 1, x: 0 }}
@@ -102,7 +102,7 @@ const About = () => {
                         {/* Vision */}
                         <motion.div
                             whileHover={{ y: -5 }}
-                            className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl p-10 shadow-sm border border-[var(--border-color)]/30 rounded-2xl"
+                            className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl p-6 sm:p-10 shadow-sm border border-[var(--border-color)]/30 rounded-2xl"
                         >
                             <div className="w-16 h-16 bg-[var(--accent)]/10 flex items-center justify-center rounded-xl mb-8">
                                 <Target className="w-8 h-8 text-[var(--accent)]" />
@@ -116,7 +116,7 @@ const About = () => {
                         {/* Mission */}
                         <motion.div
                             whileHover={{ y: -5 }}
-                            className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl p-10 shadow-sm border border-[var(--border-color)]/30 rounded-2xl"
+                            className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl p-6 sm:p-10 shadow-sm border border-[var(--border-color)]/30 rounded-2xl"
                         >
                             <div className="w-16 h-16 bg-[var(--accent)]/10 flex items-center justify-center rounded-xl mb-8">
                                 <BookOpen className="w-8 h-8 text-[var(--accent)]" />
@@ -222,8 +222,8 @@ const About = () => {
             {/* Values Section */}
             <section className="py-20 bg-[var(--bg-primary)]">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 className="text-3xl font-heading font-bold text-[var(--text-primary)] text-center mb-12">Our Core Values</h2>
-                    <div className="grid md:grid-cols-4 gap-8 mb-20">
+                    <h2 className="text-2xl sm:text-3xl font-heading font-bold text-[var(--text-primary)] text-center mb-12">Our Core Values</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 mb-20">
                         {values.map((value, index) => (
                             <motion.div
                                 key={value.title}
@@ -244,10 +244,10 @@ const About = () => {
 
                     {/* Administration / Governing Body */}
                     <div className="max-w-4xl mx-auto">
-                        <h2 className="text-3xl font-heading font-bold text-[var(--text-primary)] text-center mb-12">Administration</h2>
+                        <h2 className="text-2xl sm:text-3xl font-heading font-bold text-[var(--text-primary)] text-center mb-12">Administration</h2>
                         <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl shadow-sm border border-[var(--border-color)]/30 rounded-2xl overflow-hidden">
                             <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[var(--border-color)]">
-                                <div className="p-8">
+                                <div className="p-4 sm:p-8">
                                     <h3 className="text-xl font-bold text-[var(--accent)] mb-6">Governing Body</h3>
                                     <ul className="space-y-4">
                                         <li className="flex justify-between items-center border-b border-[var(--border-color)] pb-2 last:border-0 last:pb-0">
@@ -268,7 +268,7 @@ const About = () => {
                                         </li>
                                     </ul>
                                 </div>
-                                <div className="p-8">
+                                <div className="p-4 sm:p-8">
                                     <h3 className="text-xl font-bold text-[var(--accent)] mb-6">Key Officials</h3>
                                     <ul className="space-y-4">
                                         <li className="flex justify-between items-center border-b border-[var(--border-color)] pb-2 last:border-0 last:pb-0">

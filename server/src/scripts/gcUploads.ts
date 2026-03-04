@@ -1,97 +1,89 @@
-import fs from 'fs';
-import path from 'path';
 import User from '../models/User';
 import Post from '../models/Post';
 import Event from '../models/Event';
 import { Message } from '../models/Message';
+import GalleryAlbum from '../models/GalleryAlbum';
+import { getGridFSBucket } from '../config/gridfs';
 
-// Walk directory recursively and collect file paths
-const walk = (dir: string, fileList: string[] = []) => {
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
-    for (const entry of entries) {
-        const full = path.join(dir, entry.name);
-        if (entry.isDirectory()) {
-            walk(full, fileList);
-        } else {
-            fileList.push(full);
-        }
-    }
-    return fileList;
-};
-
-export const runGC = async (uploadsRoot?: string) => {
+/**
+ * Garbage-collect orphaned files from GridFS.
+ * Collects every referenced upload path from the DB, then walks the
+ * uploads.files collection and deletes any file whose filename is
+ * not in the referenced set and is older than 24 h.
+ */
+export const runGC = async () => {
     try {
-        const uploadsDir = uploadsRoot || path.join(__dirname, '../../uploads');
-        if (!fs.existsSync(uploadsDir)) return;
+        const bucket = getGridFSBucket();
 
-        // Collect referenced basenames from DB
+        // 1. Collect referenced GridFS filenames (without leading /uploads/)
         const referenced = new Set<string>();
 
-        const normalizeToRel = (val: string | undefined) => {
+        const strip = (val: string | undefined) => {
             if (!val) return null;
-            const uploadsIndex = val.indexOf('/uploads/');
             let rel = val;
-            if (uploadsIndex >= 0) rel = val.substring(uploadsIndex + '/uploads/'.length);
+            const idx = rel.indexOf('/uploads/');
+            if (idx >= 0) rel = rel.substring(idx + '/uploads/'.length);
             rel = rel.replace(/^\/?uploads\//, '');
-            return rel; // e.g. username/profile/file.jpg or username/posts/file.mp4
+            return rel || null;
         };
 
         const users = await User.find().select('avatar coverImage').lean();
-        users.forEach(u => {
-            const a = normalizeToRel((u as any).avatar);
+        for (const u of users) {
+            const a = strip((u as any).avatar);
             if (a) referenced.add(a);
-            const c = normalizeToRel((u as any).coverImage);
+            const c = strip((u as any).coverImage);
             if (c) referenced.add(c);
-        });
+        }
 
         const posts = await Post.find().select('media.url').lean();
-        posts.forEach(p => {
-            (p as any).media?.forEach((m: any) => {
-                const r = normalizeToRel(m?.url);
+        for (const p of posts) {
+            for (const m of (p as any).media || []) {
+                const r = strip(m?.url);
                 if (r) referenced.add(r);
-            });
-        });
-
-        const events = await Event.find().select('bannerImage').lean();
-        events.forEach(ev => {
-            const r = normalizeToRel((ev as any).bannerImage);
-            if (r) referenced.add(r);
-        });
-
-        const messages = await Message.find().select('media.url').lean();
-        messages.forEach(msg => {
-            (msg as any).media?.forEach((m: any) => {
-                const r = normalizeToRel(m?.url);
-                if (r) referenced.add(r);
-            });
-        });
-
-        // Walk uploads folder
-        const files = walk(uploadsDir, []);
-
-        const now = Date.now();
-        const minAgeMs = 1000 * 60 * 60 * 24; // only delete files older than 24 hours
-
-        let deleted = 0;
-
-        for (const file of files) {
-            try {
-                const rel = path.relative(uploadsDir, file).replace(/\\/g, '/');
-                // referenced set contains relative paths like 'username/profile/file.jpg'
-                if (!referenced.has(rel)) {
-                    const stats = fs.statSync(file);
-                    const age = now - stats.mtimeMs;
-                    if (age > minAgeMs) {
-                        fs.unlinkSync(file);
-                        deleted++;
-                    }
-                }
-            } catch (err) {
-                console.warn('GC: failed to evaluate/delete', file, err);
             }
         }
 
-        console.log(`GC: scanned ${files.length} files, deleted ${deleted} orphaned files`);
+        const events = await Event.find().select('bannerImage').lean();
+        for (const ev of events) {
+            const r = strip((ev as any).bannerImage);
+            if (r) referenced.add(r);
+        }
+
+        const messages = await Message.find().select('media.url').lean();
+        for (const msg of messages) {
+            for (const m of (msg as any).media || []) {
+                const r = strip(m?.url);
+                if (r) referenced.add(r);
+            }
+        }
+
+        const albums = await GalleryAlbum.find().select('images.url coverImage').lean();
+        for (const album of albums) {
+            const c = strip((album as any).coverImage);
+            if (c) referenced.add(c);
+            for (const img of (album as any).images || []) {
+                const r = strip(img?.url);
+                if (r) referenced.add(r);
+            }
+        }
+
+        // 2. Walk GridFS uploads.files collection
+        const allFiles = await bucket.find().toArray();
+        const now = Date.now();
+        const minAgeMs = 1000 * 60 * 60 * 24; // 24 hours
+
+        let deleted = 0;
+        for (const file of allFiles) {
+            if (!referenced.has(file.filename)) {
+                const age = now - (file.uploadDate?.getTime() || 0);
+                if (age > minAgeMs) {
+                    await bucket.delete(file._id);
+                    deleted++;
+                }
+            }
+        }
+
+        console.log(`GC: scanned ${allFiles.length} GridFS files, deleted ${deleted} orphaned`);
     } catch (err) {
         console.error('GC failed', err);
     }

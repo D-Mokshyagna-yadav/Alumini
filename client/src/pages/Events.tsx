@@ -75,7 +75,7 @@ const Events = () => {
                     const form = new FormData();
                     form.append('banner', bannerFile);
                     const up = await api.post('/upload/event-banner', form, { headers: { 'Content-Type': 'multipart/form-data' } });
-                    bannerUrl = up.data.url;
+                    bannerUrl = up.data.relative || up.data.url;
                 }
 
                 const payload = {

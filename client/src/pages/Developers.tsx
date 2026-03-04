@@ -86,7 +86,7 @@ const Developers = () => {
                             animate="visible"
                             variants={cardVariants}
                             whileHover={{ y: -6, transition: { duration: 0.25 } }}
-                            className="group bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-2xl shadow-sm hover:shadow-xl transition-all p-8 flex flex-col items-center text-center"
+                            className="group bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-2xl shadow-sm hover:shadow-xl transition-all p-5 sm:p-8 flex flex-col items-center text-center"
                         >
                             {/* Avatar */}
                             <div className="relative mb-6">

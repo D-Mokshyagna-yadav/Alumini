@@ -67,6 +67,7 @@ app.use(session({
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
+        sameSite: 'lax', // Allow cookies over LAN (same-site navigation)
         maxAge: 24 * 60 * 60 * 1000 // 1 day
     }
 }));
@@ -85,7 +86,6 @@ import { eventPostRouter } from './routes/eventPostRoutes';
 import { publicRouter } from './routes/publicRoutes';
 import galleryRouter from './routes/gallery';
 import savedRouter from './routes/savedRoutes';
-import path from 'path';
 import runGC from './scripts/gcUploads';
 
 // ... (other imports)
@@ -96,12 +96,54 @@ app.use((req, res, next) => {
     next();
 });
 
-// Serve static files from uploads directory with CORS headers
-app.use('/uploads', (req, res, next) => {
+// Middleware: sanitize absolute localhost URLs in JSON responses so images work on any LAN IP.
+// Old records in MongoDB may have been stored with http://localhost:5000/uploads/... —
+// this strips them to relative /uploads/... paths before sending to the client.
+app.use((req, res, next) => {
+    const originalJson = res.json.bind(res);
+    res.json = (body: any) => {
+        if (body) {
+            const sanitized = JSON.parse(
+                JSON.stringify(body).replace(/http:\/\/localhost:\d+(?=\/uploads\/)/g, '')
+            );
+            return originalJson(sanitized);
+        }
+        return originalJson(body);
+    };
+    next();
+});
+
+// Serve uploaded files from GridFS (MongoDB Atlas) with CORS headers
+import { getGridFSBucket } from './config/gridfs';
+
+app.use('/uploads', (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    next();
-}, express.static(path.join(__dirname, '../uploads')));
+
+    // gridName is everything after /uploads/, e.g. "username/profile/123-456.jpg"
+    const gridName = decodeURIComponent(req.path.replace(/^\//, ''));
+    if (!gridName) return res.status(404).end();
+
+    const bucket = getGridFSBucket();
+    bucket.find({ filename: gridName }).toArray()
+        .then(files => {
+            if (!files || files.length === 0) return res.status(404).json({ message: 'File not found' });
+
+            const file = files[0];
+            res.set('Content-Type', file.contentType || 'application/octet-stream');
+            res.set('Cache-Control', 'public, max-age=86400');
+
+            const downloadStream = bucket.openDownloadStreamByName(gridName);
+            downloadStream.pipe(res);
+            downloadStream.on('error', () => {
+                if (!res.headersSent) res.status(404).end();
+            });
+        })
+        .catch(err => {
+            console.error('GridFS serve error:', err);
+            if (!res.headersSent) res.status(500).json({ message: 'Error retrieving file' });
+        });
+});
 
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);

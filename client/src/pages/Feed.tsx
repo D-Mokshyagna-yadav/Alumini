@@ -488,9 +488,9 @@ const Feed = () => {
                                             {post.media.map((m, idx) => (
                                                 <div key={idx} className={post.media.length === 1 ? '' : post.media.length === 3 && idx === 0 ? 'col-span-2' : ''}>
                                                     {m.type === 'image' ? (
-                                                        <img src={normalizeMediaUrl(m.url)} alt="" className="w-full max-h-[480px] object-cover" loading="lazy" />
+                                                        <img src={normalizeMediaUrl(m.url)} alt="" className="w-full max-h-[480px] object-cover bg-[var(--bg-tertiary)]" loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                                                     ) : (
-                                                        <video src={normalizeMediaUrl(m.url)} controls className="w-full max-h-[480px]" />
+                                                        <video src={normalizeMediaUrl(m.url)} controls className="w-full max-h-[480px]" onError={e => { (e.target as HTMLVideoElement).style.display = 'none'; }} />
                                                     )}
                                                 </div>
                                             ))}
@@ -762,9 +762,9 @@ const Feed = () => {
                                                 {detailedPost.media.map((m, idx) => (
                                                     <div key={idx} className={detailedPost.media.length === 1 ? '' : detailedPost.media.length === 3 && idx === 0 ? 'col-span-2' : ''}>
                                                         {m.type === 'image' ? (
-                                                            <img src={normalizeMediaUrl(m.url)} alt="" className="w-full max-h-[480px] object-cover" loading="lazy" />
+                                                            <img src={normalizeMediaUrl(m.url)} alt="" className="w-full max-h-[480px] object-cover bg-[var(--bg-tertiary)]" loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                                                         ) : (
-                                                            <video src={normalizeMediaUrl(m.url)} controls className="w-full max-h-[480px]" />
+                                                            <video src={normalizeMediaUrl(m.url)} controls className="w-full max-h-[480px]" onError={e => { (e.target as HTMLVideoElement).style.display = 'none'; }} />
                                                         )}
                                                     </div>
                                                 ))}

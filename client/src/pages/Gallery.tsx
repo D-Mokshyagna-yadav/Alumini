@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../lib/api';
+import resolveMediaUrl from '../lib/media';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -241,16 +242,16 @@ const Gallery = () => {
                             </motion.button>
                         )}
                         <div>
-                            <h1 className="text-3xl font-bold text-[var(--text-primary)] flex items-center gap-4">
+                            <h1 className="text-xl sm:text-3xl font-bold text-[var(--text-primary)] flex items-center gap-3 sm:gap-4">
                                 <motion.div 
                                     whileHover={{ rotate: 10, scale: 1.1 }}
-                                    className="w-14 h-14 bg-gradient-to-br from-[var(--gradient-start)] via-[var(--gradient-mid)] to-[var(--gradient-end)] flex items-center justify-center shadow-sm shadow-[var(--accent)]/30"
+                                    className="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-br from-[var(--gradient-start)] via-[var(--gradient-mid)] to-[var(--gradient-end)] flex items-center justify-center shadow-sm shadow-[var(--accent)]/30"
                                 >
                                     {selectedAlbum ? <Folder size={28} className="text-[var(--bg-primary)]" /> : <Camera size={28} className="text-[var(--bg-primary)]" />}
                                 </motion.div>
                                 <span className="text-gradient">{selectedAlbum ? selectedAlbum.title : 'Gallery'}</span>
                             </h1>
-                            <p className="text-[var(--text-muted)] mt-2 ml-[72px]">
+                            <p className="text-[var(--text-muted)] mt-2 ml-0 sm:ml-[72px]">
                                 {selectedAlbum 
                                     ? <span className="flex items-center gap-3">
                                         {imageCount > 0 && <span className="flex items-center gap-1"><ImageIcon size={14} /> {imageCount} photos</span>}
@@ -377,7 +378,7 @@ const Gallery = () => {
                                                     <Loader2 size={24} className="text-[var(--text-muted)] animate-spin" />
                                                 </div>
                                                 <img 
-                                                    src={album.coverImage || album.images[0]?.url} 
+                                                    src={resolveMediaUrl(album.coverImage || album.images[0]?.url)} 
                                                     alt={album.title}
                                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 relative z-[1]"
                                                     onLoad={(e) => { const loader = (e.target as HTMLElement).parentElement?.querySelector('.album-cover-loader'); if (loader) (loader as HTMLElement).style.display = 'none'; }}
@@ -457,7 +458,7 @@ const Gallery = () => {
                         )}
                     </motion.div>
                 ) : view === 'grid' ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
                         {currentMedia.map((media, index) => (
                             <motion.div
                                 key={media.id}
@@ -470,7 +471,7 @@ const Gallery = () => {
                             >
                                 {media.type === 'video' ? (
                                     <div className="w-full h-full relative">
-                                        <video src={media.url} className="w-full h-full object-cover" muted />
+                                        <video src={resolveMediaUrl(media.url)} className="w-full h-full object-cover" muted />
                                         <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                                             <motion.div 
                                                 whileHover={{ scale: 1.2 }}
@@ -486,7 +487,7 @@ const Gallery = () => {
                                             <Loader2 size={24} className="text-[var(--text-muted)] animate-spin" />
                                         </div>
                                         <img 
-                                            src={media.url} 
+                                            src={resolveMediaUrl(media.url)} 
                                             alt={media.caption || 'Photo'}
                                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 relative z-[1]"
                                             onLoad={(e) => { const loader = (e.target as HTMLElement).parentElement?.querySelector('.media-loader'); if (loader) (loader as HTMLElement).style.display = 'none'; }}
@@ -559,13 +560,13 @@ const Gallery = () => {
                                     <div className="w-40 h-28 overflow-hidden flex-shrink-0 relative">
                                         {media.type === 'video' ? (
                                             <>
-                                                <video src={media.url} className="w-full h-full object-cover" muted />
+                                                <video src={resolveMediaUrl(media.url)} className="w-full h-full object-cover" muted />
                                                 <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                                                     <Play size={24} className="text-[var(--bg-primary)]" fill="currentColor" />
                                                 </div>
                                             </>
                                         ) : (
-                                            <img src={media.url} alt={media.caption || 'Photo'} className="w-full h-full object-cover" />
+                                            <img src={resolveMediaUrl(media.url)} alt={media.caption || 'Photo'} className="w-full h-full object-cover" />
                                         )}
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -740,7 +741,7 @@ const Gallery = () => {
                             {currentMedia[lightboxIndex].type === 'video' ? (
                                 <video
                                     key={lightboxIndex}
-                                    src={currentMedia[lightboxIndex].url}
+                                    src={resolveMediaUrl(currentMedia[lightboxIndex].url)}
                                     controls
                                     autoPlay
                                     className="max-w-full max-h-[80vh] shadow-md"
@@ -750,7 +751,7 @@ const Gallery = () => {
                                     key={lightboxIndex}
                                     initial={{ opacity: 0, scale: 0.95 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    src={currentMedia[lightboxIndex].url}
+                                    src={resolveMediaUrl(currentMedia[lightboxIndex].url)}
                                     alt={currentMedia[lightboxIndex].caption || 'Photo'}
                                     className="max-w-full max-h-[80vh] object-contain shadow-md"
                                 />
@@ -895,7 +896,7 @@ const UploadMediaModal = ({ onClose, onUpload }: { onClose: () => void, onUpload
                     </label>
 
                     {previews.length > 0 && (
-                        <div className="grid grid-cols-4 gap-3 max-h-52 overflow-y-auto p-1">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-h-52 overflow-y-auto p-1">
                             {previews.map((preview, i) => (
                                 <motion.div 
                                     key={i}

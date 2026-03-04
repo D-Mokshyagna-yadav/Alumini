@@ -144,19 +144,19 @@ const PostJob = () => {
         <div className="min-h-screen bg-[var(--bg-primary)] py-8">
             <div className="max-w-3xl mx-auto px-4">
                 {/* Header */}
-                <div className="bg-[var(--text-secondary)] text-[var(--bg-primary)] px-6 py-4 mb-6">
+                <div className="bg-[var(--text-secondary)] text-[var(--bg-primary)] px-4 sm:px-6 py-3 sm:py-4 mb-4 sm:mb-6">
                     <div className="flex items-center gap-2">
-                        <span className="text-lg">MIC COLLEGE ALUMINI JOB POST PAGE</span>
+                        <span className="text-sm sm:text-lg">MIC COLLEGE ALUMINI JOB POST PAGE</span>
                     </div>
                 </div>
 
                 {/* Steps indicator */}
-                <div className="bg-[var(--bg-secondary)] shadow-sm p-6 mb-6">
+                <div className="bg-[var(--bg-secondary)] shadow-sm p-4 sm:p-6 mb-4 sm:mb-6">
                     <div className="flex items-center justify-between mb-4">
                         {steps.map((step, idx) => (
                             <div key={step.number} className="flex items-center flex-1">
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-8 h-8 flex items-center justify-center text-sm font-medium ${
+                                <div className="flex items-center gap-1 sm:gap-3">
+                                    <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center text-sm font-medium ${
                                         currentStep > step.number 
                                             ? 'bg-[var(--text-secondary)] text-[var(--bg-primary)]' 
                                             : currentStep === step.number
@@ -165,7 +165,7 @@ const PostJob = () => {
                                     }`}>
                                         {currentStep > step.number ? <Check size={16} /> : step.number}
                                     </div>
-                                    <span className={`text-sm font-medium ${
+                                    <span className={`text-xs sm:text-sm font-medium hidden sm:inline ${
                                         currentStep === step.number 
                                             ? 'text-[var(--text-primary)]' 
                                             : 'text-[var(--text-secondary)]'
@@ -174,7 +174,7 @@ const PostJob = () => {
                                     </span>
                                 </div>
                                 {idx < steps.length - 1 && (
-                                    <div className={`flex-1 h-0.5 mx-4 ${
+                                    <div className={`flex-1 h-0.5 mx-2 sm:mx-4 ${
                                         currentStep > step.number ? 'bg-[var(--text-secondary)]' : 'bg-[var(--border-color)]'
                                     }`} />
                                 )}

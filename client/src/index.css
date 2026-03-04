@@ -33,7 +33,6 @@
 
 @layer base {
   * {
-    @apply transition-all duration-200 ease-out;
     box-sizing: border-box;
   }
 

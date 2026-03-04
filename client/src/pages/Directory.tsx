@@ -198,7 +198,7 @@ const Directory = () => {
 
             {/* Alumni Grid */}
             {filteredAlumni.length === 0 ? (
-                <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-12 text-center">
+                <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-6 sm:p-12 text-center">
                     <User className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" />
                     <p className="text-[var(--text-primary)] font-medium">No alumni found</p>
                     <p className="text-sm text-[var(--text-muted)] mt-1">Try adjusting your search or filters</p>
