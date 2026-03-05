@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
 import resolveMediaUrl from '../lib/media';
 import { Link, useNavigate } from 'react-router-dom';
@@ -10,6 +10,7 @@ import {
 import ShareModal from '../components/ShareModal';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 
 interface Job {
     id: string | number;
@@ -35,6 +36,7 @@ const Jobs = () => {
     const navigate = useNavigate();
     const toast = useToast();
     const { user, isAuthenticated } = useAuth();
+    const { on: onSocket } = useSocket();
     
     const [jobs, setJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
@@ -76,6 +78,25 @@ const Jobs = () => {
         load();
         return () => { mounted = false };
     }, []);
+
+    // Refetch jobs list
+    const refetchJobs = useCallback(async () => {
+        try {
+            const res = await api.get('/jobs');
+            setJobs(res.data.jobs || []);
+        } catch { /* silent */ }
+    }, []);
+
+    // ── Real-time socket listeners ────────────────────────────────────
+    useEffect(() => {
+        const unsubs: (() => void)[] = [];
+        unsubs.push(onSocket('job_created', () => { refetchJobs(); }));
+        unsubs.push(onSocket('job_updated', () => { refetchJobs(); }));
+        unsubs.push(onSocket('job_deleted', ({ jobId }: { jobId: string }) => {
+            setJobs(prev => prev.filter(j => String(j.id) !== String(jobId)));
+        }));
+        return () => unsubs.forEach(fn => fn());
+    }, [onSocket, refetchJobs]);
 
     const parseSalaryNumber = (s?: string) => {
         if (!s) return NaN;
@@ -260,7 +281,7 @@ const Jobs = () => {
                     </button>
                     <button
                         onClick={() => setJobViewFilter('applied')}
-                        className={`px-6 py-2 text-sm font-medium rounded-lg shadow-sm transition-all ${
+                        className={`flex-shrink-0 px-4 sm:px-6 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg shadow-sm transition-all ${
                             jobViewFilter === 'applied'
                                 ? 'bg-[var(--accent)] text-[var(--bg-primary)]'
                                 : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
@@ -270,7 +291,7 @@ const Jobs = () => {
                     </button>
                     <button
                         onClick={() => setJobViewFilter('posted')}
-                        className={`px-6 py-2 text-sm font-medium rounded-lg shadow-sm transition-all ${
+                        className={`flex-shrink-0 px-4 sm:px-6 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg shadow-sm transition-all ${
                             jobViewFilter === 'posted'
                                 ? 'bg-[var(--accent)] text-[var(--bg-primary)]'
                                 : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
@@ -300,7 +321,7 @@ const Jobs = () => {
                                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Job Title</label>
                                 <input value={newJob.title} onChange={e => setNewJob({ ...newJob, title: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)]" />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <input value={newJob.company} onChange={e => setNewJob({ ...newJob, company: e.target.value })} placeholder="Company" className="p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)]" />
                                 <input value={newJob.location} onChange={e => setNewJob({ ...newJob, location: e.target.value })} placeholder="Location" className="p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)]" />
                             </div>
@@ -308,7 +329,7 @@ const Jobs = () => {
                                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Description</label>
                                 <textarea value={newJob.description} onChange={e => setNewJob({ ...newJob, description: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] h-28" />
                             </div>
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Type</label>
                                     <select value={newJob.type} onChange={e => setNewJob({ ...newJob, type: e.target.value as any })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)]">
@@ -730,7 +751,7 @@ const Jobs = () => {
                             className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-xl shadow-sm p-4 cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5"
                         >
                             <div className="flex gap-3">
-                                <div className="w-20 h-20 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                <div className="w-14 h-14 sm:w-20 sm:h-20 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                                     {job.image ? (
                                         <img src={resolveMediaUrl(job.image)} alt={job.company} className="w-full h-full object-cover" />
                                     ) : (
@@ -739,26 +760,26 @@ const Jobs = () => {
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex-1 min-w-0 pr-4">
+                                <div className="flex-1 min-w-0 pr-2 sm:pr-4">
                                     {job.status === 'pending' && job.isCreator && (
                                         <div className="mb-1 px-2 py-0.5 bg-yellow-500/10 text-yellow-600 text-xs font-medium rounded-full inline-block">Pending admin approval</div>
                                     )}
                                     {job.status === 'rejected' && job.isCreator && (
                                         <div className="mb-1 px-2 py-0.5 bg-red-500/10 text-red-500 text-xs font-medium rounded-full inline-block">Rejected by admin</div>
                                     )}
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-xs px-2 py-0.5 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] rounded-full">{job.location}</span>
-                                        <span className="text-xs px-2 py-0.5 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] rounded-full">{job.type}</span>
-                                        {job.salary && <span className="text-xs px-2 py-0.5 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] rounded-full">{job.salary}</span>}
+                                    <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-1">
+                                        <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] rounded-full">{job.location}</span>
+                                        <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] rounded-full">{job.type}</span>
+                                        {job.salary && <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] rounded-full">{job.salary}</span>}
                                     </div>
                                     <h3 className="font-semibold text-[var(--text-primary)] truncate">{job.title}</h3>
                                     <p className="text-sm text-[var(--text-secondary)]">{job.company}</p>
                                     <p className="text-xs text-[var(--text-muted)] mt-1">Posted {new Date(job.postedAt).toLocaleDateString()}</p>
                                 </div>
-                                <div className="flex flex-col items-end justify-between">
+                                <div className="flex flex-col items-end justify-between flex-shrink-0">
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); navigate(`/jobs/${job.id}`); }} 
-                                        className={`px-6 py-1.5 text-sm font-medium ${
+                                        className={`px-3 sm:px-6 py-1 sm:py-1.5 text-xs sm:text-sm font-medium ${
                                             job.hasApplied 
                                                 ? 'bg-[var(--accent)] text-[var(--bg-primary)] hover:bg-[var(--accent-hover)]' 
                                                 : 'bg-[var(--accent)] text-[var(--bg-primary)] hover:bg-[var(--accent-hover)]'

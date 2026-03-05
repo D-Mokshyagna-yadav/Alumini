@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import resolveMediaUrl from '../lib/media';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import { useToast } from '../context/ToastContext';
 import { 
     Calendar, MapPin, Eye, Share2, MoreVertical, 
@@ -14,6 +15,7 @@ import Avatar from '../components/ui/Avatar';
 const EventDetail = () => {
     const { id } = useParams();
     const { user } = useAuth();
+    const { on: onSocket } = useSocket();
     const { show: showToast } = useToast();
     const navigate = useNavigate();
 
@@ -42,6 +44,24 @@ const EventDetail = () => {
         loadPosts();
         loadAttendees();
     }, [id]);
+
+    // ── Real-time socket listeners ────────────────────────────────────
+    useEffect(() => {
+        const unsubs: (() => void)[] = [];
+        unsubs.push(onSocket('event_updated', (data: { eventId: string }) => {
+            if (String(data.eventId) === String(id)) {
+                loadEvent();
+                loadAttendees();
+            }
+        }));
+        unsubs.push(onSocket('event_deleted', (data: { eventId: string }) => {
+            if (String(data.eventId) === String(id)) {
+                showToast('This event has been deleted', 'info');
+                navigate('/events');
+            }
+        }));
+        return () => unsubs.forEach(fn => fn());
+    }, [onSocket, id]);
 
     const loadEvent = async () => {
         try {
@@ -344,7 +364,7 @@ const EventDetail = () => {
 
             {/* Action Bar */}
             <div className="border-b border-[var(--border-color)] bg-[var(--bg-secondary)]">
-                <div className="max-w-5xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between gap-4">
+                <div className="max-w-5xl mx-auto px-4 md:px-8 py-3 flex flex-wrap items-center justify-between gap-2 sm:gap-4">
                     <div className="flex items-center gap-2">
                         {!isRegistrationClosed ? (
                             <button

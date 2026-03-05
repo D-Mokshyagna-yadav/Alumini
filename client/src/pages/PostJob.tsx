@@ -276,7 +276,7 @@ const PostJob = () => {
                                 <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
                                     Salary
                                 </label>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
                                         <label className="block text-xs text-[var(--text-secondary)] mb-1">Currency</label>
                                         <select
@@ -462,7 +462,7 @@ const PostJob = () => {
                                         </select>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-3 mt-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                                     <input
                                         type="text"
                                         value={formData.salaryMin}
@@ -541,7 +541,7 @@ const PostJob = () => {
                                 </div>
 
                                 {formData.workExperience === 'Experience required' && (
-                                    <div className="mt-3 grid grid-cols-2 gap-3">
+                                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
                                             <label className="block text-xs text-[var(--text-secondary)] mb-1">Min years*</label>
                                             <select

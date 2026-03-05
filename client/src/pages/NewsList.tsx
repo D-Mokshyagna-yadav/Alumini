@@ -54,17 +54,17 @@ const NewsList = () => {
     );
 
     return (
-        <div className="max-w-4xl mx-auto p-6">
-            <h1 className="text-2xl font-semibold mb-4">MIC College of Technology — News</h1>
+        <div className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
+            <h1 className="text-xl sm:text-2xl font-semibold mb-4">MIC College of Technology — News</h1>
             <div className="space-y-4">
                 {items.map(it => (
-                    <div key={it._id} className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm p-4 border border-[var(--border-color)]/30 rounded-xl shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
-                        <div className="flex gap-4">
-                            {it.image ? <img src={resolveMediaUrl(it.image)} alt="" className="w-28 h-20 object-cover rounded-lg" /> : <div className="w-28 h-20 bg-[var(--bg-tertiary)] rounded-lg" />}
-                            <div>
-                                <Link to={`/news/${it._id}`} className="text-lg font-medium text-[var(--text-primary)] hover:underline">{it.title}</Link>
+                    <div key={it._id} className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm p-3 sm:p-4 border border-[var(--border-color)]/30 rounded-xl shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
+                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                            {it.image ? <img src={resolveMediaUrl(it.image)} alt="" className="w-full sm:w-28 h-40 sm:h-20 object-cover rounded-lg" /> : <div className="hidden sm:block w-28 h-20 bg-[var(--bg-tertiary)] rounded-lg" />}
+                            <div className="min-w-0">
+                                <Link to={`/news/${it._id}`} className="text-base sm:text-lg font-medium text-[var(--text-primary)] hover:underline line-clamp-2">{it.title}</Link>
                                 <p className="text-xs text-[var(--text-muted)]">{it.publishedAt ? new Date(it.publishedAt).toLocaleString() : new Date(it.createdAt).toLocaleString()} • {it.readers || 0} readers</p>
-                                <p className="mt-2 text-sm text-[var(--text-secondary)]">{(stripHtml(it.body || it.time || '')).slice(0, 150)}{(stripHtml(it.body || it.time || '')).length > 150 ? '...' : ''}</p>
+                                <p className="mt-1 sm:mt-2 text-sm text-[var(--text-secondary)] line-clamp-3">{(stripHtml(it.body || it.time || '')).slice(0, 150)}{(stripHtml(it.body || it.time || '')).length > 150 ? '...' : ''}</p>
                             </div>
                         </div>
                     </div>

@@ -572,7 +572,7 @@ const Messages = () => {
             <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 overflow-hidden h-[calc(100vh-8rem)] sm:h-[calc(100vh-120px)] shadow-md shadow-black/10 rounded-2xl"
+                className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 overflow-hidden h-[calc(100vh-10rem)] sm:h-[calc(100vh-120px)] md:h-[calc(100vh-100px)] shadow-md shadow-black/10 rounded-2xl"
             >
                 <div className="flex h-full">
                     {/* Conversations List */}

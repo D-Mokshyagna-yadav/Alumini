@@ -328,7 +328,7 @@ const Profile = () => {
                         className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 overflow-hidden shadow-md shadow-black/5"
                     >
                         {/* Cover Photo */}
-                        <div className="h-[200px] relative bg-[var(--accent)]">
+                        <div className="h-[140px] sm:h-[180px] md:h-[200px] relative bg-[var(--accent)]">
                             {coverPreview || profileUser?.coverImage ? (
                                 <img
                                     src={coverPreview || resolveMediaUrl(profileUser?.coverImage)}
@@ -354,10 +354,10 @@ const Profile = () => {
                         </div>
 
                         {/* Profile Info */}
-                        <div className="px-6 pb-6">
-                            <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-16 relative z-10">
+                        <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+                            <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4 -mt-12 sm:-mt-16 relative z-10">
                                 <motion.div whileHover={{ scale: 1.02 }} className="relative flex-shrink-0">
-                                    <div className="w-[140px] h-[140px] rounded-full overflow-hidden bg-[var(--accent)] border-4 border-[var(--bg-primary)] flex items-center justify-center shadow-md shadow-[var(--accent)]/20">
+                                    <div className="w-[100px] h-[100px] sm:w-[140px] sm:h-[140px] rounded-full overflow-hidden bg-[var(--accent)] border-4 border-[var(--bg-primary)] flex items-center justify-center shadow-md shadow-[var(--accent)]/20">
                                         <Avatar src={avatarPreview || profileUser?.avatar} iconSize={56} />
                                     </div>
                                     {isOwnProfile && (
@@ -519,15 +519,15 @@ const Profile = () => {
                     </motion.div>
 
                     {/* Tabs */}
-                    <div className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 p-1.5 shadow-md shadow-black/5">
-                        <div className="flex gap-1">
+                    <div className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 p-1 sm:p-1.5 shadow-md shadow-black/5">
+                        <div className="flex gap-0.5 sm:gap-1 overflow-x-auto scrollbar-hide">
                             {(['about', 'experience', 'posts', 'comments'] as const).map((tab) => (
                                 <motion.button
                                     key={tab}
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
                                     onClick={() => setActiveTab(tab)}
-                                    className={`flex-1 py-3 px-4 font-semibold text-sm transition-all ${
+                                    className={`flex-1 py-2 sm:py-3 px-2 sm:px-4 font-semibold text-xs sm:text-sm transition-all whitespace-nowrap ${
                                         activeTab === tab
                                             ? 'bg-[var(--accent)] text-[var(--bg-primary)] shadow-sm'
                                             : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'

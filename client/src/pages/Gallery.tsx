@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../lib/api';
 import resolveMediaUrl from '../lib/media';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { 
@@ -34,6 +35,7 @@ interface GalleryAlbum {
 
 const Gallery = () => {
     const { user } = useAuth();
+    const { on: onSocket } = useSocket();
     const toast = useToast();
     const confirm = useConfirm();
     
@@ -52,6 +54,12 @@ const Gallery = () => {
     useEffect(() => {
         fetchGallery();
     }, []);
+
+    // ── Real-time socket listeners ────────────────────────────────────
+    useEffect(() => {
+        const unsub = onSocket('gallery_updated', () => { fetchGallery(); });
+        return unsub;
+    }, [onSocket]);
 
     const fetchGallery = async () => {
         try {
@@ -382,6 +390,7 @@ const Gallery = () => {
                                                     alt={album.title}
                                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 relative z-[1]"
                                                     onLoad={(e) => { const loader = (e.target as HTMLElement).parentElement?.querySelector('.album-cover-loader'); if (loader) (loader as HTMLElement).style.display = 'none'; }}
+                                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; const loader = (e.target as HTMLElement).parentElement?.querySelector('.album-cover-loader'); if (loader) (loader as HTMLElement).style.display = 'none'; }}
                                                 />
                                             </>
                                         )
@@ -491,6 +500,7 @@ const Gallery = () => {
                                             alt={media.caption || 'Photo'}
                                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 relative z-[1]"
                                             onLoad={(e) => { const loader = (e.target as HTMLElement).parentElement?.querySelector('.media-loader'); if (loader) (loader as HTMLElement).style.display = 'none'; }}
+                                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; const loader = (e.target as HTMLElement).parentElement?.querySelector('.media-loader'); if (loader) (loader as HTMLElement).style.display = 'none'; }}
                                         />
                                     </>
                                 )}
@@ -566,7 +576,7 @@ const Gallery = () => {
                                                 </div>
                                             </>
                                         ) : (
-                                            <img src={resolveMediaUrl(media.url)} alt={media.caption || 'Photo'} className="w-full h-full object-cover" />
+                                            <img src={resolveMediaUrl(media.url)} alt={media.caption || 'Photo'} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                                         )}
                                     </div>
                                     <div className="flex-1 min-w-0">

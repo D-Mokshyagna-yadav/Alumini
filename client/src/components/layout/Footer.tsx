@@ -58,8 +58,8 @@ const Footer = () => {
                 <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[var(--bg-tertiary)] blur-3xl opacity-50" />
             </div>
 
-            <div className="max-w-6xl mx-auto px-6 py-20 relative">
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-6 md:gap-12 mb-16">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20 relative">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6 md:gap-12 mb-16">
                     {/* Brand */}
                     <div className="col-span-2">
                         <Link to="/" className="flex items-center gap-3 mb-6 group">
@@ -118,7 +118,7 @@ const Footer = () => {
                 <div
                     className="bg-[var(--bg-tertiary)]/60 backdrop-blur-sm p-6 mb-12 border border-[var(--border-color)] rounded-2xl"
                 >
-                    <div className="flex flex-wrap justify-center gap-8 text-sm">
+                    <div className="flex flex-wrap justify-center gap-4 sm:gap-8 text-sm">
                         <a href={`mailto:${branding.contactEmail || 'office@example.com'}`} className="flex items-center gap-3 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors group">
                             <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center group-hover:bg-[var(--accent)] group-hover:text-[var(--bg-primary)] transition-all duration-200">
                                 <Mail size={18} />

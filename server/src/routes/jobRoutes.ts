@@ -233,6 +233,14 @@ router.post('/', requireAuth, async (req, res) => {
             message: autoApprove ? 'Job created and published' : 'Job submitted for admin approval',
             jobId: job._id
         });
+
+        // Broadcast new job to all clients if auto-approved
+        if (autoApprove) {
+            try {
+                const io = (req as any).io;
+                if (io) io.emit('job_created', { jobId: job._id });
+            } catch (e) { /* ignore */ }
+        }
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
@@ -286,6 +294,9 @@ router.post('/:id/interest', requireAuth, async (req, res) => {
             }
 
             res.json({ message: 'Application withdrawn', applied: false });
+
+            // Broadcast job update
+            try { const io = (req as any).io; if (io) io.emit('job_updated', { jobId: job._id }); } catch (e) { /* ignore */ }
         } else {
             // APPLY - Do not allow interest on closed jobs
             if ((job as any).isOpen === false) return res.status(400).json({ message: 'Job registration is closed' });
@@ -347,6 +358,9 @@ router.post('/:id/interest', requireAuth, async (req, res) => {
             }
 
             res.json({ message: 'Marked interested', applied: true });
+
+            // Broadcast job update
+            try { const io = (req as any).io; if (io) io.emit('job_updated', { jobId: job._id }); } catch (e) { /* ignore */ }
         }
     } catch (err) {
         console.error(err);
@@ -413,6 +427,9 @@ router.post('/:id/close', requireAuth, async (req, res) => {
         }
 
         res.json({ message: 'Job closed' });
+
+        // Broadcast job update
+        try { const io2 = (req as any).io; if (io2) io2.emit('job_updated', { jobId: job._id }); } catch (e) { /* ignore */ }
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
@@ -433,6 +450,10 @@ router.delete('/:id', requireAuth, async (req, res) => {
         }
 
         await Job.findByIdAndDelete(req.params.id);
+
+        // Broadcast job deletion
+        try { const io = (req as any).io; if (io) io.emit('job_deleted', { jobId: req.params.id }); } catch (e) { /* ignore */ }
+
         res.json({ message: 'Job deleted' });
     } catch (err) {
         console.error(err);

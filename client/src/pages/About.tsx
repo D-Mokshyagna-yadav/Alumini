@@ -63,7 +63,7 @@ const About = () => {
                             initial={{ opacity: 0, scale: 0.95 }}
                             whileInView={{ opacity: 1, scale: 1 }}
                             viewport={{ once: true }}
-                            className="grid grid-cols-2 gap-4"
+                            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
                         >
                             <div className="p-6 bg-[var(--bg-tertiary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl">
                                 <Award className="w-10 h-10 text-[var(--accent)] mb-4" />

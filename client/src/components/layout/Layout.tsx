@@ -7,7 +7,7 @@ const Layout = () => {
     return (
         <div className="flex flex-col min-h-screen font-body text-[var(--text-primary)] bg-[var(--bg-primary)]">
             <Navbar />
-            <main className="flex-grow pt-14"> {/* offset for fixed top navbar h-14 */}
+            <main className="flex-grow pt-14 pb-16 md:pb-0"> {/* offset for fixed top navbar h-14 + mobile bottom tab bar */}
                 <PageTransition>
                     <Outlet />
                 </PageTransition>

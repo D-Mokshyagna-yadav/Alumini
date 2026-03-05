@@ -136,6 +136,13 @@ router.post('/:id/like', requireAuth, async (req, res) => {
         }
 
         await post.save();
+
+        // Broadcast like update to all clients
+        try {
+            const io = (req as any).io;
+            if (io) io.emit('post_liked', { postId: post._id, likes: post.likes, likesCount: post.likes.length });
+        } catch (e) { /* ignore */ }
+
         res.json({ likes: post.likes.length, isLiked: likeIndex === -1 });
     } catch (error) {
         console.error(error);
@@ -218,6 +225,12 @@ router.post('/:id/comment', requireAuth, async (req, res) => {
                 }
             } catch (e) { console.error('Notification error', e); }
         }
+
+        // Broadcast comment update to all clients
+        try {
+            const io2 = (req as any).io;
+            if (io2) io2.emit('post_commented', { postId: post._id, comments: updatedPost?.comments });
+        } catch (e) { /* ignore */ }
 
         res.json({ comments: updatedPost?.comments });
     } catch (error) {
@@ -302,6 +315,13 @@ router.delete('/:id', requireAuth, async (req, res) => {
         }
 
         await Post.findByIdAndDelete(req.params.id);
+
+        // Broadcast post deletion to all clients
+        try {
+            const io = (req as any).io;
+            if (io) io.emit('post_deleted', { postId: req.params.id });
+        } catch (e) { /* ignore */ }
+
         res.json({ message: 'Post deleted' });
     } catch (error) {
         console.error(error);
@@ -333,6 +353,12 @@ router.delete('/:postId/comments/:commentId', requireAuth, async (req, res) => {
 
         const updatedPost = await Post.findById(post._id)
             .populate('comments.author', 'name avatar');
+
+        // Broadcast comment deletion to all clients
+        try {
+            const io = (req as any).io;
+            if (io) io.emit('comment_deleted', { postId: post._id, commentId: req.params.commentId, comments: updatedPost?.comments });
+        } catch (e) { /* ignore */ }
 
         res.json({ comments: updatedPost?.comments });
     } catch (error) {

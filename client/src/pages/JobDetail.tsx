@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import resolveMediaUrl from '../lib/media';
@@ -8,6 +8,7 @@ import Avatar from '../components/ui/Avatar';
 import JobShareFloating from '../components/JobShareFloating';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 
 interface Job {
     id: string | number;
@@ -39,28 +40,30 @@ const JobDetail = () => {
     const [applicantsLoading, setApplicantsLoading] = useState(false);
     const toast = useToast();
     const { isAuthenticated, user } = useAuth();
+    const { on: onSocket } = useSocket();
 
-    useEffect(() => {
-        const loadJob = async () => {
-            if (!id) return;
-            try {
-                const res = await api.get(`/jobs/${id}`);
-                setJob(res.data.job || res.data);
-            } catch (err) {
+    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    const fetchJob = useCallback(async (silent = false) => {
+        if (!id) return;
+        try {
+            const res = await api.get(`/jobs/${id}`);
+            setJob(res.data.job || res.data);
+        } catch (err) {
+            if (!silent) {
                 console.error('Failed to load job', err);
                 toast.show('Failed to load job details', 'error');
-            } finally {
-                setLoading(false);
             }
-        };
-        loadJob();
+        } finally {
+            if (!silent) setLoading(false);
+        }
     }, [id]);
 
-    const loadApplicants = async () => {
-        if (!job) return;
-        setApplicantsLoading(true);
+    const fetchApplicants = useCallback(async (silent = false) => {
+        if (!id) return;
+        if (!silent) setApplicantsLoading(true);
         try {
-            const res = await api.get(`/jobs/${job.id}/applicants`);
+            const res = await api.get(`/jobs/${id}/applicants`);
             const raw = res.data.applicants || [];
             const normalized = (Array.isArray(raw) ? raw : []).map((a: any) => ({
                 id: a.userId || a.user?._id || a.user,
@@ -72,11 +75,50 @@ const JobDetail = () => {
             }));
             setApplicants(normalized);
         } catch (err) {
-            console.error('Failed to load applicants', err);
+            if (!silent) console.error('Failed to load applicants', err);
         } finally {
             setApplicantsLoading(false);
         }
-    };
+    }, [id]);
+
+    // Initial load
+    useEffect(() => {
+        fetchJob();
+    }, [fetchJob]);
+
+    // Auto-load applicants when job is loaded and user can view them
+    useEffect(() => {
+        if (job?.canViewApplicants) {
+            fetchApplicants();
+        }
+    }, [job?.canViewApplicants, fetchApplicants]);
+
+    // Live polling every 15s for job data + applicants
+    useEffect(() => {
+        pollRef.current = setInterval(() => {
+            fetchJob(true);
+            if (job?.canViewApplicants) fetchApplicants(true);
+        }, 15000);
+        return () => { if (pollRef.current) clearInterval(pollRef.current); };
+    }, [fetchJob, fetchApplicants, job?.canViewApplicants]);
+
+    // ── Real-time socket listeners (instant updates on top of polling) ──
+    useEffect(() => {
+        const unsubs: (() => void)[] = [];
+        unsubs.push(onSocket('job_updated', (data: { jobId: string }) => {
+            if (String(data.jobId) === String(id)) {
+                fetchJob(true);
+                if (job?.canViewApplicants) fetchApplicants(true);
+            }
+        }));
+        unsubs.push(onSocket('job_deleted', (data: { jobId: string }) => {
+            if (String(data.jobId) === String(id)) {
+                toast.show('This job has been deleted', 'info');
+                navigate('/jobs');
+            }
+        }));
+        return () => unsubs.forEach(fn => fn());
+    }, [onSocket, id, fetchJob, fetchApplicants, job?.canViewApplicants, navigate, toast]);
 
     const handleSave = async () => {
         if (!job) return;
@@ -98,8 +140,8 @@ const JobDetail = () => {
             }
             await api.post(`/jobs/${job.id}/interest`);
             toast.show(job.hasApplied ? 'Application withdrawn' : 'Application submitted', 'success');
-            const res = await api.get(`/jobs/${job.id}`);
-            setJob(res.data.job || res.data);
+            await fetchJob(true);
+            if (job.canViewApplicants) fetchApplicants(true);
         } catch (err: any) {
             toast.show(err.response?.data?.message || 'Failed to apply', 'error');
         }
@@ -139,6 +181,18 @@ const JobDetail = () => {
             </button>
 
             <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-2xl shadow-sm p-6">
+                {/* Job image */}
+                {job.image && (
+                    <div className="-mx-6 -mt-6 mb-6 rounded-t-2xl overflow-hidden bg-[var(--bg-tertiary)]">
+                        <img
+                            src={resolveMediaUrl(job.image)}
+                            alt={job.title}
+                            className="w-full max-h-[320px] object-cover"
+                            onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
+                        />
+                    </div>
+                )}
+
                 {/* Job header */}
                 <div className="mb-6">
                     <div className="flex items-start gap-2 mb-3 flex-wrap">
@@ -216,13 +270,9 @@ const JobDetail = () => {
                                 <h3 className="text-sm font-semibold text-[var(--text-primary)]">
                                     Applicants ({job.applicants || 0})
                                 </h3>
-                                <button 
-                                    onClick={loadApplicants}
-                                    disabled={applicantsLoading}
-                                    className="px-3 py-1 text-sm bg-[var(--accent)] text-[var(--bg-primary)] disabled:opacity-60 hover:bg-[var(--accent-hover)]"
-                                >
-                                    {applicantsLoading ? 'Loading...' : 'Load Applicants'}
-                                </button>
+                                {applicantsLoading && (
+                                    <span className="text-xs text-[var(--text-muted)] animate-pulse">Refreshing...</span>
+                                )}
                             </div>
                             
                             {applicants.length > 0 ? (
@@ -247,7 +297,7 @@ const JobDetail = () => {
                             ) : applicantsLoading ? (
                                 <div className="text-center text-sm text-[var(--text-secondary)] py-6">Loading applicants...</div>
                             ) : (
-                                <div className="text-center text-sm text-[var(--text-secondary)] py-6">No applicants yet. Click Load Applicants to view.</div>
+                                <div className="text-center text-sm text-[var(--text-secondary)] py-6">No applicants yet</div>
                             )}
                         </div>
                     )}

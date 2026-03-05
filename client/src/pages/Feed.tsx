@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     MessageCircle,
@@ -60,6 +61,7 @@ interface NewsItem {
 
 const Feed = () => {
     const { user, isAuthenticated } = useAuth();
+    const { on: onSocket } = useSocket();
     const navigate = useNavigate();
     const toast = useToast();
     const confirm = useConfirm();
@@ -94,6 +96,55 @@ const Feed = () => {
         return () => { window.removeEventListener('news:updated', onNews as EventListener); };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, isAuthenticated]);
+
+    // ── Real-time socket listeners ────────────────────────────────────
+    useEffect(() => {
+        const unsubs: (() => void)[] = [];
+
+        // New post appears in feed
+        unsubs.push(onSocket('new_post', (post: Post) => {
+            setPosts(prev => {
+                if (prev.some(p => p._id === post._id)) return prev;
+                return [post, ...prev];
+            });
+        }));
+
+        // Like toggled on a post
+        unsubs.push(onSocket('post_liked', ({ postId, likes }: { postId: string; likes: string[] }) => {
+            setPosts(prev => prev.map(p => p._id === postId ? { ...p, likes } : p));
+            // Also update the detail modal if it's showing this post
+            setDetailedPost(prev => {
+                if (!prev || prev._id !== postId) return prev;
+                return { ...prev, likes };
+            });
+        }));
+
+        // Comment added to a post
+        unsubs.push(onSocket('post_commented', ({ postId, comments }: { postId: string; comments: Comment[] }) => {
+            setPosts(prev => prev.map(p => p._id === postId ? { ...p, comments } : p));
+            setDetailedPost(prev => {
+                if (!prev || prev._id !== postId) return prev;
+                return { ...prev, comments };
+            });
+        }));
+
+        // Post deleted
+        unsubs.push(onSocket('post_deleted', ({ postId }: { postId: string }) => {
+            setPosts(prev => prev.filter(p => p._id !== postId));
+            setDetailedPost(prev => (prev && prev._id === postId ? null : prev));
+        }));
+
+        // Comment deleted
+        unsubs.push(onSocket('comment_deleted', ({ postId, comments }: { postId: string; commentId: string; comments: Comment[] }) => {
+            setPosts(prev => prev.map(p => p._id === postId ? { ...p, comments } : p));
+            setDetailedPost(prev => {
+                if (!prev || prev._id !== postId) return prev;
+                return { ...prev, comments };
+            });
+        }));
+
+        return () => unsubs.forEach(fn => fn());
+    }, [onSocket]);
 
     const normalizeMediaUrl = (url: string) => {
         if (!url) return '';

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 // removed unused Link import
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import resolveMediaUrl from '../lib/media';
 import Avatar from '../components/ui/Avatar';
 
@@ -64,6 +65,7 @@ const Events = () => {
     const toast = useToast();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { on: onSocket } = useSocket();
     const isAdmin = user?.role === 'admin';
     const [counts, setCounts] = useState<{ all: number; upcoming: number; completed: number }>({ all: 0, upcoming: 0, completed: 0 });
 
@@ -196,6 +198,41 @@ const Events = () => {
         load();
         return () => { mounted = false };
     }, []);
+
+    // Refetch events
+    const refetchEvents = useCallback(async () => {
+        try {
+            const res = await api.get('/events');
+            const apiEvents = res.data.events || [];
+            const mapped = apiEvents.map((e: any, idx: number) => ({
+                id: e._id || idx,
+                title: e.title,
+                description: e.description,
+                date: e.date,
+                time: e.time || 'TBD',
+                location: e.venue || 'TBD',
+                type: e.venue && String(e.venue).toLowerCase().includes('online') ? 'online' : 'in-person',
+                attendees: typeof e.attendees === 'number' ? e.attendees : (e.attendeesCount || (Array.isArray(e.attendees) ? e.attendees.length : 0)),
+                image: e.bannerImage || undefined,
+                organizer: e.createdBy?.name || 'Alumni',
+                isRegistered: !!e.isRegistered,
+                isCompleted: !!e.isCompleted,
+            }));
+            setEvents(mapped);
+            try { const c = await api.get('/events/counts'); if (c.data?.counts) setCounts(c.data.counts); } catch { /* ignore */ }
+        } catch { /* silent */ }
+    }, []);
+
+    // ── Real-time socket listeners ────────────────────────────────────
+    useEffect(() => {
+        const unsubs: (() => void)[] = [];
+        unsubs.push(onSocket('event_created', () => { refetchEvents(); }));
+        unsubs.push(onSocket('event_updated', () => { refetchEvents(); }));
+        unsubs.push(onSocket('event_deleted', ({ eventId }: { eventId: string }) => {
+            setEvents(prev => prev.filter(e => String(e.id) !== String(eventId)));
+        }));
+        return () => unsubs.forEach(fn => fn());
+    }, [onSocket, refetchEvents]);
 
     if (loading) {
         return (
@@ -365,7 +402,7 @@ const Events = () => {
                                                 placeholder="Ex: Alumni Meetup 2026"
                                             />
                                         </div>
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Date</label>
                                                 <input
@@ -479,11 +516,18 @@ const Events = () => {
                                     <div className="flex flex-col sm:flex-row">
                                         {/* Image */}
                                         <div className="sm:w-[200px] h-[150px] sm:h-auto flex-shrink-0 bg-[var(--bg-tertiary)] overflow-hidden">
-                                            <img
-                                                src={resolveMediaUrl(event.image)}
-                                                alt={event.title}
-                                                className="w-full h-full object-cover"
-                                            />
+                                            {event.image ? (
+                                                <img
+                                                    src={resolveMediaUrl(event.image)}
+                                                    alt={event.title}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <Calendar size={40} className="text-[var(--text-muted)]/40" />
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Content */}

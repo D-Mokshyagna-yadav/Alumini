@@ -31,6 +31,10 @@ router.post('/', requireAdmin, async (req, res) => {
         // Only admins can create events - auto-approved
         const event = new Event({ title, description, date, time, venue, bannerImage, createdBy: user._id, status: EventStatus.APPROVED });
         await event.save();
+
+        // Broadcast new event
+        try { const io = (req as any).io; if (io) io.emit('event_created', { eventId: event._id }); } catch (e) { /* ignore */ }
+
         return res.json({ message: 'Event created and published', event });
     } catch (err) {
         console.error(err);
@@ -228,6 +232,9 @@ router.post('/:id/register', requireAuth, async (req, res) => {
             event.attendeesCount = Math.max(0, (event.attendeesCount || 1) - 1);
             await event.save();
 
+            // Broadcast event update (attendee count changed)
+            try { const io = (req as any).io; if (io) io.emit('event_updated', { eventId: event._id }); } catch (e) { /* ignore */ }
+
             // Notify user of cancellation
             await Notification.create({ recipient: user._id, type: 'general', message: `You have cancelled registration for ${event.title}`, data: { event: event._id } });
 
@@ -262,6 +269,9 @@ router.post('/:id/register', requireAuth, async (req, res) => {
         (out as any).attendeesCount = event.attendeesCount || (event.attendees ? event.attendees.length : 0);
         (out as any).isRegistered = true;
         res.json({ message: 'Registered', event: out });
+
+        // Broadcast event update (attendee count changed)
+        try { const io2 = (req as any).io; if (io2) io2.emit('event_updated', { eventId: event._id }); } catch (e) { /* ignore */ }
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
@@ -293,6 +303,9 @@ router.post('/:id/complete', requireAuth, async (req, res) => {
         } catch (e) { /* ignore */ }
 
         res.json({ message: 'Event marked completed', event });
+
+        // Broadcast event update
+        try { const io = (req as any).io; if (io) io.emit('event_updated', { eventId: event._id }); } catch (e) { /* ignore */ }
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
@@ -329,6 +342,10 @@ router.put('/:id', requireAuth, async (req, res) => {
         }
 
         await event.save();
+
+        // Broadcast event update
+        try { const io = (req as any).io; if (io) io.emit('event_updated', { eventId: event._id }); } catch (e) { /* ignore */ }
+
         res.json({ message: 'Event updated', event });
     } catch (err) {
         console.error(err);
@@ -360,6 +377,9 @@ router.patch('/:id/state', requireAuth, async (req, res) => {
         }
         await event.save();
 
+        // Broadcast event state update
+        try { const io = (req as any).io; if (io) io.emit('event_updated', { eventId: event._id }); } catch (e) { /* ignore */ }
+
         res.json({ message: `Event state updated to ${eventState}`, event });
     } catch (err) {
         console.error(err);
@@ -381,6 +401,10 @@ router.delete('/:id', requireAuth, async (req, res) => {
         }
 
         await Event.findByIdAndDelete(req.params.id);
+
+        // Broadcast event deletion
+        try { const io = (req as any).io; if (io) io.emit('event_deleted', { eventId: req.params.id }); } catch (e) { /* ignore */ }
+
         res.json({ message: 'Event deleted' });
     } catch (err) {
         console.error(err);

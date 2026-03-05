@@ -12,9 +12,6 @@ import { adminRouter } from './routes/adminRoutes';
 
 dotenv.config();
 
-// Connect to Database
-connectDB();
-
 const app = express();
 const server = http.createServer(app);
 
@@ -220,8 +217,10 @@ server.listen(Number(PORT), HOST, () => {
         console.log('\\n  Share these URLs with other computers');
         console.log('  on your college network!');
     }
-    console.log('===========================================\\n');
-    // Run GC on startup and schedule periodic runs every 6 hours
+    console.log('===========================================\\n');});
+
+// Connect to Database, then run GC (GridFS needs an active connection)
+connectDB().then(() => {    // Run GC on startup and schedule periodic runs every 6 hours
     runGC().catch((e) => console.error('Initial GC error', e));
     setInterval(() => {
         runGC().catch((e) => console.error('Scheduled GC error', e));

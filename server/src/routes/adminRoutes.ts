@@ -175,6 +175,9 @@ router.post('/approve-event/:id', requireAdmin, async (req, res) => {
             }
         } catch (e) { /* ignore notification errors */ }
 
+        // Broadcast to all clients so Events page refreshes
+        try { const io = (req as any).io; if (io) io.emit('event_created', { eventId: event._id }); } catch (e) { /* ignore */ }
+
         res.json({ message: 'Event approved', event });
     } catch (error) {
         console.error(error);
@@ -570,6 +573,10 @@ router.post('/approve-job/:id', requireAdmin, async (req, res) => {
             const io = (req as any).io;
             if (io) io.to(String(job.postedBy)).emit('notification', { message: `Your job posting "${job.title}" has been approved!`, type: 'job_approved', jobId: job._id });
         } catch (e) { /* ignore */ }
+
+        // Broadcast to all clients so Jobs page refreshes
+        try { const io = (req as any).io; if (io) io.emit('job_created', { jobId: job._id }); } catch (e) { /* ignore */ }
+
         res.json({ message: 'Job approved', job });
     } catch (error) {
         console.error(error);

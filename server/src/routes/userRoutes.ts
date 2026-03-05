@@ -197,7 +197,7 @@ router.put('/profile', requireAuth, async (req, res) => {
 router.post('/settings/email', requireAuth, async (req, res) => {
     try {
         const { newEmail, password } = req.body;
-        const userId = req.session.userId;
+        const userId = req.session!.userId;
 
         if (!newEmail || !password) {
             return res.status(400).json({ error: 'Email and password are required' });
@@ -235,7 +235,7 @@ router.post('/settings/email', requireAuth, async (req, res) => {
 router.post('/settings/password', requireAuth, async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
-        const userId = req.session.userId;
+        const userId = req.session!.userId;
 
         if (!currentPassword || !newPassword) {
             return res.status(400).json({ error: 'Current and new password are required' });
@@ -268,7 +268,7 @@ router.post('/settings/password', requireAuth, async (req, res) => {
 // GET /api/users/settings/notifications - Get notification preferences
 router.get('/settings/notifications', requireAuth, async (req, res) => {
     try {
-        const userId = req.session.userId;
+        const userId = req.session!.userId;
         const user = await User.findById(userId).select('notificationPreferences');
 
         if (!user) {
@@ -298,7 +298,7 @@ router.get('/settings/notifications', requireAuth, async (req, res) => {
 // PATCH /api/users/settings/notifications - Update notification preferences
 router.patch('/settings/notifications', requireAuth, async (req, res) => {
     try {
-        const userId = req.session.userId;
+        const userId = req.session!.userId;
         const preferences = req.body;
 
         const user = await User.findByIdAndUpdate(

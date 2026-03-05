@@ -176,6 +176,9 @@ router.post('/album/:albumId/images', requireAdmin, async (req, res) => {
             }));
 
             res.json({ images: formattedMedia });
+
+            // Broadcast gallery update
+            try { const io = (req as any).io; if (io) io.emit('gallery_updated', { albumId: album._id }); } catch (e) { /* ignore */ }
         });
     } catch (error) {
         console.error('Error uploading media:', error);
@@ -215,6 +218,10 @@ router.delete('/album/:albumId', requireAdmin, async (req, res) => {
         }
 
         await GalleryAlbum.findByIdAndDelete(req.params.albumId);
+
+        // Broadcast gallery update
+        try { const io = (req as any).io; if (io) io.emit('gallery_updated', { albumId: req.params.albumId, deleted: true }); } catch (e) { /* ignore */ }
+
         res.json({ message: 'Album deleted' });
     } catch (error) {
         console.error('Error deleting album:', error);
@@ -266,6 +273,9 @@ router.post('/album/:albumId/images/:imageId/like', requireAuth, async (req, res
 
         await album.save();
         res.json({ likes: image.likes.length, isLiked: likeIdx === -1 });
+
+        // Broadcast gallery like update
+        try { const io = (req as any).io; if (io) io.emit('gallery_updated', { albumId: album._id, imageId: image._id }); } catch (e) { /* ignore */ }
     } catch (error) {
         console.error('Error liking media:', error);
         res.status(500).json({ message: 'Failed to like media' });
