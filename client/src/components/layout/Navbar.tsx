@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
     Menu, X, GraduationCap, Sun, Moon, LogOut, Bell,
-    Home, Info, Rss, Users, Briefcase, Calendar, Image,
+    Home, Rss, Users, Briefcase, Calendar, Image,
     Settings, Shield, ChevronDown, Bookmark, Code2, Mail
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,8 +15,6 @@ import { useAuth } from '../../context/AuthContext';
 
 const guestLinks = [
     { name: 'Home', href: '/', icon: Home },
-    { name: 'About', href: '/about', icon: Info },
-    { name: 'Feed', href: '/feed', icon: Rss },
 ];
 
 const authLinks = [

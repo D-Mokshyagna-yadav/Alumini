@@ -12,7 +12,6 @@ import AccountInfo from './pages/settings/AccountInfo';
 import EmailSettings from './pages/settings/EmailSettings';
 import ChangePassword from './pages/settings/ChangePassword';
 import NotificationPreferences from './pages/settings/NotificationPreferences';
-import About from './pages/About';
 import Directory from './pages/Directory';
 import Events from './pages/Events';
 import MyEvents from './pages/MyEvents';
@@ -91,7 +90,6 @@ function App() {
             <Landing />
           </AuthRedirect>
         } />
-        <Route path="/about" element={<About />} />
         <Route path="/verification-pending" element={<VerificationPending />} />
       </Route>
 
@@ -100,7 +98,7 @@ function App() {
       <Route path="/register" element={<Register />} />
 
       {/* Protected Routes - LinkedIn-style layout */}
-      <Route path="/feed" element={<PublicProfessionalRoute><Feed /></PublicProfessionalRoute>} />
+      <Route path="/feed" element={<ProfessionalRoute><Feed /></ProfessionalRoute>} />
       <Route path="/profile" element={<ProfessionalRoute><Profile /></ProfessionalRoute>} />
       <Route path="/profile/:id" element={<ProfessionalRoute><Profile /></ProfessionalRoute>} />
       <Route path="/directory" element={<ProfessionalRoute><Directory /></ProfessionalRoute>} />
