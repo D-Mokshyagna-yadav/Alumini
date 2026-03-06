@@ -359,6 +359,9 @@ const Jobs = () => {
                             <div>
                                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Image (optional)</label>
                                 <input type="file" accept="image/*" onChange={(e) => setJobImage(e.target.files && e.target.files[0] ? e.target.files[0] : null)} className="w-full" />
+                                {jobImage && (
+                                    <img src={URL.createObjectURL(jobImage)} alt="preview" className="mt-2 w-full h-36 object-contain bg-[var(--bg-tertiary)] rounded" />
+                                )}
                             </div>
                         </div>
                         <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">

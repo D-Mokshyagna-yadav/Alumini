@@ -230,6 +230,9 @@ const NewsAdmin = () => {
                         <div>
                             <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Image (optional)</label>
                             <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files ? e.target.files[0] : null)} />
+                            {imageFile && (
+                                <img src={URL.createObjectURL(imageFile)} alt="preview" className="mt-2 w-full h-36 object-contain bg-[var(--bg-tertiary)] rounded" />
+                            )}
                         </div>
                     </div>
                                 <div className="mt-3">

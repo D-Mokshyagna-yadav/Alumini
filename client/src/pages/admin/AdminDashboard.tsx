@@ -1314,7 +1314,22 @@ const AdminDashboard = () => {
                                     </select>
                                     <input type="file" multiple accept="image/*,video/*" onChange={e => setPostAttachments(Array.from(e.target.files || []))} className="text-sm text-[var(--text-primary)]" />
                                 </div>
-                                {postAttachments.length > 0 && <p className="text-xs text-[var(--text-muted)]">{postAttachments.length} file(s) selected</p>}
+                                {postAttachments.length > 0 && (
+                                    <div>
+                                        <p className="text-xs text-[var(--text-muted)] mb-2">{postAttachments.length} file(s) selected</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {postAttachments.map((f, i) => (
+                                                <div key={i} className="relative w-16 h-16 bg-[var(--bg-tertiary)] overflow-hidden rounded">
+                                                    {f.type.startsWith('video') ? (
+                                                        <div className="w-full h-full flex items-center justify-center text-xs text-[var(--text-muted)]">VID</div>
+                                                    ) : (
+                                                        <img src={URL.createObjectURL(f)} alt="" className="w-full h-full object-cover" />
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
                                 <button onClick={() => setShowCreatePostModal(false)} className="px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]">Cancel</button>
@@ -1358,6 +1373,9 @@ const AdminDashboard = () => {
                                 <div>
                                     <label className="block text-sm text-[var(--text-muted)] mb-1">Banner Image (optional)</label>
                                     <input type="file" accept="image/*" onChange={e => setEventBanner(e.target.files?.[0] || null)} className="text-sm text-[var(--text-primary)]" />
+                                    {eventBanner && (
+                                        <img src={URL.createObjectURL(eventBanner)} alt="preview" className="mt-2 w-full h-36 object-contain bg-[var(--bg-tertiary)] rounded" />
+                                    )}
                                 </div>
                             </div>
                             <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
@@ -1420,6 +1438,9 @@ const AdminDashboard = () => {
                                 <div>
                                     <label className="block text-sm text-[var(--text-muted)] mb-1">Image (optional)</label>
                                     <input type="file" accept="image/*" onChange={e => setJobImage(e.target.files?.[0] || null)} className="text-sm text-[var(--text-primary)]" />
+                                    {jobImage && (
+                                        <img src={URL.createObjectURL(jobImage)} alt="preview" className="mt-2 w-full h-36 object-contain bg-[var(--bg-tertiary)] rounded" />
+                                    )}
                                 </div>
                             </div>
                             <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
@@ -1466,7 +1487,22 @@ const AdminDashboard = () => {
                             </div>
                             <div className="p-4 space-y-4">
                                 <input type="file" multiple accept="image/*,video/*" onChange={e => setMediaFiles(Array.from(e.target.files || []))} className="text-sm text-[var(--text-primary)]" />
-                                {mediaFiles.length > 0 && <p className="text-sm text-[var(--text-muted)]">{mediaFiles.length} file(s) selected</p>}
+                                {mediaFiles.length > 0 && (
+                                    <div>
+                                        <p className="text-sm text-[var(--text-muted)] mb-2">{mediaFiles.length} file(s) selected</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {mediaFiles.map((f, i) => (
+                                                <div key={i} className="relative w-16 h-16 bg-[var(--bg-tertiary)] overflow-hidden rounded">
+                                                    {f.type.startsWith('video') ? (
+                                                        <div className="w-full h-full flex items-center justify-center text-xs text-[var(--text-muted)]">VID</div>
+                                                    ) : (
+                                                        <img src={URL.createObjectURL(f)} alt="" className="w-full h-full object-cover" />
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
                                 <button onClick={() => { setShowUploadMediaModal(false); setMediaFiles([]); setUploadAlbumId(null); }} className="px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]">Cancel</button>
@@ -1627,6 +1663,9 @@ const AdminDashboard = () => {
                                 <div>
                                     <label className="block text-sm text-[var(--text-muted)] mb-1">Image (optional)</label>
                                     <input type="file" accept="image/*" onChange={e => setNewsImage(e.target.files?.[0] || null)} className="text-sm text-[var(--text-primary)]" />
+                                    {newsImage && (
+                                        <img src={URL.createObjectURL(newsImage)} alt="preview" className="mt-2 w-full h-36 object-contain bg-[var(--bg-tertiary)] rounded" />
+                                    )}
                                 </div>
                             </div>
                             <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
