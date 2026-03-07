@@ -152,8 +152,8 @@ router.put('/profile', requireAuth, async (req, res) => {
                 const uploadsIndex = stored.indexOf('/uploads/');
                 let rel = stored;
                 if (uploadsIndex >= 0) rel = stored.substring(uploadsIndex + '/uploads/'.length);
-                // if it starts with 'uploads/' or '/uploads/' remove that prefix
-                rel = rel.replace(/^\/?uploads\//, '');
+                // if it starts with 'uploads/', '/uploads/', or '/api/uploads/' remove that prefix
+                rel = rel.replace(/^\/?(?:api\/)?uploads\//, '');
                 return path.join(__dirname, '../../uploads', rel);
             };
 

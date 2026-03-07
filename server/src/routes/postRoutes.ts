@@ -301,6 +301,37 @@ router.get('/user/:userId', requireAuth, async (req, res) => {
     }
 });
 
+// PUT /api/posts/:id - Edit a post (author or admin)
+router.put('/:id', requireAuth, async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        if (!post) return res.status(404).json({ message: 'Post not found' });
+
+        const user = await User.findById(req.session!.userId);
+        if (post.author.toString() !== req.session!.userId && user?.role !== 'admin') {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
+
+        const { content, visibility } = req.body;
+        if (content !== undefined) post.content = content;
+        if (visibility !== undefined) post.visibility = visibility;
+
+        await post.save();
+        const populated = await Post.findById(post._id)
+            .populate('author', 'name headline avatar graduationYear degree');
+
+        try {
+            const io = (req as any).io;
+            if (io) io.emit('post_updated', { postId: post._id });
+        } catch (e) { /* ignore */ }
+
+        res.json({ post: populated });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 // DELETE /api/posts/:id - Delete a post (author or admin)
 router.delete('/:id', requireAuth, async (req, res) => {
     try {
@@ -359,6 +390,37 @@ router.delete('/:postId/comments/:commentId', requireAuth, async (req, res) => {
             const io = (req as any).io;
             if (io) io.emit('comment_deleted', { postId: post._id, commentId: req.params.commentId, comments: updatedPost?.comments });
         } catch (e) { /* ignore */ }
+
+        res.json({ comments: updatedPost?.comments });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// PUT /api/posts/:postId/comments/:commentId - Edit a comment (comment author or admin)
+router.put('/:postId/comments/:commentId', requireAuth, async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.postId);
+        if (!post) return res.status(404).json({ message: 'Post not found' });
+
+        const comment = (post.comments as any).id(req.params.commentId);
+        if (!comment) return res.status(404).json({ message: 'Comment not found' });
+
+        const userId = req.session!.userId;
+        const user = await User.findById(userId);
+        if (comment.author.toString() !== userId && user?.role !== 'admin') {
+            return res.status(403).json({ message: 'Not authorized to edit this comment' });
+        }
+
+        const { text } = req.body;
+        if (!text || !text.trim()) return res.status(400).json({ message: 'Comment text is required' });
+
+        comment.text = text.trim();
+        await post.save();
+
+        const updatedPost = await Post.findById(post._id)
+            .populate('comments.author', 'name avatar');
 
         res.json({ comments: updatedPost?.comments });
     } catch (error) {

@@ -94,14 +94,17 @@ app.use((req, res, next) => {
 });
 
 // Middleware: sanitize absolute localhost URLs in JSON responses so images work on any LAN IP.
-// Old records in MongoDB may have been stored with http://localhost:5000/uploads/... —
-// this strips them to relative /uploads/... paths before sending to the client.
+// Old records in MongoDB may have been stored with http://localhost:5000/api/uploads/... —
+// this strips them to relative /api/uploads/... paths before sending to the client.
 app.use((req, res, next) => {
     const originalJson = res.json.bind(res);
     res.json = (body: any) => {
         if (body) {
             const sanitized = JSON.parse(
-                JSON.stringify(body).replace(/http:\/\/localhost:\d+(?=\/uploads\/)/g, '')
+                JSON.stringify(body)
+                    .replace(/http:\/\/localhost:\d+(?=\/api\/uploads\/)/g, '')
+                    // Migrate legacy /uploads/ paths → /api/uploads/
+                    .replace(/(?<!\/api)\/uploads\//g, '/api/uploads/')
             );
             return originalJson(sanitized);
         }
@@ -113,11 +116,11 @@ app.use((req, res, next) => {
 // Serve uploaded files from GridFS (MongoDB Atlas) with CORS headers
 import { getGridFSBucket } from './config/gridfs';
 
-app.use('/uploads', (req, res) => {
+app.use('/api/uploads', (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
-    // gridName is everything after /uploads/, e.g. "username/profile/123-456.jpg"
+    // gridName is everything after /api/uploads/, e.g. "username/profile/123-456.jpg"
     const gridName = decodeURIComponent(req.path.replace(/^\//, ''));
     if (!gridName) return res.status(404).end();
 

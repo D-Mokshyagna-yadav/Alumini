@@ -186,16 +186,19 @@ const Saved = () => {
     const normalizeMediaUrl = (url: string) => {
         if (!url) return '';
         if (url.startsWith('/uploads')) return url;
+        if (url.startsWith('/api/uploads')) return url;
         if (url.startsWith('http://') || url.startsWith('https://')) {
             try {
-                const parsed = new URL(url);
-                return parsed.pathname;
+                const p = new URL(url).pathname;
+                if (p.startsWith('/uploads/')) return '/api' + p;
+                return p;
             } catch {
                 return url;
             }
         }
-        if (url.startsWith('uploads/')) return `/${url}`;
-        return `/uploads/${url}`;
+        if (url.startsWith('/uploads')) return '/api' + url;
+        if (url.startsWith('uploads/')) return `/api/uploads/${url.substring('uploads/'.length)}`;
+        return `/api/uploads/${url}`;
     };
 
     const getTimeAgo = (dateStr: string) => {

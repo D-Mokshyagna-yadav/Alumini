@@ -115,6 +115,10 @@ const AdminDashboard = () => {
     const [showUploadMediaModal, setShowUploadMediaModal] = useState(false);
     const [uploadAlbumId, setUploadAlbumId] = useState<string | null>(null);
     const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+    const [showEditAlbumModal, setShowEditAlbumModal] = useState(false);
+    const [editAlbumId, setEditAlbumId] = useState<string | null>(null);
+    const [editAlbumTitle, setEditAlbumTitle] = useState('');
+    const [editAlbumDesc, setEditAlbumDesc] = useState('');
 
     // News
     const [allNews, setAllNews] = useState<any[]>([]);
@@ -127,6 +131,23 @@ const AdminDashboard = () => {
     // Post preview
     const [previewPost, setPreviewPost] = useState<any | null>(null);
     const [previewPostLoading, setPreviewPostLoading] = useState(false);
+
+    // Edit modals
+    const [showEditPostModal, setShowEditPostModal] = useState(false);
+    const [editPostId, setEditPostId] = useState<string | null>(null);
+    const [editPostContent, setEditPostContent] = useState('');
+    const [editPostVisibility, setEditPostVisibility] = useState<'public' | 'connections'>('public');
+
+    const [showEditEventModal, setShowEditEventModal] = useState(false);
+    const [editEventId, setEditEventId] = useState<string | null>(null);
+    const [editEventForm, setEditEventForm] = useState({ title: '', date: '', time: '', location: '', description: '' });
+    const [editEventBanner, setEditEventBanner] = useState<File | null>(null);
+
+    const [showEditJobModal, setShowEditJobModal] = useState(false);
+    const [editJobId, setEditJobId] = useState<string | null>(null);
+    const [editJobForm, setEditJobForm] = useState({ title: '', company: '', location: '', type: 'Full-time', mode: 'Remote', description: '', salary: '' });
+    const [editJobRequirements, setEditJobRequirements] = useState('');
+    const [editJobImage, setEditJobImage] = useState<File | null>(null);
 
     const [toast, setToast] = useState<string | null>(null);
     const confirm = useConfirm();
@@ -481,6 +502,107 @@ const AdminDashboard = () => {
         }
     };
 
+    // ==================== EDIT POST ====================
+    const openEditPostModal = (post: any) => {
+        setEditPostId(post._id);
+        setEditPostContent(post.content || '');
+        setEditPostVisibility(post.visibility || 'public');
+        setShowEditPostModal(true);
+    };
+
+    const handleEditPost = async () => {
+        if (!editPostId || !editPostContent.trim()) return;
+        try {
+            const res = await api.put(`/posts/${editPostId}`, { content: editPostContent, visibility: editPostVisibility });
+            if (res.data.post) {
+                setAllPosts(prev => prev.map(p => p._id === editPostId ? { ...p, ...res.data.post } : p));
+            }
+            setShowEditPostModal(false);
+            setToast('Post updated');
+        } catch (err: any) {
+            setToast(err.response?.data?.message || 'Failed to update post');
+        }
+    };
+
+    // ==================== EDIT EVENT ====================
+    const openEditEventModal = (ev: any) => {
+        setEditEventId(ev._id);
+        setEditEventForm({
+            title: ev.title || '',
+            date: ev.date ? new Date(ev.date).toISOString().split('T')[0] : '',
+            time: ev.time || '',
+            location: ev.venue || '',
+            description: ev.description || '',
+        });
+        setEditEventBanner(null);
+        setShowEditEventModal(true);
+    };
+
+    const handleEditEvent = async () => {
+        if (!editEventId || !editEventForm.title) return;
+        try {
+            let bannerUrl: string | undefined;
+            if (editEventBanner) {
+                const form = new FormData();
+                form.append('banner', editEventBanner);
+                const up = await api.post('/upload/event-banner', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+                bannerUrl = up.data.relative || up.data.url;
+            }
+            const payload: any = { title: editEventForm.title, description: editEventForm.description, date: editEventForm.date, time: editEventForm.time, venue: editEventForm.location };
+            if (bannerUrl) payload.bannerImage = bannerUrl;
+            const res = await api.put(`/events/${editEventId}`, payload);
+            if (res.data.event) {
+                setAllEvents(prev => prev.map(e => e._id === editEventId ? res.data.event : e));
+            }
+            setShowEditEventModal(false);
+            setToast('Event updated');
+        } catch (err: any) {
+            setToast(err.response?.data?.message || 'Failed to update event');
+        }
+    };
+
+    // ==================== EDIT JOB ====================
+    const openEditJobModal = (job: any) => {
+        setEditJobId(job._id);
+        setEditJobForm({
+            title: job.title || '',
+            company: job.company || '',
+            location: job.location || '',
+            type: job.type || 'Full-time',
+            mode: job.mode || 'Remote',
+            description: job.description || '',
+            salary: job.salary || '',
+        });
+        setEditJobRequirements((job.requirements || []).join(', '));
+        setEditJobImage(null);
+        setShowEditJobModal(true);
+    };
+
+    const handleEditJob = async () => {
+        if (!editJobId || !editJobForm.title) return;
+        try {
+            let imageUrl: string | undefined;
+            if (editJobImage) {
+                const fd = new FormData();
+                fd.append('image', editJobImage);
+                const up = await api.post('/upload/job-image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+                imageUrl = up.data.relative || up.data.url;
+            }
+            const requirementsArr = editJobRequirements.split(',').map(s => s.trim()).filter(Boolean);
+            const payload: any = { ...editJobForm, requirements: requirementsArr };
+            if (imageUrl) payload.image = imageUrl;
+            if (editJobForm.salary) payload.salary = editJobForm.salary;
+            const res = await api.put(`/jobs/${editJobId}`, payload);
+            if (res.data.jobId) {
+                setAllJobs(prev => prev.map(j => j._id === editJobId ? { ...j, ...editJobForm, requirements: requirementsArr, ...(imageUrl ? { image: imageUrl } : {}) } : j));
+            }
+            setShowEditJobModal(false);
+            setToast('Job updated');
+        } catch (err: any) {
+            setToast(err.response?.data?.message || 'Failed to update job');
+        }
+    };
+
     // ==================== NEWS ACTIONS ====================
     const resetNewsForm = () => {
         setNewsForm({ title: '', body: '', link: '', priority: 0, draft: false });
@@ -573,6 +695,25 @@ const AdminDashboard = () => {
             setToast('Album created');
         } catch (err: any) {
             setToast(err.response?.data?.message || 'Failed to create album');
+        }
+    };
+
+    const openEditAlbumModal = (album: any) => {
+        setEditAlbumId(album.id);
+        setEditAlbumTitle(album.title);
+        setEditAlbumDesc(album.description || '');
+        setShowEditAlbumModal(true);
+    };
+
+    const handleEditAlbum = async () => {
+        if (!editAlbumId || !editAlbumTitle.trim()) return;
+        try {
+            await api.put(`/gallery/album/${editAlbumId}`, { title: editAlbumTitle, description: editAlbumDesc });
+            setAllAlbums(prev => prev.map(a => a.id === editAlbumId ? { ...a, title: editAlbumTitle, description: editAlbumDesc } : a));
+            setShowEditAlbumModal(false);
+            setToast('Album updated');
+        } catch (err: any) {
+            setToast(err.response?.data?.message || 'Failed to update album');
         }
     };
 
@@ -948,6 +1089,9 @@ const AdminDashboard = () => {
                                                 <Button size="sm" variant="outline" onClick={() => handleViewPost(post._id)}>
                                                     <Eye size={14} className="mr-1" /> View
                                                 </Button>
+                                                <Button size="sm" variant="outline" onClick={() => openEditPostModal(post)}>
+                                                    <Edit2 size={14} />
+                                                </Button>
                                                 {post.status === 'pending' && (
                                                     <>
                                                         <Button size="sm" onClick={() => handleApprovePost(post._id)} className="bg-[var(--accent)] hover:bg-[var(--accent-hover)]">
@@ -997,6 +1141,9 @@ const AdminDashboard = () => {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2 flex-shrink-0">
+                                                <Button size="sm" variant="outline" onClick={() => openEditJobModal(job)}>
+                                                    <Edit2 size={14} />
+                                                </Button>
                                                 {job.status === 'pending' && (
                                                     <>
                                                         <Button size="sm" onClick={() => handleApproveJob(job._id)} className="bg-[var(--accent)] hover:bg-[var(--accent-hover)]">
@@ -1047,6 +1194,9 @@ const AdminDashboard = () => {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2 flex-shrink-0">
+                                                <Button size="sm" variant="outline" onClick={() => openEditEventModal(ev)}>
+                                                    <Edit2 size={14} />
+                                                </Button>
                                                 {ev.status === 'PENDING' && (
                                                     <>
                                                         <Button size="sm" onClick={() => handleApproveEvent(ev._id)} className="bg-[var(--accent)] hover:bg-[var(--accent-hover)]">
@@ -1098,6 +1248,9 @@ const AdminDashboard = () => {
                                             <div className="flex items-center gap-2 flex-shrink-0">
                                                 <Button size="sm" onClick={() => { setUploadAlbumId(album.id); setShowUploadMediaModal(true); }}>
                                                     <Upload size={14} className="mr-1" /> Upload
+                                                </Button>
+                                                <Button size="sm" variant="outline" onClick={() => openEditAlbumModal(album)}>
+                                                    <Edit2 size={14} />
                                                 </Button>
                                                 <Button size="sm" variant="destructive" onClick={() => handleDeleteAlbum(album.id)}>
                                                     <Trash2 size={14} />
@@ -1477,6 +1630,32 @@ const AdminDashboard = () => {
                     </div>
                 )}
 
+                {/* Edit Album Modal */}
+                {showEditAlbumModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 modal-overlay">
+                        <div className="bg-[var(--bg-secondary)] w-full max-w-md modal-content">
+                            <div className="p-4 border-b border-[var(--border-color)]/30 flex items-center justify-between">
+                                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Edit Album</h3>
+                                <button onClick={() => setShowEditAlbumModal(false)} className="p-1 text-[var(--text-muted)]"><X size={18} /></button>
+                            </div>
+                            <div className="p-4 space-y-4">
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Album Title *</label>
+                                    <input value={editAlbumTitle} onChange={e => setEditAlbumTitle(e.target.value)} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Description</label>
+                                    <textarea value={editAlbumDesc} onChange={e => setEditAlbumDesc(e.target.value)} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] h-20 resize-none" />
+                                </div>
+                            </div>
+                            <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
+                                <button onClick={() => setShowEditAlbumModal(false)} className="px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]">Cancel</button>
+                                <Button onClick={handleEditAlbum} disabled={!editAlbumTitle.trim()}>Save Changes</Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Upload Media Modal */}
                 {showUploadMediaModal && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 modal-overlay">
@@ -1673,6 +1852,145 @@ const AdminDashboard = () => {
                                 <Button onClick={handleSaveNews} disabled={!newsForm.title.trim()}>
                                     {newsModalMode === 'edit' ? 'Save Changes' : 'Publish'}
                                 </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Edit Post Modal */}
+                {showEditPostModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 modal-overlay">
+                        <div className="bg-[var(--bg-secondary)] w-full max-w-lg modal-content">
+                            <div className="p-4 border-b border-[var(--border-color)]/30 flex items-center justify-between">
+                                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Edit Post</h3>
+                                <button onClick={() => setShowEditPostModal(false)} className="p-1 text-[var(--text-muted)]"><X size={18} /></button>
+                            </div>
+                            <div className="p-4 space-y-4">
+                                <textarea
+                                    value={editPostContent}
+                                    onChange={e => setEditPostContent(e.target.value)}
+                                    className="w-full p-3 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] h-32 resize-none focus:outline-none"
+                                />
+                                <select value={editPostVisibility} onChange={e => setEditPostVisibility(e.target.value as any)} className="p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] text-sm">
+                                    <option value="public">Public</option>
+                                    <option value="connections">Connections Only</option>
+                                </select>
+                            </div>
+                            <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
+                                <button onClick={() => setShowEditPostModal(false)} className="px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]">Cancel</button>
+                                <Button onClick={handleEditPost} disabled={!editPostContent.trim()}>Save Changes</Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Edit Event Modal */}
+                {showEditEventModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 modal-overlay">
+                        <div className="bg-[var(--bg-secondary)] w-full max-w-lg modal-content">
+                            <div className="p-4 border-b border-[var(--border-color)]/30 flex items-center justify-between">
+                                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Edit Event</h3>
+                                <button onClick={() => setShowEditEventModal(false)} className="p-1 text-[var(--text-muted)]"><X size={18} /></button>
+                            </div>
+                            <div className="p-4 space-y-4">
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Event Title *</label>
+                                    <input value={editEventForm.title} onChange={e => setEditEventForm({ ...editEventForm, title: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm text-[var(--text-muted)] mb-1">Date *</label>
+                                        <input type="date" value={editEventForm.date} onChange={e => setEditEventForm({ ...editEventForm, date: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-[var(--text-muted)] mb-1">Time</label>
+                                        <input value={editEventForm.time} onChange={e => setEditEventForm({ ...editEventForm, time: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" placeholder="10:00 AM" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Venue / Location</label>
+                                    <input value={editEventForm.location} onChange={e => setEditEventForm({ ...editEventForm, location: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Description</label>
+                                    <textarea value={editEventForm.description} onChange={e => setEditEventForm({ ...editEventForm, description: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] h-24 resize-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Banner Image (optional)</label>
+                                    <input type="file" accept="image/*" onChange={e => setEditEventBanner(e.target.files?.[0] || null)} className="text-sm text-[var(--text-primary)]" />
+                                    {editEventBanner && (
+                                        <img src={URL.createObjectURL(editEventBanner)} alt="preview" className="mt-2 w-full h-36 object-contain bg-[var(--bg-tertiary)] rounded" />
+                                    )}
+                                </div>
+                            </div>
+                            <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
+                                <button onClick={() => setShowEditEventModal(false)} className="px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]">Cancel</button>
+                                <Button onClick={handleEditEvent} disabled={!editEventForm.title || !editEventForm.date}>Save Changes</Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Edit Job Modal */}
+                {showEditJobModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 modal-overlay">
+                        <div className="bg-[var(--bg-secondary)] w-full max-w-lg modal-content max-h-[90vh] overflow-y-auto">
+                            <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between sticky top-0 bg-[var(--bg-secondary)] z-10">
+                                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Edit Job</h3>
+                                <button onClick={() => setShowEditJobModal(false)} className="p-1 text-[var(--text-muted)]"><X size={18} /></button>
+                            </div>
+                            <div className="p-4 space-y-4">
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Job Title *</label>
+                                    <input value={editJobForm.title} onChange={e => setEditJobForm({ ...editJobForm, title: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm text-[var(--text-muted)] mb-1">Company *</label>
+                                        <input value={editJobForm.company} onChange={e => setEditJobForm({ ...editJobForm, company: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-[var(--text-muted)] mb-1">Location</label>
+                                        <input value={editJobForm.location} onChange={e => setEditJobForm({ ...editJobForm, location: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-sm text-[var(--text-muted)] mb-1">Type</label>
+                                        <select value={editJobForm.type} onChange={e => setEditJobForm({ ...editJobForm, type: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]">
+                                            <option>Full-time</option><option>Part-time</option><option>Contract</option><option>Internship</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-[var(--text-muted)] mb-1">Mode</label>
+                                        <select value={editJobForm.mode} onChange={e => setEditJobForm({ ...editJobForm, mode: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]">
+                                            <option>Remote</option><option>On-site</option><option>Hybrid</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-[var(--text-muted)] mb-1">Salary</label>
+                                        <input value={editJobForm.salary} onChange={e => setEditJobForm({ ...editJobForm, salary: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" placeholder="e.g. ₹12 LPA" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Description</label>
+                                    <textarea value={editJobForm.description} onChange={e => setEditJobForm({ ...editJobForm, description: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] h-24 resize-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Requirements (comma separated)</label>
+                                    <input value={editJobRequirements} onChange={e => setEditJobRequirements(e.target.value)} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Image (optional)</label>
+                                    <input type="file" accept="image/*" onChange={e => setEditJobImage(e.target.files?.[0] || null)} className="text-sm text-[var(--text-primary)]" />
+                                    {editJobImage && (
+                                        <img src={URL.createObjectURL(editJobImage)} alt="preview" className="mt-2 w-full h-36 object-contain bg-[var(--bg-tertiary)] rounded" />
+                                    )}
+                                </div>
+                            </div>
+                            <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
+                                <button onClick={() => setShowEditJobModal(false)} className="px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]">Cancel</button>
+                                <Button onClick={handleEditJob} disabled={!editJobForm.title || !editJobForm.company}>Save Changes</Button>
                             </div>
                         </div>
                     </div>

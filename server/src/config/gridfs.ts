@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import fs from 'fs';
+import { Readable } from 'stream';
 
 let _bucket: InstanceType<typeof mongoose.mongo.GridFSBucket> | null = null;
 
@@ -17,7 +18,31 @@ export const getGridFSBucket = (): InstanceType<typeof mongoose.mongo.GridFSBuck
 };
 
 /**
- * Store a local file into GridFS.
+ * Store a Buffer directly into GridFS (no temp file needed).
+ * @param buffer      The file contents in memory
+ * @param gridName    The "filename" stored in GridFS, e.g. "username/profile/123-456.jpg"
+ * @param contentType MIME type
+ * @returns The inserted GridFS ObjectId
+ */
+export const storeBufferInGridFS = (
+    buffer: Buffer,
+    gridName: string,
+    contentType: string,
+): Promise<mongoose.Types.ObjectId> => {
+    return new Promise((resolve, reject) => {
+        const bucket = getGridFSBucket();
+        const readStream = Readable.from(buffer);
+        const uploadStream = bucket.openUploadStream(gridName, { contentType });
+
+        readStream.pipe(uploadStream);
+        uploadStream.on('finish', () => resolve(uploadStream.id as mongoose.Types.ObjectId));
+        uploadStream.on('error', reject);
+        readStream.on('error', reject);
+    });
+};
+
+/**
+ * Store a local file into GridFS (used only for video processing that requires disk).
  * @param localPath   Absolute path to the file on disk (temp file)
  * @param gridName    The "filename" stored in GridFS, e.g. "username/profile/123-456.jpg"
  * @param contentType MIME type

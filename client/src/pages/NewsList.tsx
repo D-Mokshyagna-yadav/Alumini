@@ -2,16 +2,16 @@ import { useEffect, useState } from 'react';
 import api from '../lib/api';
 import resolveMediaUrl from '../lib/media';
 import { Link } from 'react-router-dom';
+import { useSocket } from '../context/SocketContext';
 
 // using central `api` instance
 
 const NewsList = () => {
     const [items, setItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const { on: onSocket } = useSocket();
 
-    useEffect(() => { fetch(); const onNews = () => fetch(); window.addEventListener('news:updated', onNews as EventListener); return () => window.removeEventListener('news:updated', onNews as EventListener); }, []);
-
-    const fetch = async () => {
+    const fetchNews = async () => {
         try {
             const res = await api.get('/public/news');
             setItems(res.data.news || []);
@@ -19,6 +19,22 @@ const NewsList = () => {
             console.error(err);
         } finally { setLoading(false); }
     };
+
+    useEffect(() => {
+        fetchNews();
+        // Listen for DOM events (same-tab admin updates)
+        const onNews = () => fetchNews();
+        window.addEventListener('news:updated', onNews as EventListener);
+        return () => window.removeEventListener('news:updated', onNews as EventListener);
+    }, []);
+
+    // Listen for socket.io events (cross-tab/cross-user real-time updates)
+    useEffect(() => {
+        const unsubs: (() => void)[] = [];
+        unsubs.push(onSocket('news_updated', () => { fetchNews(); }));
+        unsubs.push(onSocket('news_deleted', () => { fetchNews(); }));
+        return () => unsubs.forEach(fn => fn());
+    }, [onSocket]);
 
     const stripHtml = (htmlOrJson: string) => {
         if (!htmlOrJson) return '';

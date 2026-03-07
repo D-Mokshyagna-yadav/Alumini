@@ -266,13 +266,17 @@ const Messages = () => {
 
     const normalizeMediaUrl = (url: string) => {
         if (!url) return '';
-        // Strip full URLs to relative paths so Vite proxy serves them
+        if (url.startsWith('/api/uploads')) return url;
         if (url.startsWith('http://') || url.startsWith('https://')) {
-            try { return new URL(url).pathname; } catch { return url; }
+            try {
+                const p = new URL(url).pathname;
+                if (p.startsWith('/uploads/')) return '/api' + p;
+                return p;
+            } catch { return url; }
         }
-        if (url.startsWith('/uploads')) return url;
-        if (url.startsWith('uploads/')) return `/${url}`;
-        return `/uploads/${url}`;
+        if (url.startsWith('/uploads')) return '/api' + url;
+        if (url.startsWith('uploads/')) return `/api/uploads/${url.substring('uploads/'.length)}`;
+        return `/api/uploads/${url}`;
     };
 
     useEffect(() => {

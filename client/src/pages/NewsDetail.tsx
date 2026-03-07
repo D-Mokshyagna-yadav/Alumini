@@ -56,7 +56,10 @@ const NewsDetail = () => {
                                         const items = (b.data.items || []).map((it: string) => `<li>${it}</li>`).join('');
                                         return `<${tag}>${items}</${tag}>`;
                                     }
-                                    if (b.type === 'image') return `<figure><img src="${b.data.file?.url || b.data.url}" alt="${b.data.caption||''}" /><figcaption>${b.data.caption||''}</figcaption></figure>`;
+                                    if (b.type === 'image') {
+                                        const imgUrl = resolveMediaUrl(b.data.file?.url || b.data.url);
+                                        return `<figure><img src="${imgUrl}" alt="${b.data.caption||''}" /><figcaption>${b.data.caption||''}</figcaption></figure>`;
+                                    }
                                     return '';
                                 }).join('');
                                 return <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }} />;

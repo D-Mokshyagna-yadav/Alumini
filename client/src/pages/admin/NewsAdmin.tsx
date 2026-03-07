@@ -63,6 +63,7 @@ const NewsAdmin = () => {
     };
 
     const editorRef = useRef<EditorJS | null>(null);
+    const holderRef = useRef<HTMLDivElement | null>(null);
     // helper to upload a file to server for news images (admin only). Field name 'image'.
     const uploadFileToServer = async (file: File) => {
         try {
@@ -132,14 +133,27 @@ const NewsAdmin = () => {
         // initialize editor data later via effect
     };
 
-    // initialize Editor.js instance
+    // initialize Editor.js instance – robust against React StrictMode double-mount
     useEffect(() => {
-        let mounted = true;
-        let editor: EditorJS | null = null;
+        let cancelled = false;
+
         const init = async () => {
+            // Destroy previous instance first
+            if (editorRef.current) {
+                try {
+                    await editorRef.current.isReady;
+                    editorRef.current.destroy();
+                } catch { /* ignore */ }
+                editorRef.current = null;
+            }
+
+            if (cancelled || !holderRef.current) return;
+            // Clear leftover DOM from previous EditorJS instance
+            holderRef.current.innerHTML = '';
+
             try {
-                editor = new EditorJS({
-                    holder: 'editorjs',
+                const editor = new EditorJS({
+                    holder: holderRef.current,
                     placeholder: 'Write your article here...',
                     autofocus: false,
                     data: body && body.trim().startsWith('{') ? JSON.parse(body) : undefined,
@@ -161,20 +175,22 @@ const NewsAdmin = () => {
                 });
 
                 await editor.isReady;
-                if (!mounted) return;
+                if (cancelled) {
+                    editor.destroy();
+                    return;
+                }
                 editorRef.current = editor;
             } catch (e) {
                 console.error('EditorJS init failed', e);
             }
         };
-        init();
+
+        // Small delay to ensure DOM is painted before EditorJS attaches
+        const timer = setTimeout(init, 50);
 
         return () => {
-            mounted = false;
-            if (editor) {
-                editor.isReady && editor.isReady.then(() => editor!.destroy()).catch(() => {});
-            }
-            editorRef.current = null;
+            cancelled = true;
+            clearTimeout(timer);
         };
         // re-init when editingId or body changes
     }, [editingId, body]);
@@ -237,7 +253,7 @@ const NewsAdmin = () => {
                     </div>
                                 <div className="mt-3">
                                         <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Body</label>
-                                        <div id="editorjs" className="w-full border border-[var(--border-color)] rounded-xl p-2 bg-[var(--bg-tertiary)] text-[var(--text-primary)] min-h-64" style={{ minHeight: 300 }} />
+                                        <div ref={holderRef} className="w-full border border-[var(--border-color)] rounded-xl p-2 bg-[var(--bg-tertiary)] text-[var(--text-primary)] min-h-64" style={{ minHeight: 300 }} />
                                     </div>
                                     <div className="flex items-center gap-4 mt-3">
                                         <label className="inline-flex items-center gap-2">

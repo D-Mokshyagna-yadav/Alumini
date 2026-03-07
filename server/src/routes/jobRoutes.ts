@@ -436,6 +436,37 @@ router.post('/:id/close', requireAuth, async (req, res) => {
     }
 });
 
+// PUT /api/jobs/:id - edit job (poster or admin)
+router.put('/:id', requireAuth, async (req, res) => {
+    try {
+        const user = await User.findById(req.session!.userId);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        const job = await Job.findById(req.params.id);
+        if (!job) return res.status(404).json({ message: 'Job not found' });
+
+        if (String(job.postedBy) !== String(user._id) && user.role !== 'admin') {
+            return res.status(403).json({ message: 'Not allowed to edit this job' });
+        }
+
+        const allowed = ['title', 'company', 'location', 'type', 'mode', 'salary', 'description', 'requirements', 'image', 'industry', 'workExperience', 'experienceRange', 'deadline', 'companyDescription'];
+        for (const key of allowed) {
+            if (req.body[key] !== undefined) {
+                (job as any)[key] = req.body[key];
+            }
+        }
+
+        await job.save();
+
+        try { const io = (req as any).io; if (io) io.emit('job_updated', { jobId: job._id }); } catch (e) { /* ignore */ }
+
+        res.json({ message: 'Job updated', jobId: job._id });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 // DELETE /api/jobs/:id - delete job (poster or admin)
 router.delete('/:id', requireAuth, async (req, res) => {
     try {

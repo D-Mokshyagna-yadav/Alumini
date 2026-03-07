@@ -15,7 +15,7 @@ export const runGC = async () => {
     try {
         const bucket = getGridFSBucket();
 
-        // 1. Collect referenced GridFS filenames (without leading /uploads/)
+        // 1. Collect referenced GridFS filenames (without leading /api/uploads/)
         const referenced = new Set<string>();
 
         const strip = (val: string | undefined) => {
@@ -23,7 +23,7 @@ export const runGC = async () => {
             let rel = val;
             const idx = rel.indexOf('/uploads/');
             if (idx >= 0) rel = rel.substring(idx + '/uploads/'.length);
-            rel = rel.replace(/^\/?uploads\//, '');
+            rel = rel.replace(/^\/?(?:api\/)?uploads\//, '');
             return rel || null;
         };
 

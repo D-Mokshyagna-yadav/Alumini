@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
     Search, MapPin, GraduationCap,
-    UserPlus, User, Loader2, Clock, Users
+    UserPlus, User, Loader2, Clock, Users, UserCheck, UserMinus, X, Send
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../lib/api';
@@ -22,6 +22,22 @@ interface Alumni {
     avatar?: string;
 }
 
+interface ConnectionPerson {
+    _id: string;
+    name: string;
+    avatar?: string;
+    headline?: string;
+    currentCompany?: string;
+    graduationYear?: number;
+    department?: string;
+}
+
+interface PendingRequest {
+    requestId: string;
+    user: ConnectionPerson;
+    createdAt: string;
+}
+
 const Directory = () => {
     const [alumni, setAlumni] = useState<Alumni[]>([]);
     const [loading, setLoading] = useState(true);
@@ -29,6 +45,14 @@ const Directory = () => {
     const [batchFilter, setBatchFilter] = useState<string>('all');
     const [deptFilter, setDeptFilter] = useState<string>('all');
     const [connectionStatuses, setConnectionStatuses] = useState<Record<string, { status: string; requestId?: string }>>({});
+
+    // Network tabs
+    const [mainTab, setMainTab] = useState<'explore' | 'network'>('explore');
+    const [networkTab, setNetworkTab] = useState<'requests' | 'following' | 'connections'>('requests');
+    const [pendingReceived, setPendingReceived] = useState<PendingRequest[]>([]);
+    const [pendingSent, setPendingSent] = useState<PendingRequest[]>([]);
+    const [myConnections, setMyConnections] = useState<ConnectionPerson[]>([]);
+    const [networkLoading, setNetworkLoading] = useState(false);
 
     useEffect(() => {
         fetchAlumni();
@@ -48,6 +72,30 @@ const Directory = () => {
             setLoading(false);
         }
     };
+
+    const fetchNetworkData = useCallback(async () => {
+        setNetworkLoading(true);
+        try {
+            const [recvRes, sentRes, connRes] = await Promise.all([
+                api.get('/connections/pending-received'),
+                api.get('/connections/pending-sent'),
+                api.get('/connections/my-connections'),
+            ]);
+            setPendingReceived(recvRes.data);
+            setPendingSent(sentRes.data);
+            setMyConnections(connRes.data);
+        } catch (error) {
+            console.error('Failed to fetch network data:', error);
+        } finally {
+            setNetworkLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (mainTab === 'network') {
+            fetchNetworkData();
+        }
+    }, [mainTab, fetchNetworkData]);
 
     const checkConnectionStatus = async (userId: string) => {
         try {
@@ -81,8 +129,45 @@ const Directory = () => {
             setConnectionStatuses(prev => ({ ...prev, [userId]: { status: 'accepted' } }));
             try { await checkAuth(); } catch { /* ignore */ }
             toast.show('Connection accepted', 'success');
+            // Refresh network data if on network tab
+            if (mainTab === 'network') fetchNetworkData();
         } catch (error: unknown) {
             const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to accept request';
+            toast.show(msg, 'error');
+        }
+    };
+
+    const handleCancelRequest = async (userId: string) => {
+        try {
+            await api.delete(`/connections/remove/${userId}`);
+            setPendingSent(prev => prev.filter(r => r.user._id !== userId));
+            setConnectionStatuses(prev => ({ ...prev, [userId]: { status: 'none' } }));
+            toast.show('Request withdrawn', 'success');
+        } catch (error: unknown) {
+            const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to cancel request';
+            toast.show(msg, 'error');
+        }
+    };
+
+    const handleRemoveConnection = async (userId: string) => {
+        try {
+            await api.delete(`/connections/remove/${userId}`);
+            setMyConnections(prev => prev.filter(c => c._id !== userId));
+            setConnectionStatuses(prev => ({ ...prev, [userId]: { status: 'none' } }));
+            toast.show('Connection removed', 'success');
+        } catch (error: unknown) {
+            const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to remove connection';
+            toast.show(msg, 'error');
+        }
+    };
+
+    const handleDeclineRequest = async (userId: string) => {
+        try {
+            await api.delete(`/connections/remove/${userId}`);
+            setPendingReceived(prev => prev.filter(r => r.user._id !== userId));
+            toast.show('Request declined', 'success');
+        } catch (error: unknown) {
+            const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to decline request';
             toast.show(msg, 'error');
         }
     };
@@ -150,6 +235,35 @@ const Directory = () => {
 
     return (
         <div className="max-w-[1128px] mx-auto px-3 sm:px-4 py-4 sm:py-6">
+            {/* Main Tab Switcher */}
+            <div className="flex gap-1 mb-5 bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-1.5">
+                <button
+                    onClick={() => setMainTab('explore')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-medium rounded-xl transition-all ${
+                        mainTab === 'explore'
+                            ? 'bg-[var(--accent)] text-[var(--bg-primary)] shadow-sm'
+                            : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
+                    }`}
+                >
+                    <Search size={16} /> Explore
+                </button>
+                <button
+                    onClick={() => setMainTab('network')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-sm font-medium rounded-xl transition-all ${
+                        mainTab === 'network'
+                            ? 'bg-[var(--accent)] text-[var(--bg-primary)] shadow-sm'
+                            : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
+                    }`}
+                >
+                    <Users size={16} /> My Network
+                    {pendingReceived.length > 0 && mainTab !== 'network' && (
+                        <span className="ml-1 px-1.5 py-0.5 text-xs bg-red-500 text-white rounded-full">{pendingReceived.length}</span>
+                    )}
+                </button>
+            </div>
+
+            {mainTab === 'explore' && (
+                <>
             {/* Search Bar */}
             <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-4 sm:p-5 mb-5">
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -262,6 +376,187 @@ const Directory = () => {
                         </motion.div>
                     ))}
                 </div>
+            )}
+                </>
+            )}
+
+            {mainTab === 'network' && (
+                <>
+                    {/* Network Sub-tabs */}
+                    <div className="flex gap-1 mb-5 bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-1.5">
+                        {([
+                            { key: 'requests' as const, label: 'Requests', icon: UserPlus, count: pendingReceived.length },
+                            { key: 'following' as const, label: 'Sent Requests', icon: Send, count: pendingSent.length },
+                            { key: 'connections' as const, label: 'Connections', icon: UserCheck, count: myConnections.length },
+                        ]).map(tab => (
+                            <button
+                                key={tab.key}
+                                onClick={() => setNetworkTab(tab.key)}
+                                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 text-sm font-medium rounded-xl transition-all ${
+                                    networkTab === tab.key
+                                        ? 'bg-[var(--accent)] text-[var(--bg-primary)] shadow-sm'
+                                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
+                                }`}
+                            >
+                                <tab.icon size={15} />
+                                <span className="hidden sm:inline">{tab.label}</span>
+                                <span className={`px-1.5 py-0.5 text-xs rounded-full ${
+                                    networkTab === tab.key
+                                        ? 'bg-[var(--bg-primary)]/20'
+                                        : 'bg-[var(--accent-light)] text-[var(--text-primary)]'
+                                }`}>{tab.count}</span>
+                            </button>
+                        ))}
+                    </div>
+
+                    {networkLoading ? (
+                        <div className="flex items-center justify-center py-20">
+                            <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
+                        </div>
+                    ) : (
+                        <>
+                            {/* Requests Tab */}
+                            {networkTab === 'requests' && (
+                                <div className="space-y-3">
+                                    {pendingReceived.length === 0 ? (
+                                        <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-6 sm:p-12 text-center">
+                                            <UserPlus className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" />
+                                            <p className="text-[var(--text-primary)] font-medium">No pending requests</p>
+                                            <p className="text-sm text-[var(--text-muted)] mt-1">When someone sends you a connection request, it will appear here</p>
+                                        </div>
+                                    ) : (
+                                        pendingReceived.map((req, idx) => (
+                                            <motion.div
+                                                key={req.requestId}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: idx * 0.05 }}
+                                                className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-4 flex items-center gap-4"
+                                            >
+                                                <Link to={`/profile/${req.user._id}`}>
+                                                    <div className="w-12 h-12 rounded-xl bg-[var(--accent)] flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                        <Avatar src={req.user.avatar} iconSize={20} />
+                                                    </div>
+                                                </Link>
+                                                <div className="flex-1 min-w-0">
+                                                    <Link to={`/profile/${req.user._id}`} className="font-semibold text-sm text-[var(--text-primary)] hover:underline">{req.user.name}</Link>
+                                                    <p className="text-xs text-[var(--text-secondary)] truncate">{req.user.headline || req.user.currentCompany || ''}</p>
+                                                    <p className="text-[10px] text-[var(--text-muted)] mt-0.5">{new Date(req.createdAt).toLocaleDateString()}</p>
+                                                </div>
+                                                <div className="flex items-center gap-2 flex-shrink-0">
+                                                    <button
+                                                        onClick={() => handleRespond(req.user._id, req.requestId)}
+                                                        className="flex items-center gap-1.5 py-2 px-3 bg-[var(--accent)] text-[var(--bg-primary)] font-medium text-xs rounded-lg hover:opacity-90 transition-all"
+                                                    >
+                                                        <UserPlus size={13} /> Accept
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeclineRequest(req.user._id)}
+                                                        className="flex items-center gap-1.5 py-2 px-3 border border-[var(--border-color)]/40 text-[var(--text-secondary)] font-medium text-xs rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
+                                                    >
+                                                        <X size={13} /> Decline
+                                                    </button>
+                                                </div>
+                                            </motion.div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Following / Sent Requests Tab */}
+                            {networkTab === 'following' && (
+                                <div className="space-y-3">
+                                    {pendingSent.length === 0 ? (
+                                        <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-6 sm:p-12 text-center">
+                                            <Send className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" />
+                                            <p className="text-[var(--text-primary)] font-medium">No sent requests</p>
+                                            <p className="text-sm text-[var(--text-muted)] mt-1">Requests you've sent that are waiting for a response will appear here</p>
+                                        </div>
+                                    ) : (
+                                        pendingSent.map((req, idx) => (
+                                            <motion.div
+                                                key={req.requestId}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: idx * 0.05 }}
+                                                className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-4 flex items-center gap-4"
+                                            >
+                                                <Link to={`/profile/${req.user._id}`}>
+                                                    <div className="w-12 h-12 rounded-xl bg-[var(--accent)] flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                        <Avatar src={req.user.avatar} iconSize={20} />
+                                                    </div>
+                                                </Link>
+                                                <div className="flex-1 min-w-0">
+                                                    <Link to={`/profile/${req.user._id}`} className="font-semibold text-sm text-[var(--text-primary)] hover:underline">{req.user.name}</Link>
+                                                    <p className="text-xs text-[var(--text-secondary)] truncate">{req.user.headline || req.user.currentCompany || ''}</p>
+                                                    <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Sent {new Date(req.createdAt).toLocaleDateString()}</p>
+                                                </div>
+                                                <div className="flex items-center gap-2 flex-shrink-0">
+                                                    <span className="flex items-center gap-1.5 py-2 px-3 bg-[var(--accent)]/8 text-[var(--accent)] font-medium text-xs rounded-lg">
+                                                        <Clock size={13} /> Pending
+                                                    </span>
+                                                    <button
+                                                        onClick={() => handleCancelRequest(req.user._id)}
+                                                        className="flex items-center gap-1.5 py-2 px-3 border border-[var(--border-color)]/40 text-[var(--text-secondary)] font-medium text-xs rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
+                                                    >
+                                                        <UserMinus size={13} /> Withdraw
+                                                    </button>
+                                                </div>
+                                            </motion.div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Connections Tab */}
+                            {networkTab === 'connections' && (
+                                <div className="space-y-3">
+                                    {myConnections.length === 0 ? (
+                                        <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-6 sm:p-12 text-center">
+                                            <Users className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" />
+                                            <p className="text-[var(--text-primary)] font-medium">No connections yet</p>
+                                            <p className="text-sm text-[var(--text-muted)] mt-1">Start connecting with alumni from the Explore tab</p>
+                                        </div>
+                                    ) : (
+                                        myConnections.map((person, idx) => (
+                                            <motion.div
+                                                key={person._id}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: idx * 0.05 }}
+                                                className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-4 flex items-center gap-4"
+                                            >
+                                                <Link to={`/profile/${person._id}`}>
+                                                    <div className="w-12 h-12 rounded-xl bg-[var(--accent)] flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                        <Avatar src={person.avatar} iconSize={20} />
+                                                    </div>
+                                                </Link>
+                                                <div className="flex-1 min-w-0">
+                                                    <Link to={`/profile/${person._id}`} className="font-semibold text-sm text-[var(--text-primary)] hover:underline">{person.name}</Link>
+                                                    <p className="text-xs text-[var(--text-secondary)] truncate">{person.headline || ''}</p>
+                                                </div>
+                                                <div className="flex items-center gap-2 flex-shrink-0">
+                                                    <Link
+                                                        to={`/profile/${person._id}`}
+                                                        className="flex items-center gap-1.5 py-2 px-3 bg-[var(--bg-tertiary)]/60 text-[var(--text-secondary)] font-medium text-xs rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
+                                                    >
+                                                        <User size={13} /> Profile
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => handleRemoveConnection(person._id)}
+                                                        className="flex items-center gap-1.5 py-2 px-3 border border-red-500/30 text-red-400 font-medium text-xs rounded-lg hover:bg-red-500/10 transition-colors"
+                                                    >
+                                                        <UserMinus size={13} /> Remove
+                                                    </button>
+                                                </div>
+                                            </motion.div>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </>
+                    )}
+                </>
             )}
         </div>
     );

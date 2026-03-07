@@ -5,11 +5,12 @@ import api from '../lib/api';
 import resolveMediaUrl from '../lib/media';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useConfirm } from '../context/ConfirmContext';
 import { 
     User as UserIcon, GraduationCap, Briefcase, Edit3, Camera, Award, Users, 
     MessageCircle, Plus, MapPin, Mail, Phone, Calendar, ExternalLink, Clock,
     Linkedin, Github, Globe, X, Check, Upload, FileText, Star, Building2,
-    Link as LinkIcon, Trash2
+    Link as LinkIcon, Trash2, Edit2, Save
 } from 'lucide-react';
 import Avatar from '../components/ui/Avatar';
 
@@ -79,6 +80,46 @@ const Profile = () => {
     const [newSkill, setNewSkill] = useState('');
 
     const [stats, setStats] = useState({ connections: 0, posts: 0, achievements: 0 });
+
+    const handleDeleteProfilePost = async (postId: string) => {
+        const ok = await confirm({ title: 'Delete Post', message: 'Are you sure you want to delete this post? This cannot be undone.', confirmText: 'Delete', danger: true });
+        if (!ok) return;
+        try {
+            await api.delete(`/posts/${postId}`);
+            setUserPosts(prev => prev.filter(p => p._id !== postId));
+            toast.show('Post deleted', 'success');
+        } catch { toast.show('Failed to delete post', 'error'); }
+    };
+
+    const handleEditProfilePost = async (postId: string) => {
+        if (!editPostContent.trim()) return;
+        try {
+            const res = await api.put(`/posts/${postId}`, { content: editPostContent });
+            setUserPosts(prev => prev.map(p => p._id === postId ? { ...p, content: res.data.post.content } : p));
+            setEditingPostId(null);
+            toast.show('Post updated', 'success');
+        } catch { toast.show('Failed to update post', 'error'); }
+    };
+
+    const handleDeleteProfileComment = async (postId: string, commentId: string) => {
+        const ok = await confirm({ title: 'Delete Comment', message: 'Are you sure you want to delete this comment?', confirmText: 'Delete', danger: true });
+        if (!ok) return;
+        try {
+            await api.delete(`/posts/${postId}/comments/${commentId}`);
+            setUserComments(prev => prev.filter(c => c._id !== commentId));
+            toast.show('Comment deleted', 'success');
+        } catch { toast.show('Failed to delete comment', 'error'); }
+    };
+
+    const handleEditProfileComment = async (postId: string, commentId: string) => {
+        if (!editCommentText.trim()) return;
+        try {
+            await api.put(`/posts/${postId}/comments/${commentId}`, { text: editCommentText });
+            setUserComments(prev => prev.map(c => c._id === commentId ? { ...c, text: editCommentText } : c));
+            setEditingCommentId(null);
+            toast.show('Comment updated', 'success');
+        } catch { toast.show('Failed to update comment', 'error'); }
+    };
     const [connectionStatus, setConnectionStatus] = useState<'none'|'pending_sent'|'pending_received'|'accepted'>('none');
     const [connectionRequestId, setConnectionRequestId] = useState<string | null>(null);
     const [showUnconnectModal, setShowUnconnectModal] = useState(false);
@@ -88,7 +129,16 @@ const Profile = () => {
     const [userComments, setUserComments] = useState<any[]>([]);
     const [loadingComments, setLoadingComments] = useState(false);
 
+    // Inline edit state for posts and comments
+    const [editingPostId, setEditingPostId] = useState<string | null>(null);
+    const [editPostContent, setEditPostContent] = useState('');
+    const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+    const [editCommentText, setEditCommentText] = useState('');
+    const [editCommentPostId, setEditCommentPostId] = useState<string | null>(null);
+    const confirm = useConfirm();
+
     const isOwnProfile = !id || id === user?.id;
+    const isAdmin = user?.role === 'admin';
     const profileUser = viewUser || user;
 
     
@@ -868,16 +918,48 @@ const Profile = () => {
                                         {post.status === 'rejected' && (
                                             <div className="mb-2 px-2 py-1 bg-red-500/10 text-red-500 text-xs font-medium inline-block">Rejected by admin</div>
                                         )}
-                                        <p className="text-[var(--text-primary)] whitespace-pre-wrap">{post.content}</p>
-                                        {post.media && post.media.length > 0 && (
-                                            <div className="mt-3 overflow-hidden">
-                                                <img src={resolveMediaUrl(post.media[0].url)} alt="" className="w-full max-h-[300px] object-cover" />
+
+                                        {editingPostId === post._id ? (
+                                            <div className="space-y-3">
+                                                <textarea
+                                                    value={editPostContent}
+                                                    onChange={e => setEditPostContent(e.target.value)}
+                                                    className="w-full p-3 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] text-sm rounded-lg resize-none h-28 focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                                                />
+                                                <div className="flex gap-2 justify-end">
+                                                    <button onClick={() => setEditingPostId(null)} className="px-3 py-1.5 text-xs text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] rounded-lg transition-colors">Cancel</button>
+                                                    <button onClick={() => handleEditProfilePost(post._id)} disabled={!editPostContent.trim()} className="px-3 py-1.5 text-xs bg-[var(--accent)] text-[var(--bg-primary)] rounded-lg hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-1">
+                                                        <Save size={12} /> Save
+                                                    </button>
+                                                </div>
                                             </div>
+                                        ) : (
+                                            <>
+                                                <p className="text-[var(--text-primary)] whitespace-pre-wrap">{post.content}</p>
+                                                {post.media && post.media.length > 0 && (
+                                                    <div className="mt-3 overflow-hidden">
+                                                        <img src={resolveMediaUrl(post.media[0].url)} alt="" className="w-full max-h-[300px] object-cover" />
+                                                    </div>
+                                                )}
+                                            </>
                                         )}
+
                                         <div className="flex items-center gap-4 mt-4 pt-4 border-t border-[var(--border-color)]/50 text-sm text-[var(--text-muted)]">
                                             <span>{post.likes?.length || 0} likes</span>
                                             <span>{post.comments?.length || 0} comments</span>
-                                            <span className="ml-auto">{new Date(post.createdAt).toLocaleDateString()}</span>
+                                            <span className="ml-auto flex items-center gap-2">
+                                                {(isOwnProfile || isAdmin) && editingPostId !== post._id && (
+                                                    <>
+                                                        <button onClick={() => { setEditingPostId(post._id); setEditPostContent(post.content); }} className="p-1 hover:bg-[var(--bg-tertiary)] rounded transition-colors" title="Edit post">
+                                                            <Edit2 size={14} className="text-[var(--text-muted)] hover:text-[var(--accent)]" />
+                                                        </button>
+                                                        <button onClick={() => handleDeleteProfilePost(post._id)} className="p-1 hover:bg-red-500/10 rounded transition-colors" title="Delete post">
+                                                            <Trash2 size={14} className="text-[var(--text-muted)] hover:text-red-500" />
+                                                        </button>
+                                                    </>
+                                                )}
+                                                {new Date(post.createdAt).toLocaleDateString()}
+                                            </span>
                                         </div>
                                     </motion.div>
                                 )) : (
@@ -933,11 +1015,41 @@ const Profile = () => {
                                         <div className="p-4 flex gap-3">
                                             <div className="w-1 bg-[var(--accent)]/40 rounded-full flex-shrink-0" />
                                             <div className="flex-1">
-                                                <p className="text-sm text-[var(--text-primary)] leading-relaxed">{item.text}</p>
-                                                <p className="text-[10px] text-[var(--text-muted)] mt-2 flex items-center gap-1">
-                                                    <MessageCircle size={10} />
-                                                    {new Date(item.createdAt).toLocaleDateString()} at {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </p>
+                                                {editingCommentId === item._id ? (
+                                                    <div className="space-y-2">
+                                                        <textarea
+                                                            value={editCommentText}
+                                                            onChange={e => setEditCommentText(e.target.value)}
+                                                            className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] text-sm rounded-lg resize-none h-20 focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                                                        />
+                                                        <div className="flex gap-2 justify-end">
+                                                            <button onClick={() => setEditingCommentId(null)} className="px-3 py-1.5 text-xs text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] rounded-lg transition-colors">Cancel</button>
+                                                            <button onClick={() => handleEditProfileComment(item.postId, item._id)} disabled={!editCommentText.trim()} className="px-3 py-1.5 text-xs bg-[var(--accent)] text-[var(--bg-primary)] rounded-lg hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-1">
+                                                                <Save size={12} /> Save
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <p className="text-sm text-[var(--text-primary)] leading-relaxed">{item.text}</p>
+                                                        <div className="flex items-center justify-between mt-2">
+                                                            <p className="text-[10px] text-[var(--text-muted)] flex items-center gap-1">
+                                                                <MessageCircle size={10} />
+                                                                {new Date(item.createdAt).toLocaleDateString()} at {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </p>
+                                                            {(isOwnProfile || isAdmin) && (
+                                                                <div className="flex items-center gap-1">
+                                                                    <button onClick={() => { setEditingCommentId(item._id); setEditCommentText(item.text); setEditCommentPostId(item.postId); }} className="p-1 hover:bg-[var(--bg-tertiary)] rounded transition-colors" title="Edit comment">
+                                                                        <Edit2 size={12} className="text-[var(--text-muted)] hover:text-[var(--accent)]" />
+                                                                    </button>
+                                                                    <button onClick={() => handleDeleteProfileComment(item.postId, item._id)} className="p-1 hover:bg-red-500/10 rounded transition-colors" title="Delete comment">
+                                                                        <Trash2 size={12} className="text-[var(--text-muted)] hover:text-red-500" />
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                     </motion.div>

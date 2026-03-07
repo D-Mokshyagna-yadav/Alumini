@@ -7,7 +7,7 @@ import {
     MessageCircle,
     Image as ImageIcon, Video, Calendar, FileText, User,
     ThumbsUp, Bookmark, Globe, ChevronDown, X, Users, Trash2,
-    Sparkles, TrendingUp, Award, ExternalLink
+    Sparkles, TrendingUp, Award, ExternalLink, Edit2, Save
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -87,6 +87,12 @@ const Feed = () => {
     const [detailLoading, setDetailLoading] = useState(false);
     const [detailCommentText, setDetailCommentText] = useState('');
 
+    // Inline edit state
+    const [editingFeedPostId, setEditingFeedPostId] = useState<string | null>(null);
+    const [editFeedPostContent, setEditFeedPostContent] = useState('');
+    const [editingFeedCommentId, setEditingFeedCommentId] = useState<string | null>(null);
+    const [editFeedCommentText, setEditFeedCommentText] = useState('');
+
     useEffect(() => {
         fetchPosts();
         fetchNews();
@@ -148,12 +154,17 @@ const Feed = () => {
 
     const normalizeMediaUrl = (url: string) => {
         if (!url) return '';
-        if (url.startsWith('/uploads')) return url;
+        if (url.startsWith('/api/uploads')) return url;
         if (url.startsWith('http://') || url.startsWith('https://')) {
-            try { return new URL(url).pathname; } catch { return url; }
+            try {
+                const p = new URL(url).pathname;
+                if (p.startsWith('/uploads/')) return '/api' + p;
+                return p;
+            } catch { return url; }
         }
-        if (url.startsWith('uploads/')) return `/${url}`;
-        return `/uploads/${url}`;
+        if (url.startsWith('/uploads')) return '/api' + url;
+        if (url.startsWith('uploads/')) return `/api/uploads/${url.substring('uploads/'.length)}`;
+        return `/api/uploads/${url}`;
     };
 
     const fetchNews = async () => {
@@ -271,6 +282,30 @@ const Feed = () => {
             }
             toast.show('Comment deleted', 'success');
         } catch { toast.show('Failed to delete comment', 'error'); }
+    };
+
+    const handleEditFeedPost = async (postId: string) => {
+        if (!editFeedPostContent.trim()) return;
+        try {
+            const res = await api.put(`/posts/${postId}`, { content: editFeedPostContent });
+            setPosts(prev => prev.map(p => p._id === postId ? { ...p, content: res.data.post.content } : p));
+            setEditingFeedPostId(null);
+            toast.show('Post updated', 'success');
+        } catch { toast.show('Failed to update post', 'error'); }
+    };
+
+    const handleEditFeedComment = async (postId: string, commentId: string) => {
+        if (!editFeedCommentText.trim()) return;
+        try {
+            const res = await api.put(`/posts/${postId}/comments/${commentId}`, { text: editFeedCommentText });
+            setPosts(prev => prev.map(p => p._id === postId ? { ...p, comments: res.data.comments } : p));
+            if (detailedPost && detailedPost._id === postId) {
+                const detailRes = await api.get(`/posts/detail/${postId}`);
+                setDetailedPost(detailRes.data.post);
+            }
+            setEditingFeedCommentId(null);
+            toast.show('Comment updated', 'success');
+        } catch { toast.show('Failed to update comment', 'error'); }
     };
 
     const isPostLiked = (post: Post) => user?.id ? post.likes.includes(user.id) : false;
@@ -519,7 +554,7 @@ const Feed = () => {
                                     </div>
 
                                     {/* Post Content */}
-                                    <div className="px-4 py-3 cursor-pointer" onClick={() => handleViewDetail(post._id)}>
+                                    <div className="px-4 py-3" onClick={() => { if (editingFeedPostId !== post._id) handleViewDetail(post._id); }}>
                                         {post.status === 'pending' && post.author._id === user?.id && (
                                             <div className="mb-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/20 text-yellow-600 dark:text-yellow-400 text-xs font-medium" onClick={e => e.stopPropagation()}>
                                                 Pending admin approval — only visible to you
@@ -530,7 +565,23 @@ const Feed = () => {
                                                 This post was rejected by an administrator
                                             </div>
                                         )}
-                                        <p className="text-sm text-[var(--text-primary)] whitespace-pre-wrap leading-relaxed hover:text-[var(--accent)] transition-colors">{post.content}</p>
+                                        {editingFeedPostId === post._id ? (
+                                            <div className="space-y-2" onClick={e => e.stopPropagation()}>
+                                                <textarea
+                                                    value={editFeedPostContent}
+                                                    onChange={e => setEditFeedPostContent(e.target.value)}
+                                                    className="w-full p-3 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] text-sm rounded-lg resize-none h-28 focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                                                />
+                                                <div className="flex gap-2 justify-end">
+                                                    <button onClick={() => setEditingFeedPostId(null)} className="px-3 py-1.5 text-xs text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] rounded-lg transition-colors">Cancel</button>
+                                                    <button onClick={() => handleEditFeedPost(post._id)} disabled={!editFeedPostContent.trim()} className="px-3 py-1.5 text-xs bg-[var(--accent)] text-[var(--bg-primary)] rounded-lg hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-1">
+                                                        <Save size={12} /> Save
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-[var(--text-primary)] whitespace-pre-wrap leading-relaxed hover:text-[var(--accent)] transition-colors cursor-pointer">{post.content}</p>
+                                        )}
                                     </div>
 
                                     {/* Post Media */}
@@ -582,12 +633,20 @@ const Feed = () => {
                                             <span className="font-medium hidden sm:inline">Comment</span>
                                         </button>
                                         {(post.author._id === user?.id || user?.role === 'admin') && (
-                                            <button onClick={() => handleDelete(post._id)}
-                                                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[var(--text-muted)] hover:bg-red-500/10 hover:text-red-500 transition-all text-sm"
-                                            >
-                                                <Trash2 size={16} />
-                                                <span className="font-medium hidden sm:inline">Delete</span>
-                                            </button>
+                                            <>
+                                                <button onClick={() => { setEditingFeedPostId(post._id); setEditFeedPostContent(post.content); }}
+                                                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[var(--text-muted)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] transition-all text-sm"
+                                                >
+                                                    <Edit2 size={16} />
+                                                    <span className="font-medium hidden sm:inline">Edit</span>
+                                                </button>
+                                                <button onClick={() => handleDelete(post._id)}
+                                                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[var(--text-muted)] hover:bg-red-500/10 hover:text-red-500 transition-all text-sm"
+                                                >
+                                                    <Trash2 size={16} />
+                                                    <span className="font-medium hidden sm:inline">Delete</span>
+                                                </button>
+                                            </>
                                         )}
                                     </div>
 
@@ -624,16 +683,45 @@ const Feed = () => {
                                                                 </div>
                                                                 <div className="flex-1 bg-[var(--bg-secondary)]/60 rounded-2xl px-3.5 py-2.5 relative">
                                                                     <p className="text-xs font-semibold text-[var(--text-primary)]">{comment.author.name}</p>
-                                                                    <p className="text-xs text-[var(--text-primary)] mt-0.5 leading-relaxed">{comment.text}</p>
-                                                                    <p className="text-[10px] text-[var(--text-muted)] mt-1">{getTimeAgo(comment.createdAt)}</p>
-                                                                    {(comment.author._id === user?.id || user?.role === 'admin') && (
-                                                                        <button
-                                                                            onClick={() => handleDeleteComment(post._id, comment._id)}
-                                                                            className="absolute top-2 right-2 p-1 rounded-full opacity-0 group-hover/comment:opacity-100 hover:bg-red-500/10 hover:text-red-500 text-[var(--text-muted)] transition-all"
-                                                                            title="Delete comment"
-                                                                        >
-                                                                            <Trash2 size={12} />
-                                                                        </button>
+                                                                    {editingFeedCommentId === comment._id ? (
+                                                                        <div className="mt-1 space-y-2">
+                                                                            <input
+                                                                                type="text"
+                                                                                value={editFeedCommentText}
+                                                                                onChange={e => setEditFeedCommentText(e.target.value)}
+                                                                                className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                                                                                onKeyDown={e => e.key === 'Enter' && handleEditFeedComment(post._id, comment._id)}
+                                                                            />
+                                                                            <div className="flex gap-1.5 justify-end">
+                                                                                <button onClick={() => setEditingFeedCommentId(null)} className="px-2 py-1 text-[10px] text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] rounded transition-colors">Cancel</button>
+                                                                                <button onClick={() => handleEditFeedComment(post._id, comment._id)} disabled={!editFeedCommentText.trim()} className="px-2 py-1 text-[10px] bg-[var(--accent)] text-[var(--bg-primary)] rounded hover:opacity-90 disabled:opacity-50 flex items-center gap-0.5">
+                                                                                    <Save size={10} /> Save
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <>
+                                                                            <p className="text-xs text-[var(--text-primary)] mt-0.5 leading-relaxed">{comment.text}</p>
+                                                                            <p className="text-[10px] text-[var(--text-muted)] mt-1">{getTimeAgo(comment.createdAt)}</p>
+                                                                        </>
+                                                                    )}
+                                                                    {(comment.author._id === user?.id || user?.role === 'admin') && editingFeedCommentId !== comment._id && (
+                                                                        <div className="absolute top-2 right-2 flex gap-0.5 opacity-0 group-hover/comment:opacity-100 transition-all">
+                                                                            <button
+                                                                                onClick={() => { setEditingFeedCommentId(comment._id); setEditFeedCommentText(comment.text); }}
+                                                                                className="p-1 rounded-full hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] text-[var(--text-muted)] transition-all"
+                                                                                title="Edit comment"
+                                                                            >
+                                                                                <Edit2 size={12} />
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => handleDeleteComment(post._id, comment._id)}
+                                                                                className="p-1 rounded-full hover:bg-red-500/10 hover:text-red-500 text-[var(--text-muted)] transition-all"
+                                                                                title="Delete comment"
+                                                                            >
+                                                                                <Trash2 size={12} />
+                                                                            </button>
+                                                                        </div>
                                                                     )}
                                                                 </div>
                                                             </motion.div>
@@ -888,16 +976,45 @@ const Feed = () => {
                                                     </div>
                                                     <div className="flex-1 bg-[var(--bg-tertiary)]/40 rounded-2xl px-3.5 py-2.5 relative">
                                                         <p className="text-xs font-semibold text-[var(--text-primary)]">{comment.author?.name || 'Unknown'}</p>
-                                                        <p className="text-xs text-[var(--text-primary)] mt-0.5 leading-relaxed">{comment.text}</p>
-                                                        <p className="text-[10px] text-[var(--text-muted)] mt-1">{getTimeAgo(comment.createdAt)}</p>
-                                                        {(comment.author?._id === user?.id || user?.role === 'admin') && (
-                                                            <button
-                                                                onClick={() => handleDeleteComment(detailedPost._id, comment._id)}
-                                                                className="absolute top-2 right-2 p-1 rounded-full opacity-0 group-hover/comment:opacity-100 hover:bg-red-500/10 hover:text-red-500 text-[var(--text-muted)] transition-all"
-                                                                title="Delete comment"
-                                                            >
-                                                                <Trash2 size={12} />
-                                                            </button>
+                                                        {editingFeedCommentId === comment._id ? (
+                                                            <div className="mt-1 space-y-2">
+                                                                <input
+                                                                    type="text"
+                                                                    value={editFeedCommentText}
+                                                                    onChange={e => setEditFeedCommentText(e.target.value)}
+                                                                    className="w-full p-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                                                                    onKeyDown={e => e.key === 'Enter' && handleEditFeedComment(detailedPost._id, comment._id)}
+                                                                />
+                                                                <div className="flex gap-1.5 justify-end">
+                                                                    <button onClick={() => setEditingFeedCommentId(null)} className="px-2 py-1 text-[10px] text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] rounded transition-colors">Cancel</button>
+                                                                    <button onClick={() => handleEditFeedComment(detailedPost._id, comment._id)} disabled={!editFeedCommentText.trim()} className="px-2 py-1 text-[10px] bg-[var(--accent)] text-[var(--bg-primary)] rounded hover:opacity-90 disabled:opacity-50 flex items-center gap-0.5">
+                                                                        <Save size={10} /> Save
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                <p className="text-xs text-[var(--text-primary)] mt-0.5 leading-relaxed">{comment.text}</p>
+                                                                <p className="text-[10px] text-[var(--text-muted)] mt-1">{getTimeAgo(comment.createdAt)}</p>
+                                                            </>
+                                                        )}
+                                                        {(comment.author?._id === user?.id || user?.role === 'admin') && editingFeedCommentId !== comment._id && (
+                                                            <div className="absolute top-2 right-2 flex gap-0.5 opacity-0 group-hover/comment:opacity-100 transition-all">
+                                                                <button
+                                                                    onClick={() => { setEditingFeedCommentId(comment._id); setEditFeedCommentText(comment.text); }}
+                                                                    className="p-1 rounded-full hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] text-[var(--text-muted)] transition-all"
+                                                                    title="Edit comment"
+                                                                >
+                                                                    <Edit2 size={12} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDeleteComment(detailedPost._id, comment._id)}
+                                                                    className="p-1 rounded-full hover:bg-red-500/10 hover:text-red-500 text-[var(--text-muted)] transition-all"
+                                                                    title="Delete comment"
+                                                                >
+                                                                    <Trash2 size={12} />
+                                                                </button>
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </div>

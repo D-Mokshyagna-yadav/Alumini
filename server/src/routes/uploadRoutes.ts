@@ -6,7 +6,7 @@ import os from 'os';
 import sharp from 'sharp';
 import ffmpeg from 'fluent-ffmpeg';
 import User, { UserStatus } from '../models/User';
-import { storeFileInGridFS, deleteGridFSFile, cleanupTempFile } from '../config/gridfs';
+import { storeBufferInGridFS, storeFileInGridFS, deleteGridFSFile, cleanupTempFile } from '../config/gridfs';
 
 const router = express.Router();
 
@@ -14,6 +14,11 @@ const router = express.Router();
 
 const sanitizeUsername = (name: string): string =>
     name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+const generateFilename = (originalname: string): string => {
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    return unique + path.extname(originalname);
+};
 
 /** Middleware: reject unauthenticated / unverified users */
 const requireAuth = async (
@@ -30,18 +35,9 @@ const requireAuth = async (
     next();
 };
 
-// ── Multer – write to OS temp directory ────────────────────
+// ── Multer – memory storage (no temp files) ────────────────
 
-const TEMP_DIR = path.join(os.tmpdir(), 'alumni-uploads');
-if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true });
-
-const tempStorage = multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, TEMP_DIR),
-    filename: (_req, file, cb) => {
-        const unique = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, unique + path.extname(file.originalname));
-    },
-});
+const memStorage = multer.memoryStorage();
 
 // File-type filters
 const mediaFilter = (_req: express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
@@ -62,36 +58,33 @@ const imageFilter = (_req: express.Request, file: Express.Multer.File, cb: multe
     cb(null, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.mimetype));
 };
 
-// Multer instances – all use temp storage now
-const postUpload = multer({ storage: tempStorage, fileFilter: mediaFilter, limits: { fileSize: 200 * 1024 * 1024 } });
-const profileUpload = multer({ storage: tempStorage, fileFilter: imageFilter, limits: { fileSize: 50 * 1024 * 1024 } });
-const eventUpload = multer({ storage: tempStorage, fileFilter: imageFilter, limits: { fileSize: 50 * 1024 * 1024 } });
-const newsUpload = multer({ storage: tempStorage, fileFilter: imageFilter, limits: { fileSize: 50 * 1024 * 1024 } });
-const jobUpload = multer({ storage: tempStorage, fileFilter: imageFilter, limits: { fileSize: 50 * 1024 * 1024 } });
+// Multer instances – all use memory storage
+const postUpload = multer({ storage: memStorage, fileFilter: mediaFilter, limits: { fileSize: 200 * 1024 * 1024 } });
+const profileUpload = multer({ storage: memStorage, fileFilter: imageFilter, limits: { fileSize: 50 * 1024 * 1024 } });
+const eventUpload = multer({ storage: memStorage, fileFilter: imageFilter, limits: { fileSize: 50 * 1024 * 1024 } });
+const newsUpload = multer({ storage: memStorage, fileFilter: imageFilter, limits: { fileSize: 50 * 1024 * 1024 } });
+const jobUpload = multer({ storage: memStorage, fileFilter: imageFilter, limits: { fileSize: 50 * 1024 * 1024 } });
 
-// ── Shared: compress image & store in GridFS ──────────────
+// ── Shared: compress image buffer & store in GridFS ───────
 
 /**
- * Optionally compress an image (>10 MB → lossless webp) then store in GridFS.
- * Returns the public relative URL, e.g. `/uploads/username/profile/123-456.jpg`
+ * Optionally compress an image (>10 MB → lossless webp) then store in GridFS directly from buffer.
+ * Returns the public relative URL, e.g. `/api/uploads/username/profile/123-456.jpg`
  */
 const processImageAndStore = async (
     file: Express.Multer.File,
     username: string,
     folder: string,
 ): Promise<string> => {
-    let filePath = file.path;
-    let filename = file.filename;
+    let buffer = file.buffer;
+    let filename = generateFilename(file.originalname);
     let contentType = file.mimetype;
 
     // Compress large images
-    if (file.size > 10 * 1024 * 1024) {
+    if (buffer.length > 10 * 1024 * 1024) {
         try {
-            const compressedPath = filePath + '.webp';
-            await sharp(filePath).webp({ lossless: true }).toFile(compressedPath);
-            cleanupTempFile(filePath);
-            filePath = compressedPath;
-            filename = path.basename(compressedPath);
+            buffer = await sharp(buffer).webp({ lossless: true }).toBuffer();
+            filename = filename.replace(/\.[^.]+$/, '.webp');
             contentType = 'image/webp';
         } catch (err) {
             console.error('Image compression failed:', err);
@@ -99,9 +92,8 @@ const processImageAndStore = async (
     }
 
     const gridName = `${username}/${folder}/${filename}`;
-    await storeFileInGridFS(filePath, gridName, contentType);
-    cleanupTempFile(filePath);
-    return `/uploads/${gridName}`;
+    await storeBufferInGridFS(buffer, gridName, contentType);
+    return `/api/uploads/${gridName}`;
 };
 
 // ── Routes ─────────────────────────────────────────────────
@@ -118,7 +110,7 @@ router.post('/profile-pic', requireAuth, profileUpload.single('avatar'), async (
 
         // Delete old avatar from GridFS
         if (user.avatar) {
-            const oldGrid = user.avatar.replace(/^\/uploads\//, '');
+            const oldGrid = user.avatar.replace(/^\/?(?:api\/)?uploads\//, '');
             deleteGridFSFile(oldGrid).catch(e => console.error('Failed to delete old avatar from GridFS:', e));
         }
 
@@ -146,7 +138,7 @@ router.post('/cover-photo', requireAuth, profileUpload.single('cover'), async (r
 
         // Delete old cover from GridFS
         if ((user as any).coverImage) {
-            const oldGrid = ((user as any).coverImage as string).replace(/^\/uploads\//, '');
+            const oldGrid = ((user as any).coverImage as string).replace(/^\/?(?:api\/)?uploads\//, '');
             deleteGridFSFile(oldGrid).catch(e => console.error('Failed to delete old cover from GridFS:', e));
         }
 
@@ -227,41 +219,44 @@ router.post('/post-media', requireAuth, postUpload.array('media', 10), async (re
         const mediaUrls: Array<{ type: string; url: string }> = [];
 
         for (const file of files) {
-            let filePath = file.path;
-            let filename = file.filename;
+            let buffer = file.buffer;
+            let filename = generateFilename(file.originalname);
             let contentType = file.mimetype;
-            const relPath = (fn: string) => `/uploads/${username}/posts/${fn}`;
+            const relPath = (fn: string) => `/api/uploads/${username}/posts/${fn}`;
 
             if (file.mimetype.startsWith('image/')) {
                 // Compress large images
-                if (file.size > 10 * 1024 * 1024) {
+                if (buffer.length > 10 * 1024 * 1024) {
                     try {
-                        const compressedPath = filePath + '.webp';
-                        await sharp(filePath).webp({ lossless: true }).toFile(compressedPath);
-                        cleanupTempFile(filePath);
-                        filePath = compressedPath;
-                        filename = path.basename(compressedPath);
+                        buffer = await sharp(buffer).webp({ lossless: true }).toBuffer();
+                        filename = filename.replace(/\.[^.]+$/, '.webp');
                         contentType = 'image/webp';
                     } catch (err) {
                         console.error('Image compression failed:', err);
                     }
                 }
                 const gridName = `${username}/posts/${filename}`;
-                await storeFileInGridFS(filePath, gridName, contentType);
-                cleanupTempFile(filePath);
+                await storeBufferInGridFS(buffer, gridName, contentType);
                 mediaUrls.push({ type: 'image', url: relPath(filename) });
 
             } else if (file.mimetype.startsWith('video/')) {
-                // Trim to 90 s if longer
+                // Videos need temp file for ffmpeg processing
+                const tmpDir = path.join(os.tmpdir(), 'alumni-video-tmp');
+                if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+                const tmpPath = path.join(tmpDir, filename);
+                fs.writeFileSync(tmpPath, buffer);
+
+                let finalPath = tmpPath;
+                let finalFilename = filename;
                 try {
                     const info: any = await new Promise((resolve, reject) =>
-                        ffmpeg.ffprobe(filePath, (err: any, meta: any) => (err ? reject(err) : resolve(meta))),
+                        ffmpeg.ffprobe(tmpPath, (err: any, meta: any) => (err ? reject(err) : resolve(meta))),
                     );
                     const duration = info.format.duration || 0;
                     if (duration > 90) {
-                        const trimmedPath = filePath + '.mp4';
+                        const trimmedPath = tmpPath + '.mp4';
                         await new Promise<void>((resolve, reject) => {
-                            ffmpeg(filePath)
+                            ffmpeg(tmpPath)
                                 .setStartTime(0)
                                 .setDuration(90)
                                 .outputOptions(['-c:v libx264', '-preset veryfast', '-crf 23'])
@@ -269,29 +264,27 @@ router.post('/post-media', requireAuth, postUpload.array('media', 10), async (re
                                 .on('end', () => resolve())
                                 .on('error', (e: any) => reject(e));
                         });
-                        cleanupTempFile(filePath);
-                        filePath = trimmedPath;
-                        filename = path.basename(trimmedPath);
+                        cleanupTempFile(tmpPath);
+                        finalPath = trimmedPath;
+                        finalFilename = path.basename(trimmedPath);
                         contentType = 'video/mp4';
                     }
                 } catch (err) {
                     console.error('Video processing failed:', err);
                 }
-                const gridName = `${username}/posts/${filename}`;
-                await storeFileInGridFS(filePath, gridName, contentType);
-                cleanupTempFile(filePath);
-                mediaUrls.push({ type: 'video', url: relPath(filename) });
+                const gridName = `${username}/posts/${finalFilename}`;
+                await storeFileInGridFS(finalPath, gridName, contentType);
+                cleanupTempFile(finalPath);
+                mediaUrls.push({ type: 'video', url: relPath(finalFilename) });
 
             } else if (file.mimetype.startsWith('audio/')) {
                 const gridName = `${username}/posts/${filename}`;
-                await storeFileInGridFS(filePath, gridName, contentType);
-                cleanupTempFile(filePath);
+                await storeBufferInGridFS(buffer, gridName, contentType);
                 mediaUrls.push({ type: 'audio', url: relPath(filename) });
 
             } else {
                 const gridName = `${username}/posts/${filename}`;
-                await storeFileInGridFS(filePath, gridName, contentType);
-                cleanupTempFile(filePath);
+                await storeBufferInGridFS(buffer, gridName, contentType);
                 mediaUrls.push({ type: 'file', url: relPath(filename) });
             }
         }

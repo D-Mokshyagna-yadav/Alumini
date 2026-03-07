@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import resolveMediaUrl from '../lib/media';
-import { MapPin, Briefcase, Building2, DollarSign, Bookmark, MoreHorizontal, ChevronLeft } from 'lucide-react';
+import { MapPin, Briefcase, Building2, DollarSign, Bookmark, MoreHorizontal, ChevronLeft, Edit2, X, ImagePlus } from 'lucide-react';
 import ShareModal from '../components/ShareModal';
 import Avatar from '../components/ui/Avatar';
 import JobShareFloating from '../components/JobShareFloating';
@@ -38,6 +38,10 @@ const JobDetail = () => {
     const [showShareModal, setShowShareModal] = useState(false);
     const [applicants, setApplicants] = useState<any[]>([]);
     const [applicantsLoading, setApplicantsLoading] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editForm, setEditForm] = useState<any>({});
+    const [editImage, setEditImage] = useState<File | null>(null);
+    const [editSubmitting, setEditSubmitting] = useState(false);
     const toast = useToast();
     const { isAuthenticated, user } = useAuth();
     const { on: onSocket } = useSocket();
@@ -119,6 +123,56 @@ const JobDetail = () => {
         }));
         return () => unsubs.forEach(fn => fn());
     }, [onSocket, id, fetchJob, fetchApplicants, job?.canViewApplicants, navigate, toast]);
+
+    const openEditModal = () => {
+        if (!job) return;
+        setEditForm({
+            title: job.title,
+            company: job.company,
+            location: job.location,
+            type: job.type,
+            mode: job.mode,
+            salary: job.salary || '',
+            description: job.description,
+            requirements: (job.requirements || []).join(', '),
+            image: job.image || '',
+        });
+        setEditImage(null);
+        setShowEditModal(true);
+    };
+
+    const handleEditSubmit = async () => {
+        if (!job) return;
+        setEditSubmitting(true);
+        try {
+            let imageUrl = editForm.image;
+            if (editImage) {
+                const fd = new FormData();
+                fd.append('image', editImage);
+                const up = await api.post('/upload/job-image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+                imageUrl = up.data.relative || up.data.url;
+            }
+            const payload = {
+                title: editForm.title,
+                company: editForm.company,
+                location: editForm.location,
+                type: editForm.type,
+                mode: editForm.mode,
+                salary: editForm.salary || undefined,
+                description: editForm.description,
+                requirements: editForm.requirements ? editForm.requirements.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
+                image: imageUrl || undefined,
+            };
+            await api.put(`/jobs/${job.id}`, payload);
+            toast.show('Job updated successfully', 'success');
+            setShowEditModal(false);
+            fetchJob();
+        } catch (err: any) {
+            toast.show(err.response?.data?.message || 'Failed to update job', 'error');
+        } finally {
+            setEditSubmitting(false);
+        }
+    };
 
     const handleSave = async () => {
         if (!job) return;
@@ -231,6 +285,11 @@ const JobDetail = () => {
                     >
                         {job.hasApplied ? 'Unapply' : 'Apply'}
                     </button>
+                    {job.isCreator && (
+                        <button onClick={openEditModal} className="px-4 py-2 border border-[var(--border-color)] text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] flex items-center gap-1.5" title="Edit job">
+                            <Edit2 size={16} /> Edit
+                        </button>
+                    )}
                     <button onClick={handleSave} className="p-2 hover:bg-[var(--bg-tertiary)]" title="Save job">
                         <Bookmark size={22} className={job.isSaved ? 'text-[var(--accent)] fill-current' : 'text-[var(--text-secondary)]'} />
                     </button>
@@ -326,6 +385,92 @@ const JobDetail = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Edit modal */}
+            {showEditModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-[var(--bg-secondary)] w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl shadow-xl">
+                        <div className="p-4 border-b border-[var(--border-color)]/30 flex items-center justify-between sticky top-0 bg-[var(--bg-secondary)] z-10">
+                            <h2 className="text-lg font-semibold text-[var(--text-primary)]">Edit Job</h2>
+                            <button onClick={() => setShowEditModal(false)} className="p-1 hover:bg-[var(--bg-tertiary)] rounded"><X size={18} className="text-[var(--text-muted)]" /></button>
+                        </div>
+                        <div className="p-4 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Job Title</label>
+                                <input value={editForm.title || ''} onChange={e => setEditForm({ ...editForm, title: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded" />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Company</label>
+                                    <input value={editForm.company || ''} onChange={e => setEditForm({ ...editForm, company: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Location</label>
+                                    <input value={editForm.location || ''} onChange={e => setEditForm({ ...editForm, location: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Description</label>
+                                <textarea value={editForm.description || ''} onChange={e => setEditForm({ ...editForm, description: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] h-28 rounded" />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Type</label>
+                                    <select value={editForm.type || 'Full-time'} onChange={e => setEditForm({ ...editForm, type: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded">
+                                        <option value="Full-time">Full-time</option>
+                                        <option value="Part-time">Part-time</option>
+                                        <option value="Contract">Contract</option>
+                                        <option value="Internship">Internship</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Mode</label>
+                                    <select value={editForm.mode || 'Remote'} onChange={e => setEditForm({ ...editForm, mode: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded">
+                                        <option value="Remote">Remote</option>
+                                        <option value="On-site">On-site</option>
+                                        <option value="Hybrid">Hybrid</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Salary</label>
+                                    <input value={editForm.salary || ''} onChange={e => setEditForm({ ...editForm, salary: e.target.value })} placeholder="e.g. ₹12 LPA" className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Requirements (comma separated)</label>
+                                <input value={editForm.requirements || ''} onChange={e => setEditForm({ ...editForm, requirements: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Job Image</label>
+                                {editForm.image && !editImage && (
+                                    <div className="mb-2">
+                                        <img src={resolveMediaUrl(editForm.image)} alt="current" className="h-32 object-contain rounded bg-[var(--bg-tertiary)]" />
+                                    </div>
+                                )}
+                                <label className="flex items-center justify-center w-full h-20 border-2 border-dashed border-[var(--border-color)] rounded-lg cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--bg-tertiary)] transition-colors">
+                                    <div className="flex items-center gap-2 text-[var(--text-muted)]">
+                                        {editImage ? (
+                                            <img src={URL.createObjectURL(editImage)} alt="preview" className="h-16 object-contain rounded" />
+                                        ) : (
+                                            <>
+                                                <ImagePlus size={20} />
+                                                <span className="text-sm">{editForm.image ? 'Replace image' : 'Upload image'}</span>
+                                            </>
+                                        )}
+                                    </div>
+                                    <input type="file" accept="image/*" onChange={e => setEditImage(e.target.files?.[0] || null)} className="hidden" />
+                                </label>
+                            </div>
+                        </div>
+                        <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2 sticky bottom-0 bg-[var(--bg-secondary)]">
+                            <button onClick={() => setShowEditModal(false)} className="px-4 py-2 text-[var(--text-secondary)] font-medium hover:bg-[var(--bg-tertiary)] rounded">Cancel</button>
+                            <button onClick={handleEditSubmit} disabled={editSubmitting} className="px-4 py-2 bg-[var(--accent)] text-[var(--bg-primary)] font-medium rounded disabled:opacity-50">
+                                {editSubmitting ? 'Saving...' : 'Save Changes'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Share modal */}
             <ShareModal open={showShareModal} onClose={() => setShowShareModal(false)} url={shareUrl} resourceType="job" resourceId={String(job.id)} />

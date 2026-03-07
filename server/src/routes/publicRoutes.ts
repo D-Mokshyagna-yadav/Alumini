@@ -132,6 +132,8 @@ router.post('/news', requireAdmin, async (req, res) => {
         if (publishedAt) payload.publishedAt = new Date(publishedAt);
         if (typeof priority !== 'undefined') payload.priority = Number(priority) || 0;
         const created = await NewsItem.create(payload);
+        // Broadcast news update via socket.io
+        try { const io = (req as any).io; if (io) io.emit('news_updated', { item: created }); } catch (e) { }
         return res.json({ message: 'News created', item: created });
     } catch (error) {
         console.error(error);
@@ -157,6 +159,8 @@ router.put('/news/:id', requireAdmin, async (req, res) => {
 
         const updated = await NewsItem.findByIdAndUpdate(id, update, { new: true });
         if (!updated) return res.status(404).json({ message: 'Not found' });
+        // Broadcast news update via socket.io
+        try { const io = (req as any).io; if (io) io.emit('news_updated', { item: updated }); } catch (e) { }
         return res.json({ message: 'Updated', item: updated });
     } catch (error) {
         console.error(error);
@@ -170,6 +174,8 @@ router.delete('/news/:id', requireAdmin, async (req, res) => {
         const id = req.params.id;
         const removed = await NewsItem.findByIdAndDelete(id);
         if (!removed) return res.status(404).json({ message: 'Not found' });
+        // Broadcast news deletion via socket.io
+        try { const io = (req as any).io; if (io) io.emit('news_deleted', { newsId: id }); } catch (e) { }
         return res.json({ message: 'Deleted' });
     } catch (error) {
         console.error(error);

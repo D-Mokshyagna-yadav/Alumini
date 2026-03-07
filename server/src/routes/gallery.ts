@@ -1,11 +1,9 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
-import os from 'os';
 import GalleryAlbum from '../models/GalleryAlbum';
 import User from '../models/User';
-import { storeFileInGridFS, deleteGridFSFile, cleanupTempFile, getGridFSBucket } from '../config/gridfs';
+import { storeBufferInGridFS, deleteGridFSFile, getGridFSBucket } from '../config/gridfs';
 
 const router = express.Router();
 
@@ -14,17 +12,13 @@ const router = express.Router();
 const sanitizeFolderName = (name: string) =>
     name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').substring(0, 50);
 
-// Temp storage for multer (files are moved to GridFS after upload)
-const TEMP_DIR = path.join(os.tmpdir(), 'alumni-gallery');
-if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true });
+const generateFilename = (originalname: string): string => {
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    return unique + path.extname(originalname);
+};
 
-const tempStorage = multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, TEMP_DIR),
-    filename: (_req, file, cb) => {
-        const unique = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, unique + path.extname(file.originalname));
-    },
-});
+// Memory storage for multer (no temp files)
+const memStorage = multer.memoryStorage();
 
 const fileFilter = (_req: express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
     const allowedImageTypes = /jpeg|jpg|png|gif|webp/;
@@ -33,7 +27,7 @@ const fileFilter = (_req: express.Request, file: Express.Multer.File, cb: multer
     cb(null, allowedImageTypes.test(ext) || allowedVideoTypes.test(ext));
 };
 
-const upload = multer({ storage: tempStorage, limits: { fileSize: 100 * 1024 * 1024 }, fileFilter });
+const upload = multer({ storage: memStorage, limits: { fileSize: 100 * 1024 * 1024 }, fileFilter });
 
 // ── Auth middleware ────────────────────────────────────────
 
@@ -123,8 +117,8 @@ router.post('/album/:albumId/images', requireAdmin, async (req, res) => {
 
         const folderName = (album as any).folderName || sanitizeFolderName(album.title);
 
-        // Use the shared temp-storage multer
-        const albumUpload = multer({ storage: tempStorage, limits: { fileSize: 100 * 1024 * 1024 }, fileFilter }).array('images', 20);
+        // Use memory-storage multer
+        const albumUpload = multer({ storage: memStorage, limits: { fileSize: 100 * 1024 * 1024 }, fileFilter }).array('images', 20);
 
         albumUpload(req, res, async (err) => {
             if (err) {
@@ -141,14 +135,14 @@ router.post('/album/:albumId/images', requireAdmin, async (req, res) => {
                 const ext = path.extname(file.originalname).toLowerCase();
                 const isVideo = ['.mp4', '.mov', '.avi', '.mkv', '.webm'].includes(ext);
                 const contentType = file.mimetype;
-                const gridName = `gallery/${folderName}/${file.filename}`;
+                const filename = generateFilename(file.originalname);
+                const gridName = `gallery/${folderName}/${filename}`;
 
-                // Store in GridFS
-                await storeFileInGridFS(file.path, gridName, contentType);
-                cleanupTempFile(file.path);
+                // Store buffer directly in GridFS
+                await storeBufferInGridFS(file.buffer, gridName, contentType);
 
                 newMedia.push({
-                    url: `/uploads/gallery/${folderName}/${file.filename}`,
+                    url: `/api/uploads/gallery/${folderName}/${filename}`,
                     type: isVideo ? 'video' : 'image',
                     uploadedBy: (req as any).user.id,
                     likes: [],
@@ -213,7 +207,7 @@ router.delete('/album/:albumId', requireAdmin, async (req, res) => {
 
         // Delete every image/video from GridFS
         for (const image of album.images) {
-            const gridName = image.url.replace(/^\/uploads\//, '');
+            const gridName = image.url.replace(/^\/?(?:api\/)?uploads\//, '');
             deleteGridFSFile(gridName).catch(e => console.error('GridFS delete error:', e));
         }
 

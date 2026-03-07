@@ -57,6 +57,50 @@ router.get('/my-connections', requireAuth, async (req, res) => {
     }
 });
 
+// GET /api/connections/pending-received - Get incoming pending requests
+router.get('/pending-received', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session?.userId as string | undefined;
+        const connections = await Connection.find({
+            recipient: userId,
+            status: ConnectionStatus.PENDING
+        }).populate('requester', 'name avatar headline currentCompany graduationYear department');
+
+        const requests = connections.map(conn => ({
+            requestId: conn._id,
+            user: conn.requester,
+            createdAt: conn.createdAt
+        }));
+
+        res.json(requests);
+    } catch (error) {
+        console.error('Error fetching pending received:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// GET /api/connections/pending-sent - Get outgoing pending requests
+router.get('/pending-sent', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session?.userId as string | undefined;
+        const connections = await Connection.find({
+            requester: userId,
+            status: ConnectionStatus.PENDING
+        }).populate('recipient', 'name avatar headline currentCompany graduationYear department');
+
+        const requests = connections.map(conn => ({
+            requestId: conn._id,
+            user: conn.recipient,
+            createdAt: conn.createdAt
+        }));
+
+        res.json(requests);
+    } catch (error) {
+        console.error('Error fetching pending sent:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 // GET /api/connections/status/:userId - Get status with a specific user
 router.get('/status/:otherId', requireAuth, async (req, res) => {
     try {

@@ -45,6 +45,8 @@ const PostJob = () => {
         }
     }, [user]);
 
+    const [jobImage, setJobImage] = useState<File | null>(null);
+
     const [formData, setFormData] = useState<JobFormData>({
         type: 'Full Time',
         title: '',
@@ -104,6 +106,17 @@ const PostJob = () => {
         }
 
         try {
+            // Upload image first if selected
+            let imageUrl: string | undefined = undefined;
+            if (jobImage) {
+                const fd = new FormData();
+                fd.append('image', jobImage);
+                const up = await api.post('/upload/job-image', fd, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                imageUrl = up.data.relative || up.data.url;
+            }
+
             // Map frontend fields to backend schema
             const jobData = {
                 title: formData.title,
@@ -119,6 +132,7 @@ const PostJob = () => {
                     : undefined,
                 description: formData.description,
                 requirements: formData.skills ? formData.skills.split(',').map(s => s.trim()).filter(Boolean) : [],
+                image: imageUrl,
                 industry: formData.industry,
                 workExperience: formData.workExperience,
                 experienceRange: formData.minYears && formData.maxYears ? `${formData.minYears}-${formData.maxYears} years` : undefined,
@@ -491,6 +505,33 @@ const PostJob = () => {
                                     className="w-full px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
                                 />
                                 {!formData.description && <p className="text-xs text-[var(--text-secondary)] mt-1">This information is required</p>}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
+                                    Job Image (optional)
+                                </label>
+                                <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-[var(--border-color)] rounded-lg cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--bg-tertiary)] transition-colors">
+                                    <div className="flex flex-col items-center gap-2">
+                                        {jobImage ? (
+                                            <img src={URL.createObjectURL(jobImage)} alt="preview" className="h-24 max-w-full object-contain rounded" />
+                                        ) : (
+                                            <>
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                                <span className="text-sm text-[var(--text-muted)]">Click to upload image</span>
+                                            </>
+                                        )}
+                                    </div>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => setJobImage(e.target.files?.[0] || null)}
+                                        className="hidden"
+                                    />
+                                </label>
+                                {jobImage && (
+                                    <button type="button" onClick={() => setJobImage(null)} className="mt-2 text-xs text-red-500 hover:underline">Remove image</button>
+                                )}
                             </div>
                         </div>
                     )}
