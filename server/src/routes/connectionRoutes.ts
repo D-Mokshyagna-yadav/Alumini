@@ -27,8 +27,11 @@ router.get('/stats/:userId', requireAuth, async (req, res) => {
         });
         
         const postsCount = await Post.countDocuments({ author: userId });
+
+        const targetUser = await User.findById(userId).select('profileViewers');
+        const profileViews = targetUser?.profileViewers?.length ?? 0;
         
-        res.json({ connections: connectionsCount, posts: postsCount });
+        res.json({ connections: connectionsCount, posts: postsCount, profileViews });
     } catch (error) {
         console.error('Error fetching stats:', error);
         res.status(500).json({ message: 'Server error' });

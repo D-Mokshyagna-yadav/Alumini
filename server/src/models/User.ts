@@ -63,6 +63,9 @@ export interface IUser extends Document {
     linkedinUrl?: string;
     githubUrl?: string;
     websiteUrl?: string;
+    twitterUrl?: string;
+    instagramUrl?: string;
+    youtubeUrl?: string;
 
     isVerified: boolean;
     // Job portal preferences
@@ -88,6 +91,8 @@ export interface IUser extends Document {
         phoneVisibility?: 'everyone' | 'connections' | 'only_me';
         connectionsVisibility?: 'everyone' | 'connections' | 'only_me';
     };
+
+    profileViewers: mongoose.Types.ObjectId[];
     
     createdAt: Date;
     updatedAt: Date;
@@ -147,11 +152,17 @@ const userSchema = new Schema<IUser>({
     linkedinUrl: { type: String },
     githubUrl: { type: String },
     websiteUrl: { type: String },
+    twitterUrl: { type: String },
+    instagramUrl: { type: String },
+    youtubeUrl: { type: String },
 
     // Saved posts by the user
     savedPosts: [{ type: Schema.Types.ObjectId, ref: 'Post' }],
 
     isVerified: { type: Boolean, default: false },
+
+    profileViewers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+
     // Job portal preferences
     jobProviderPreference: { type: String, enum: ['provider', 'referrer', 'not_provider'], default: 'not_provider' },
     jobSeekerPreference: { type: String, enum: ['active', 'casual', 'not_interested'], default: 'active' },

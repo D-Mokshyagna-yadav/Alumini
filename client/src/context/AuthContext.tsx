@@ -32,6 +32,9 @@ interface User {
     linkedinUrl?: string;
     githubUrl?: string;
     websiteUrl?: string;
+    twitterUrl?: string;
+    instagramUrl?: string;
+    youtubeUrl?: string;
     // Job preferences
     jobProviderPreference?: 'provider' | 'referrer' | 'not_provider';
     jobSeekerPreference?: 'active' | 'casual' | 'not_interested';

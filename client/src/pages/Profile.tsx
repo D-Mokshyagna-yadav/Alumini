@@ -11,7 +11,7 @@ import {
     User as UserIcon, GraduationCap, Briefcase, Edit3, Camera, Award, Users, UserPlus,
     MessageCircle, Plus, MapPin, Mail, Phone, Calendar, ExternalLink, Clock,
     Linkedin, Github, Globe, X, Check, Upload, FileText, Star, Building2,
-    Link as LinkIcon, Trash2, Edit2, Save
+    Link as LinkIcon, Trash2, Edit2, Save, ThumbsUp, Twitter, Instagram, Youtube
 } from 'lucide-react';
 import Avatar from '../components/ui/Avatar';
 import ConnectionsModal from '../components/ConnectionsModal';
@@ -58,6 +58,9 @@ const Profile = () => {
     const [linkedinUrl, setLinkedinUrl] = useState('');
     const [githubUrl, setGithubUrl] = useState('');
     const [websiteUrl, setWebsiteUrl] = useState('');
+    const [twitterUrl, setTwitterUrl] = useState('');
+    const [instagramUrl, setInstagramUrl] = useState('');
+    const [youtubeUrl, setYoutubeUrl] = useState('');
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [coverFile, setCoverFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -82,7 +85,7 @@ const Profile = () => {
     const [editingEdu, setEditingEdu] = useState<Education | null>(null);
     const [newSkill, setNewSkill] = useState('');
 
-    const [stats, setStats] = useState({ connections: 0, posts: 0, achievements: 0 });
+    const [stats, setStats] = useState({ connections: 0, posts: 0, achievements: 0, profileViews: 0 });
 
     const handleDeleteProfilePost = async (postId: string) => {
         const ok = await confirm({ title: 'Delete Post', message: 'Are you sure you want to delete this post? This cannot be undone.', confirmText: 'Delete', danger: true });
@@ -108,10 +111,68 @@ const Profile = () => {
         const ok = await confirm({ title: 'Delete Comment', message: 'Are you sure you want to delete this comment?', confirmText: 'Delete', danger: true });
         if (!ok) return;
         try {
-            await api.delete(`/posts/${postId}/comments/${commentId}`);
+            const res = await api.delete(`/posts/${postId}/comments/${commentId}`);
             setUserComments(prev => prev.filter(c => c._id !== commentId));
+            // Also update the post's comments in userPosts
+            if (res.data.comments) {
+                setUserPosts(prev => prev.map(p => p._id === postId ? { ...p, comments: res.data.comments } : p));
+            }
             toast.show('Comment deleted', 'success');
         } catch { toast.show('Failed to delete comment', 'error'); }
+    };
+
+    const handleProfilePostLike = async (postId: string) => {
+        try {
+            await api.post(`/posts/${postId}/like`);
+            setUserPosts(prev => prev.map(post => {
+                if (post._id !== postId) return post;
+                const userId = user?.id || '';
+                const likes = post.likes || [];
+                const newLikes = likes.includes(userId) ? likes.filter((id: string) => id !== userId) : [...likes, userId];
+                return { ...post, likes: newLikes };
+            }));
+        } catch { /* silent */ }
+    };
+
+    const handleProfilePostComment = async (postId: string) => {
+        if (!profileCommentText.trim()) return;
+        try {
+            const res = await api.post(`/posts/${postId}/comment`, { text: profileCommentText });
+            setUserPosts(prev => prev.map(post =>
+                post._id === postId ? { ...post, comments: res.data.comments } : post
+            ));
+            setProfileCommentText('');
+            setActiveProfileCommentPost(null);
+        } catch { /* silent */ }
+    };
+
+    const handleDeleteProfilePostComment = async (postId: string, commentId: string) => {
+        const ok = await confirm({ title: 'Delete Comment', message: 'Are you sure you want to delete this comment?', confirmText: 'Delete', danger: true });
+        if (!ok) return;
+        try {
+            const res = await api.delete(`/posts/${postId}/comments/${commentId}`);
+            setUserPosts(prev => prev.map(p => p._id === postId ? { ...p, comments: res.data.comments } : p));
+            toast.show('Comment deleted', 'success');
+        } catch { toast.show('Failed to delete comment', 'error'); }
+    };
+
+    const handleEditProfilePostComment = async (postId: string, commentId: string) => {
+        if (!editProfileCommentText.trim()) return;
+        try {
+            const res = await api.put(`/posts/${postId}/comments/${commentId}`, { text: editProfileCommentText });
+            setUserPosts(prev => prev.map(p => p._id === postId ? { ...p, comments: res.data.comments } : p));
+            setEditingProfileCommentId(null);
+            toast.show('Comment updated', 'success');
+        } catch { toast.show('Failed to update comment', 'error'); }
+    };
+
+    const getTimeAgo = (dateStr: string) => {
+        const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+        if (diff < 60) return 'Just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+        if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
+        return new Date(dateStr).toLocaleDateString();
     };
 
     const handleEditProfileComment = async (postId: string, commentId: string) => {
@@ -141,6 +202,10 @@ const Profile = () => {
     const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
     const [editCommentText, setEditCommentText] = useState('');
     const [editCommentPostId, setEditCommentPostId] = useState<string | null>(null);
+    const [activeProfileCommentPost, setActiveProfileCommentPost] = useState<string | null>(null);
+    const [profileCommentText, setProfileCommentText] = useState('');
+    const [editingProfileCommentId, setEditingProfileCommentId] = useState<string | null>(null);
+    const [editProfileCommentText, setEditProfileCommentText] = useState('');
     const confirm = useConfirm();
 
     const isOwnProfile = !id || id === user?.id;
@@ -163,6 +228,8 @@ const Profile = () => {
             try {
                 const res = await api.get(`/users/${id}`);
                 setViewUser(res.data.user);
+                // Record profile view (fire-and-forget, don't block on it)
+                api.post(`/users/${id}/view`).catch(() => {});
             } catch (err) {
                 console.error('Failed to load user', err);
             }
@@ -188,7 +255,8 @@ const Profile = () => {
                 setStats({
                     connections: statsRes.data.connections ?? 0,
                     posts: statsRes.data.posts ?? postsList.length,
-                    achievements: 0
+                    achievements: 0,
+                    profileViews: statsRes.data.profileViews ?? 0
                 });
                 // If viewing someone else's profile, check connection status
                 if (!isOwnProfile) {
@@ -272,6 +340,9 @@ const Profile = () => {
             setLinkedinUrl((user as any).linkedinUrl || '');
             setGithubUrl((user as any).githubUrl || '');
             setWebsiteUrl((user as any).websiteUrl || '');
+            setTwitterUrl((user as any).twitterUrl || '');
+            setInstagramUrl((user as any).instagramUrl || '');
+            setYoutubeUrl((user as any).youtubeUrl || '');
             setExperiences((user as any).experiences || []);
             setEducation((user as any).education || []);
             setSkills((user as any).skills || []);
@@ -325,7 +396,7 @@ const Profile = () => {
 
             const payload = { 
                 headline, currentCompany, currentLocation, bio, phone,
-                linkedinUrl, githubUrl, websiteUrl,
+                linkedinUrl, githubUrl, websiteUrl, twitterUrl, instagramUrl, youtubeUrl,
                 experiences, education, skills
             };
 
@@ -746,12 +817,12 @@ const Profile = () => {
                                             {editMode ? (
                                                 <div className="w-full space-y-2">
                                                     <div className="flex items-center gap-2">
-                                                        <Linkedin size={16} className="text-[var(--accent)]" />
+                                                        <Linkedin size={16} className="text-[#0A66C2]" />
                                                         <input
                                                             value={linkedinUrl}
                                                             onChange={(e) => setLinkedinUrl(e.target.value)}
-                                                            placeholder="LinkedIn URL"
-                                                            className="flex-1 text-sm bg-[var(--bg-tertiary)] px-3 py-2"
+                                                            placeholder="https://linkedin.com/in/username"
+                                                            className="flex-1 text-sm bg-[var(--bg-tertiary)] border border-[var(--border-color)]/30 px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--accent)] text-[var(--text-primary)] placeholder-[var(--text-muted)]"
                                                         />
                                                     </div>
                                                     <div className="flex items-center gap-2">
@@ -759,8 +830,35 @@ const Profile = () => {
                                                         <input
                                                             value={githubUrl}
                                                             onChange={(e) => setGithubUrl(e.target.value)}
-                                                            placeholder="GitHub URL"
-                                                            className="flex-1 text-sm bg-[var(--bg-tertiary)] px-3 py-2"
+                                                            placeholder="https://github.com/username"
+                                                            className="flex-1 text-sm bg-[var(--bg-tertiary)] border border-[var(--border-color)]/30 px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--accent)] text-[var(--text-primary)] placeholder-[var(--text-muted)]"
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Twitter size={16} className="text-[#1DA1F2]" />
+                                                        <input
+                                                            value={twitterUrl}
+                                                            onChange={(e) => setTwitterUrl(e.target.value)}
+                                                            placeholder="https://x.com/username"
+                                                            className="flex-1 text-sm bg-[var(--bg-tertiary)] border border-[var(--border-color)]/30 px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--accent)] text-[var(--text-primary)] placeholder-[var(--text-muted)]"
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Instagram size={16} className="text-[#E4405F]" />
+                                                        <input
+                                                            value={instagramUrl}
+                                                            onChange={(e) => setInstagramUrl(e.target.value)}
+                                                            placeholder="https://instagram.com/username"
+                                                            className="flex-1 text-sm bg-[var(--bg-tertiary)] border border-[var(--border-color)]/30 px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--accent)] text-[var(--text-primary)] placeholder-[var(--text-muted)]"
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Youtube size={16} className="text-[#FF0000]" />
+                                                        <input
+                                                            value={youtubeUrl}
+                                                            onChange={(e) => setYoutubeUrl(e.target.value)}
+                                                            placeholder="https://youtube.com/@channel"
+                                                            className="flex-1 text-sm bg-[var(--bg-tertiary)] border border-[var(--border-color)]/30 px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--accent)] text-[var(--text-primary)] placeholder-[var(--text-muted)]"
                                                         />
                                                     </div>
                                                     <div className="flex items-center gap-2">
@@ -768,27 +866,54 @@ const Profile = () => {
                                                         <input
                                                             value={websiteUrl}
                                                             onChange={(e) => setWebsiteUrl(e.target.value)}
-                                                            placeholder="Website URL"
-                                                            className="flex-1 text-sm bg-[var(--bg-tertiary)] px-3 py-2"
+                                                            placeholder="https://yourwebsite.com"
+                                                            className="flex-1 text-sm bg-[var(--bg-tertiary)] border border-[var(--border-color)]/30 px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--accent)] text-[var(--text-primary)] placeholder-[var(--text-muted)]"
                                                         />
                                                     </div>
                                                 </div>
                                             ) : (
                                                 <>
                                                     {profileUser?.linkedinUrl && (
-                                                        <a href={profileUser.linkedinUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)]/10 text-[var(--accent)] text-sm font-medium hover:bg-[var(--accent)]/20 transition-colors">
+                                                        <a href={profileUser.linkedinUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-[#0A66C2]/10 text-[#0A66C2] text-sm font-medium hover:bg-[#0A66C2]/20 transition-colors rounded-lg">
                                                             <Linkedin size={16} /> LinkedIn
                                                         </a>
                                                     )}
                                                     {profileUser?.githubUrl && (
-                                                        <a href={profileUser.githubUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-primary)]0/10 text-[var(--text-primary)] text-sm font-medium hover:bg-[var(--bg-primary)]0/20 transition-colors">
+                                                        <a href={profileUser.githubUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-tertiary)] text-[var(--text-primary)] text-sm font-medium hover:bg-[var(--bg-tertiary)]/80 transition-colors rounded-lg">
                                                             <Github size={16} /> GitHub
                                                         </a>
                                                     )}
+                                                    {profileUser?.twitterUrl && (
+                                                        <a href={profileUser.twitterUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-[#1DA1F2]/10 text-[#1DA1F2] text-sm font-medium hover:bg-[#1DA1F2]/20 transition-colors rounded-lg">
+                                                            <Twitter size={16} /> X / Twitter
+                                                        </a>
+                                                    )}
+                                                    {profileUser?.instagramUrl && (
+                                                        <a href={profileUser.instagramUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-[#E4405F]/10 text-[#E4405F] text-sm font-medium hover:bg-[#E4405F]/20 transition-colors rounded-lg">
+                                                            <Instagram size={16} /> Instagram
+                                                        </a>
+                                                    )}
+                                                    {profileUser?.youtubeUrl && (
+                                                        <a href={profileUser.youtubeUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-[#FF0000]/10 text-[#FF0000] text-sm font-medium hover:bg-[#FF0000]/20 transition-colors rounded-lg">
+                                                            <Youtube size={16} /> YouTube
+                                                        </a>
+                                                    )}
                                                     {profileUser?.websiteUrl && (
-                                                        <a href={profileUser.websiteUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)]/10 text-[var(--accent)] text-sm font-medium hover:bg-[var(--accent)]/20 transition-colors">
+                                                        <a href={profileUser.websiteUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)]/10 text-[var(--accent)] text-sm font-medium hover:bg-[var(--accent)]/20 transition-colors rounded-lg">
                                                             <Globe size={16} /> Website
                                                         </a>
+                                                    )}
+                                                    {!profileUser?.linkedinUrl && !profileUser?.githubUrl && !profileUser?.websiteUrl && !profileUser?.twitterUrl && !profileUser?.instagramUrl && !profileUser?.youtubeUrl && (
+                                                        isOwnProfile ? (
+                                                            <button
+                                                                onClick={() => setEditMode(true)}
+                                                                className="flex items-center gap-2 px-4 py-2.5 border border-dashed border-[var(--border-color)] text-[var(--text-muted)] text-sm hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors rounded-lg w-full justify-center"
+                                                            >
+                                                                <Plus size={16} /> Add social links
+                                                            </button>
+                                                        ) : (
+                                                            <p className="text-sm text-[var(--text-muted)]">No social links added</p>
+                                                        )
                                                     )}
                                                 </>
                                             )}
@@ -980,65 +1105,186 @@ const Profile = () => {
                                 exit={{ opacity: 0, y: -20 }}
                                 className="space-y-4"
                             >
-                                {userPosts.length > 0 ? userPosts.map((post, i) => (
+                                {userPosts.length > 0 ? userPosts.map((post, i) => {
+                                    const liked = user?.id ? (post.likes || []).includes(user.id) : false;
+                                    return (
                                     <motion.div
                                         key={post._id}
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: i * 0.1 }}
-                                        className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 p-5 shadow-md shadow-black/5"
+                                        className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 shadow-md shadow-black/5 overflow-hidden"
                                     >
-                                        {post.status === 'pending' && (
-                                            <div className="mb-2 px-2 py-1 bg-yellow-500/10 text-yellow-600 text-xs font-medium inline-block">Pending admin approval</div>
-                                        )}
-                                        {post.status === 'rejected' && (
-                                            <div className="mb-2 px-2 py-1 bg-red-500/10 text-red-500 text-xs font-medium inline-block">Rejected by admin</div>
-                                        )}
+                                        <div className="p-5">
+                                            {post.status === 'pending' && (
+                                                <div className="mb-2 px-2 py-1 bg-yellow-500/10 text-yellow-600 text-xs font-medium inline-block">Pending admin approval</div>
+                                            )}
+                                            {post.status === 'rejected' && (
+                                                <div className="mb-2 px-2 py-1 bg-red-500/10 text-red-500 text-xs font-medium inline-block">Rejected by admin</div>
+                                            )}
 
-                                        {editingPostId === post._id ? (
-                                            <div className="space-y-3">
-                                                <textarea
-                                                    value={editPostContent}
-                                                    onChange={e => setEditPostContent(e.target.value)}
-                                                    className="w-full p-3 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] text-sm rounded-lg resize-none h-28 focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
-                                                />
-                                                <div className="flex gap-2 justify-end">
-                                                    <button onClick={() => setEditingPostId(null)} className="px-3 py-1.5 text-xs text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] rounded-lg transition-colors">Cancel</button>
-                                                    <button onClick={() => handleEditProfilePost(post._id)} disabled={!editPostContent.trim()} className="px-3 py-1.5 text-xs bg-[var(--accent)] text-[var(--bg-primary)] rounded-lg hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-1">
-                                                        <Save size={12} /> Save
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <p className="text-[var(--text-primary)] whitespace-pre-wrap">{post.content}</p>
-                                                {post.media && post.media.length > 0 && (
-                                                    <div className="mt-3 overflow-hidden group">
-                                                        <ImageCarousel media={post.media} normalizeMediaUrl={resolveMediaUrl} />
+                                            {editingPostId === post._id ? (
+                                                <div className="space-y-3">
+                                                    <textarea
+                                                        value={editPostContent}
+                                                        onChange={e => setEditPostContent(e.target.value)}
+                                                        className="w-full p-3 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] text-sm rounded-lg resize-none h-28 focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                                                    />
+                                                    <div className="flex gap-2 justify-end">
+                                                        <button onClick={() => setEditingPostId(null)} className="px-3 py-1.5 text-xs text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] rounded-lg transition-colors">Cancel</button>
+                                                        <button onClick={() => handleEditProfilePost(post._id)} disabled={!editPostContent.trim()} className="px-3 py-1.5 text-xs bg-[var(--accent)] text-[var(--bg-primary)] rounded-lg hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-1">
+                                                            <Save size={12} /> Save
+                                                        </button>
                                                     </div>
-                                                )}
-                                            </>
-                                        )}
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <p className="text-[var(--text-primary)] whitespace-pre-wrap">{post.content}</p>
+                                                    {post.media && post.media.length > 0 && (
+                                                        <div className="mt-3 overflow-hidden group">
+                                                            <ImageCarousel media={post.media} normalizeMediaUrl={resolveMediaUrl} />
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
 
-                                        <div className="flex items-center gap-4 mt-4 pt-4 border-t border-[var(--border-color)]/50 text-sm text-[var(--text-muted)]">
-                                            <span>{post.likes?.length || 0} likes</span>
-                                            <span>{post.comments?.length || 0} comments</span>
-                                            <span className="ml-auto flex items-center gap-2">
-                                                {(isOwnProfile || isAdmin) && editingPostId !== post._id && (
+                                        {/* Engagement Stats */}
+                                        <div className="px-5 py-2.5 flex items-center justify-between text-[11px] text-[var(--text-muted)]">
+                                            <div className="flex items-center gap-1.5">
+                                                {(post.likes?.length || 0) > 0 && (
                                                     <>
-                                                        <button onClick={() => { setEditingPostId(post._id); setEditPostContent(post.content); }} className="p-1 hover:bg-[var(--bg-tertiary)] rounded transition-colors" title="Edit post">
-                                                            <Edit2 size={14} className="text-[var(--text-muted)] hover:text-[var(--accent)]" />
-                                                        </button>
-                                                        <button onClick={() => handleDeleteProfilePost(post._id)} className="p-1 hover:bg-red-500/10 rounded transition-colors" title="Delete post">
-                                                            <Trash2 size={14} className="text-[var(--text-muted)] hover:text-red-500" />
-                                                        </button>
+                                                        <div className="w-4 h-4 bg-[var(--accent)] rounded-full flex items-center justify-center">
+                                                            <ThumbsUp size={8} className="text-[var(--bg-primary)]" />
+                                                        </div>
+                                                        <span className="font-medium">{post.likes.length}</span>
                                                     </>
                                                 )}
-                                                {new Date(post.createdAt).toLocaleDateString()}
-                                            </span>
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <button onClick={() => setActiveProfileCommentPost(activeProfileCommentPost === post._id ? null : post._id)} className="hover:text-[var(--accent)] transition-colors cursor-pointer">
+                                                    {post.comments?.length || 0} comments
+                                                </button>
+                                                <span>{getTimeAgo(post.createdAt)}</span>
+                                            </div>
                                         </div>
+
+                                        {/* Action Buttons */}
+                                        <div className="border-t border-[var(--border-color)]/20 px-2 py-1 flex">
+                                            <button onClick={() => handleProfilePostLike(post._id)}
+                                                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all text-sm ${liked ? 'text-[var(--accent)] bg-[var(--accent)]/8' : 'text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)]/50'}`}
+                                            >
+                                                <ThumbsUp size={16} fill={liked ? 'currentColor' : 'none'} />
+                                                <span className="font-medium hidden sm:inline">Like</span>
+                                            </button>
+                                            <button onClick={() => setActiveProfileCommentPost(activeProfileCommentPost === post._id ? null : post._id)}
+                                                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)]/50 transition-all text-sm"
+                                            >
+                                                <MessageCircle size={16} />
+                                                <span className="font-medium hidden sm:inline">Comment</span>
+                                            </button>
+                                            {(isOwnProfile || isAdmin) && editingPostId !== post._id && (
+                                                <>
+                                                    <button onClick={() => { setEditingPostId(post._id); setEditPostContent(post.content); }}
+                                                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[var(--text-muted)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] transition-all text-sm"
+                                                    >
+                                                        <Edit2 size={16} />
+                                                        <span className="font-medium hidden sm:inline">Edit</span>
+                                                    </button>
+                                                    <button onClick={() => handleDeleteProfilePost(post._id)}
+                                                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[var(--text-muted)] hover:bg-red-500/10 hover:text-red-500 transition-all text-sm"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                        <span className="font-medium hidden sm:inline">Delete</span>
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+
+                                        {/* Comments Section */}
+                                        <AnimatePresence>
+                                            {activeProfileCommentPost === post._id && (
+                                                <motion.div
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: 'auto', opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    className="border-t border-[var(--border-color)]/20 px-4 py-3 bg-[var(--bg-tertiary)]/20"
+                                                >
+                                                    <div className="flex gap-2.5 mb-3">
+                                                        <div className="w-8 h-8 bg-[var(--accent)] rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                                            <Avatar src={user?.avatar} iconSize={14} />
+                                                        </div>
+                                                        <div className="flex-1 flex gap-2">
+                                                            <input type="text" value={profileCommentText} onChange={(e) => setProfileCommentText(e.target.value)}
+                                                                placeholder="Write a comment..."
+                                                                className="flex-1 bg-[var(--bg-secondary)]/80 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] px-3.5 py-2 rounded-full focus:outline-none border border-[var(--border-color)]/30 focus:border-[var(--accent)]/40 transition-colors"
+                                                                onKeyDown={(e) => e.key === 'Enter' && handleProfilePostComment(post._id)}
+                                                            />
+                                                            <button onClick={() => handleProfilePostComment(post._id)} disabled={!profileCommentText.trim()}
+                                                                className="px-4 py-2 bg-[var(--accent)] text-[var(--bg-primary)] text-xs font-semibold rounded-full disabled:opacity-40 transition-all"
+                                                            >Post</button>
+                                                        </div>
+                                                    </div>
+                                                    {post.comments?.length ? (
+                                                        <div className="space-y-2.5">
+                                                            {post.comments.map((comment: any) => (
+                                                                <motion.div key={comment._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-2.5 group/comment">
+                                                                    <div className="w-7 h-7 bg-[var(--accent)]/80 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                                                        <Avatar src={comment.author?.avatar} iconSize={12} />
+                                                                    </div>
+                                                                    <div className="flex-1 bg-[var(--bg-secondary)]/60 rounded-2xl px-3.5 py-2.5 relative">
+                                                                        <p className="text-xs font-semibold text-[var(--text-primary)]">{comment.author?.name || 'Unknown'}</p>
+                                                                        {editingProfileCommentId === comment._id ? (
+                                                                            <div className="mt-1 space-y-2">
+                                                                                <input
+                                                                                    type="text"
+                                                                                    value={editProfileCommentText}
+                                                                                    onChange={e => setEditProfileCommentText(e.target.value)}
+                                                                                    className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] text-xs rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                                                                                    onKeyDown={e => e.key === 'Enter' && handleEditProfilePostComment(post._id, comment._id)}
+                                                                                />
+                                                                                <div className="flex gap-1.5 justify-end">
+                                                                                    <button onClick={() => setEditingProfileCommentId(null)} className="px-2 py-1 text-[10px] text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] rounded transition-colors">Cancel</button>
+                                                                                    <button onClick={() => handleEditProfilePostComment(post._id, comment._id)} disabled={!editProfileCommentText.trim()} className="px-2 py-1 text-[10px] bg-[var(--accent)] text-[var(--bg-primary)] rounded hover:opacity-90 disabled:opacity-50 flex items-center gap-0.5">
+                                                                                        <Save size={10} /> Save
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <>
+                                                                                <p className="text-xs text-[var(--text-primary)] mt-0.5 leading-relaxed">{comment.text}</p>
+                                                                                <p className="text-[10px] text-[var(--text-muted)] mt-1">{getTimeAgo(comment.createdAt)}</p>
+                                                                            </>
+                                                                        )}
+                                                                        {(comment.author?._id === user?.id || user?.role === 'admin') && editingProfileCommentId !== comment._id && (
+                                                                            <div className="absolute top-2 right-2 flex gap-0.5 opacity-0 group-hover/comment:opacity-100 transition-all">
+                                                                                <button
+                                                                                    onClick={() => { setEditingProfileCommentId(comment._id); setEditProfileCommentText(comment.text); }}
+                                                                                    className="p-1 rounded-full hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] text-[var(--text-muted)] transition-all"
+                                                                                    title="Edit comment"
+                                                                                >
+                                                                                    <Edit2 size={12} />
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={() => handleDeleteProfilePostComment(post._id, comment._id)}
+                                                                                    className="p-1 rounded-full hover:bg-red-500/10 hover:text-red-500 text-[var(--text-muted)] transition-all"
+                                                                                    title="Delete comment"
+                                                                                >
+                                                                                    <Trash2 size={12} />
+                                                                                </button>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </motion.div>
+                                                            ))}
+                                                        </div>
+                                                    ) : null}
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
                                     </motion.div>
-                                )) : (
+                                    );
+                                }) : (
                                     <div className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 p-12 text-center shadow-md">
                                         <FileText size={48} className="text-[var(--text-muted)] mx-auto mb-4" />
                                         <p className="text-[var(--text-muted)]">No posts yet</p>
@@ -1152,7 +1398,7 @@ const Profile = () => {
                             {[
                                 { label: 'Connections', value: stats.connections, icon: Users, color: 'text-[var(--accent)]' },
                                 { label: 'Posts', value: stats.posts, icon: MessageCircle, color: 'text-[var(--text-secondary)]' },
-                                { label: 'Profile Views', value: 0, icon: Award, color: 'text-[var(--text-secondary)]' },
+                                { label: 'Profile Views', value: stats.profileViews, icon: Award, color: 'text-[var(--text-secondary)]' },
                             ].map((stat) => (
                                 <div key={stat.label} className="flex items-center justify-between p-3 bg-[var(--bg-tertiary)]/50">
                                     <div className="flex items-center gap-3">

@@ -82,6 +82,25 @@ router.get('/search/all', requireAuth, async (req, res) => {
     }
 });
 
+// POST /api/users/:id/view - Record a profile view
+router.post('/:id/view', requireAuth, async (req, res) => {
+    try {
+        const viewerId = req.session!.userId;
+        const profileId = req.params.id;
+
+        // Don't count self-views
+        if (viewerId === profileId) {
+            return res.json({ message: 'Self view not counted' });
+        }
+
+        await User.findByIdAndUpdate(profileId, { $addToSet: { profileViewers: viewerId } });
+        res.json({ message: 'View recorded' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 // GET /api/users/:id - Get single user profile
 router.get('/:id', requireAuth, async (req, res) => {
     try {
@@ -128,7 +147,7 @@ router.put('/profile', requireAuth, async (req, res) => {
         const updates = req.body;
 
         // Fields that can be updated
-        const allowedUpdates = ['headline', 'currentLocation', 'currentCompany', 'bio', 'skills', 'isMentor', 'avatar', 'coverImage', 'phone', 'linkedinUrl', 'githubUrl', 'websiteUrl', 'experiences', 'education', 'jobProviderPreference', 'jobSeekerPreference', 'privacySettings'];
+        const allowedUpdates = ['headline', 'currentLocation', 'currentCompany', 'bio', 'skills', 'isMentor', 'avatar', 'coverImage', 'phone', 'linkedinUrl', 'githubUrl', 'websiteUrl', 'twitterUrl', 'instagramUrl', 'youtubeUrl', 'experiences', 'education', 'jobProviderPreference', 'jobSeekerPreference', 'privacySettings'];
         const updateData: any = {};
 
         for (const key of allowedUpdates) {
