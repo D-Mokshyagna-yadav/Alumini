@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Clock, Users, UserCheck, UserX, Search, ChevronDown, ChevronUp, Eye, EyeOff, Plus, Edit2, Trash2, X, Lock, FileText, Briefcase, Calendar, Shield, ShieldOff, Image as ImageIcon, Upload, FolderPlus, ThumbsUp, MessageCircle, MapPin, Phone, Mail, GraduationCap, Building2, BadgeCheck, Heart, ToggleLeft, ToggleRight, Newspaper } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Users, UserCheck, UserX, Search, ChevronDown, ChevronUp, Eye, EyeOff, Plus, Edit2, Trash2, X, Lock, FileText, Briefcase, Calendar, Shield, ShieldOff, Image as ImageIcon, Upload, FolderPlus, ThumbsUp, MessageCircle, MapPin, Phone, Mail, GraduationCap, Building2, BadgeCheck, Heart, ToggleLeft, ToggleRight, Newspaper, Star, Landmark } from 'lucide-react';
 import { resolveMediaUrl } from '../../lib/media';
 import { useConfirm } from '../../context/ConfirmContext';
 import { Button } from '../../components/ui/Button';
@@ -65,7 +65,7 @@ const emptyUserForm = {
     bio: ''
 };
 
-type TabKey = 'pending' | 'registered' | 'posts' | 'jobs' | 'events' | 'gallery' | 'news';
+type TabKey = 'pending' | 'registered' | 'posts' | 'jobs' | 'events' | 'gallery' | 'news' | 'notable-alumni' | 'administration';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState<TabKey>('pending');
@@ -128,6 +128,23 @@ const AdminDashboard = () => {
     const [newsForm, setNewsForm] = useState({ title: '', body: '', link: '', priority: 0, draft: false });
     const [newsImage, setNewsImage] = useState<File | null>(null);
 
+    // Notable Alumni
+    const [allNotableAlumni, setAllNotableAlumni] = useState<any[]>([]);
+    const [showAlumniModal, setShowAlumniModal] = useState(false);
+    const [alumniModalMode, setAlumniModalMode] = useState<'create' | 'edit'>('create');
+    const [editingAlumniId, setEditingAlumniId] = useState<string | null>(null);
+    const [alumniForm, setAlumniForm] = useState({ name: '', role: '', batch: '', profileId: '', order: 0 });
+    const [alumniImage, setAlumniImage] = useState<File | null>(null);
+    const [alumniUserSearch, setAlumniUserSearch] = useState('');
+    const [alumniUserResults, setAlumniUserResults] = useState<any[]>([]);
+
+    // Administration
+    const [allAdminMembers, setAllAdminMembers] = useState<any[]>([]);
+    const [showAdminMemberModal, setShowAdminMemberModal] = useState(false);
+    const [adminMemberMode, setAdminMemberMode] = useState<'create' | 'edit'>('create');
+    const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+    const [adminMemberForm, setAdminMemberForm] = useState({ name: '', designation: '', category: 'governing' as 'governing' | 'officials', order: 0 });
+
     // Post preview
     const [previewPost, setPreviewPost] = useState<any | null>(null);
     const [previewPostLoading, setPreviewPostLoading] = useState(false);
@@ -169,7 +186,7 @@ const AdminDashboard = () => {
 
     const fetchData = async () => {
         try {
-            const [pendingRes, registeredRes, analyticsRes, postsRes, jobsRes, eventsRes, galleryRes, settingsRes, newsRes] = await Promise.all([
+            const [pendingRes, registeredRes, analyticsRes, postsRes, jobsRes, eventsRes, galleryRes, settingsRes, newsRes, notableRes, adminMembersRes] = await Promise.all([
                 api.get('/admin/pending-users'),
                 api.get('/admin/all-users?status=active'),
                 api.get('/admin/analytics-full').catch(() => api.get('/admin/analytics').then(r => ({ data: { ...r.data, totalPosts: 0, totalJobs: 0, totalEvents: 0, pendingEvents: 0 } }))),
@@ -179,6 +196,8 @@ const AdminDashboard = () => {
                 api.get('/gallery').catch(() => ({ data: { albums: [] } })),
                 api.get('/admin/settings').catch(() => ({ data: { settings: { autoApproveUsers: false, autoApprovePosts: false, autoApproveJobs: false } } })),
                 api.get('/public/news').catch(() => ({ data: { news: [] } })),
+                api.get('/admin/notable-alumni').catch(() => ({ data: { alumni: [] } })),
+                api.get('/admin/administration').catch(() => ({ data: { members: [] } })),
             ]);
             setPendingUsers(pendingRes.data.users);
             setRegisteredUsers(registeredRes.data.users);
@@ -188,6 +207,15 @@ const AdminDashboard = () => {
             setAllEvents(eventsRes.data.events || []);
             setAllAlbums(galleryRes.data.albums || []);
             setAllNews(newsRes.data.news || []);
+            setAllNotableAlumni(notableRes.data.alumni || []);
+            const adminMembers = adminMembersRes.data.members || [];
+            setAllAdminMembers(adminMembers);
+            // Auto-seed administration if empty
+            if (adminMembers.length === 0) {
+                api.post('/admin/administration/seed').then(r => {
+                    if (r.data.members) setAllAdminMembers(r.data.members);
+                }).catch(() => {});
+            }
             if (settingsRes.data.settings) {
                 setAutoApproveUsers(settingsRes.data.settings.autoApproveUsers);
                 setAutoApprovePosts(settingsRes.data.settings.autoApprovePosts);
@@ -875,6 +903,164 @@ const AdminDashboard = () => {
         }
     };
 
+    // ==================== NOTABLE ALUMNI ACTIONS ====================
+    const resetAlumniForm = () => {
+        setAlumniForm({ name: '', role: '', batch: '', profileId: '', order: 0 });
+        setAlumniImage(null);
+        setEditingAlumniId(null);
+        setAlumniModalMode('create');
+        setAlumniUserSearch('');
+        setAlumniUserResults([]);
+    };
+
+    const openCreateAlumniModal = () => {
+        resetAlumniForm();
+        setAlumniModalMode('create');
+        setShowAlumniModal(true);
+    };
+
+    const openEditAlumniModal = (item: any) => {
+        setAlumniForm({
+            name: item.name || '',
+            role: item.role || '',
+            batch: item.batch || '',
+            profileId: item.profileId || '',
+            order: item.order || 0,
+        });
+        setEditingAlumniId(item._id);
+        setAlumniModalMode('edit');
+        setShowAlumniModal(true);
+    };
+
+    const handleSaveAlumni = async () => {
+        if (!alumniForm.name.trim() || !alumniForm.role.trim() || !alumniForm.batch.trim()) {
+            setToast('Name, role and batch are required');
+            return;
+        }
+        try {
+            let imageUrl: string | undefined;
+            if (alumniImage) {
+                const fd = new FormData();
+                fd.append('image', alumniImage);
+                const up = await api.post('/upload/notable-alumni-image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+                imageUrl = up.data.relative || up.data.url;
+            }
+
+            if (alumniModalMode === 'edit' && editingAlumniId) {
+                const payload: any = { ...alumniForm };
+                if (imageUrl) payload.image = imageUrl;
+                const res = await api.put(`/admin/notable-alumni/${editingAlumniId}`, payload);
+                if (res.data.alumni) {
+                    setAllNotableAlumni(prev => prev.map(a => a._id === editingAlumniId ? res.data.alumni : a));
+                }
+                setToast('Alumni updated');
+            } else {
+                if (!imageUrl && !alumniImage) {
+                    setToast('Image is required');
+                    return;
+                }
+                const payload: any = { ...alumniForm, image: imageUrl };
+                const res = await api.post('/admin/notable-alumni', payload);
+                if (res.data.alumni) setAllNotableAlumni(prev => [...prev, res.data.alumni]);
+                setToast('Alumni added');
+            }
+            resetAlumniForm();
+            setShowAlumniModal(false);
+        } catch (err: any) {
+            setToast(err.response?.data?.message || 'Failed to save alumni');
+        }
+    };
+
+    const handleDeleteAlumni = async (id: string) => {
+        const ok = await confirm({ title: 'Delete Alumni', message: 'Remove this notable alumni entry?' });
+        if (!ok) return;
+        try {
+            await api.delete(`/admin/notable-alumni/${id}`);
+            setAllNotableAlumni(prev => prev.filter(a => a._id !== id));
+            setToast('Alumni deleted');
+        } catch {
+            setToast('Failed to delete alumni');
+        }
+    };
+
+    const searchAlumniUsers = async (q: string) => {
+        setAlumniUserSearch(q);
+        if (q.trim().length < 2) { setAlumniUserResults([]); return; }
+        try {
+            const res = await api.get(`/admin/all-users?status=active`);
+            const filtered = (res.data.users || []).filter((u: any) =>
+                u.name.toLowerCase().includes(q.toLowerCase()) ||
+                u.email.toLowerCase().includes(q.toLowerCase())
+            ).slice(0, 8);
+            setAlumniUserResults(filtered);
+        } catch {
+            setAlumniUserResults([]);
+        }
+    };
+
+    // ==================== FILTERING ====================
+
+    // ==================== ADMINISTRATION ACTIONS ====================
+    const resetAdminMemberForm = () => {
+        setAdminMemberForm({ name: '', designation: '', category: 'governing', order: 0 });
+        setEditingMemberId(null);
+        setAdminMemberMode('create');
+    };
+
+    const openCreateAdminMemberModal = () => {
+        resetAdminMemberForm();
+        setAdminMemberMode('create');
+        setShowAdminMemberModal(true);
+    };
+
+    const openEditAdminMemberModal = (item: any) => {
+        setAdminMemberForm({
+            name: item.name || '',
+            designation: item.designation || '',
+            category: item.category || 'governing',
+            order: item.order || 0,
+        });
+        setEditingMemberId(item._id);
+        setAdminMemberMode('edit');
+        setShowAdminMemberModal(true);
+    };
+
+    const handleSaveAdminMember = async () => {
+        if (!adminMemberForm.name.trim() || !adminMemberForm.designation.trim()) {
+            setToast('Name and designation are required');
+            return;
+        }
+        try {
+            if (adminMemberMode === 'edit' && editingMemberId) {
+                const res = await api.put(`/admin/administration/${editingMemberId}`, adminMemberForm);
+                if (res.data.member) {
+                    setAllAdminMembers(prev => prev.map(m => m._id === editingMemberId ? res.data.member : m));
+                }
+                setToast('Member updated');
+            } else {
+                const res = await api.post('/admin/administration', adminMemberForm);
+                if (res.data.member) setAllAdminMembers(prev => [...prev, res.data.member]);
+                setToast('Member added');
+            }
+            resetAdminMemberForm();
+            setShowAdminMemberModal(false);
+        } catch (err: any) {
+            setToast(err.response?.data?.message || 'Failed to save member');
+        }
+    };
+
+    const handleDeleteAdminMember = async (id: string) => {
+        const ok = await confirm({ title: 'Delete Member', message: 'Remove this administration member?' });
+        if (!ok) return;
+        try {
+            await api.delete(`/admin/administration/${id}`);
+            setAllAdminMembers(prev => prev.filter(m => m._id !== id));
+            setToast('Member deleted');
+        } catch {
+            setToast('Failed to delete member');
+        }
+    };
+
     // ==================== FILTERING ====================
     const filteredUsers = (activeTab === 'pending' ? pendingUsers : registeredUsers).filter(user =>
         user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -903,6 +1089,17 @@ const AdminDashboard = () => {
         (n.body || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const filteredNotableAlumni = allNotableAlumni.filter(a =>
+        (a.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (a.role || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (a.batch || '').toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const filteredAdminMembers = allAdminMembers.filter(m =>
+        (m.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (m.designation || '').toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     if (loading) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[var(--bg-primary)]">
@@ -923,6 +1120,8 @@ const AdminDashboard = () => {
         { key: 'events', label: 'Events', count: allEvents.length, icon: Calendar },
         { key: 'gallery', label: 'Gallery', count: allAlbums.length, icon: ImageIcon },
         { key: 'news', label: 'News', count: allNews.length, icon: Newspaper },
+        { key: 'notable-alumni', label: 'Notable Alumni', count: allNotableAlumni.length, icon: Star },
+        { key: 'administration', label: 'Administration', count: allAdminMembers.length, icon: Landmark },
     ];
 
     return (
@@ -954,6 +1153,16 @@ const AdminDashboard = () => {
                         {activeTab === 'news' && (
                             <Button onClick={openCreateNewsModal} className="flex items-center gap-2">
                                 <Plus size={18} /> Create News
+                            </Button>
+                        )}
+                        {activeTab === 'notable-alumni' && (
+                            <Button onClick={openCreateAlumniModal} className="flex items-center gap-2">
+                                <Plus size={18} /> Add Alumni
+                            </Button>
+                        )}
+                        {activeTab === 'administration' && (
+                            <Button onClick={openCreateAdminMemberModal} className="flex items-center gap-2">
+                                <Plus size={18} /> Add Member
                             </Button>
                         )}
                         {(activeTab === 'pending' || activeTab === 'registered') && (
@@ -1343,7 +1552,108 @@ const AdminDashboard = () => {
                         </div>
                     )}
 
+                    {/* =============== NOTABLE ALUMNI TAB =============== */}
+                    {activeTab === 'notable-alumni' && (
+                        <div className="divide-y divide-[var(--border-color)]">
+                            {filteredNotableAlumni.length === 0 ? (
+                                <EmptyState icon={Star} text="No notable alumni added yet" />
+                            ) : (
+                                filteredNotableAlumni.map(item => (
+                                    <div key={item._id} className="p-4 hover:bg-[var(--bg-tertiary)] transition-colors">
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="flex items-start gap-3 flex-1 min-w-0">
+                                                {item.image && (
+                                                    <img src={resolveMediaUrl(item.image)} alt={item.name} className="w-16 h-16 object-cover rounded-lg flex-shrink-0" />
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-semibold text-[var(--text-primary)]">{item.name}</p>
+                                                    <p className="text-sm text-[var(--text-secondary)]">{item.role}</p>
+                                                    <div className="flex items-center gap-3 mt-1 text-xs text-[var(--text-muted)]">
+                                                        <span>Class of {item.batch}</span>
+                                                        {item.profileId && <span className="text-[var(--accent)]">Profile linked</span>}
+                                                        <span>Order: {item.order}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                <Button size="sm" variant="outline" onClick={() => openEditAlumniModal(item)}>
+                                                    <Edit2 size={14} />
+                                                </Button>
+                                                <Button size="sm" variant="destructive" onClick={() => handleDeleteAlumni(item._id)}>
+                                                    <Trash2 size={14} />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
+
                     {/* =============== USERS TABS (pending + registered) =============== */}
+
+                    {/* =============== ADMINISTRATION TAB =============== */}
+                    {activeTab === 'administration' && (
+                        <div className="divide-y divide-[var(--border-color)]">
+                            {filteredAdminMembers.length === 0 ? (
+                                <EmptyState icon={Landmark} text="No administration members found" />
+                            ) : (
+                                <>
+                                    {/* Governing Body */}
+                                    {filteredAdminMembers.filter(m => m.category === 'governing').length > 0 && (
+                                        <div className="p-4">
+                                            <h4 className="text-sm font-semibold text-[var(--accent)] uppercase tracking-wide mb-3">Governing Body</h4>
+                                            <div className="space-y-2">
+                                                {filteredAdminMembers.filter(m => m.category === 'governing').map(item => (
+                                                    <div key={item._id} className="flex items-center justify-between gap-4 p-3 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors">
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-medium text-[var(--text-primary)]">{item.name}</p>
+                                                            <p className="text-sm text-[var(--text-secondary)]">{item.designation}</p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                                            <span className="text-xs text-[var(--text-muted)]">#{item.order}</span>
+                                                            <Button size="sm" variant="outline" onClick={() => openEditAdminMemberModal(item)}>
+                                                                <Edit2 size={14} />
+                                                            </Button>
+                                                            <Button size="sm" variant="destructive" onClick={() => handleDeleteAdminMember(item._id)}>
+                                                                <Trash2 size={14} />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {/* Key Officials */}
+                                    {filteredAdminMembers.filter(m => m.category === 'officials').length > 0 && (
+                                        <div className="p-4">
+                                            <h4 className="text-sm font-semibold text-[var(--accent)] uppercase tracking-wide mb-3">Key Officials</h4>
+                                            <div className="space-y-2">
+                                                {filteredAdminMembers.filter(m => m.category === 'officials').map(item => (
+                                                    <div key={item._id} className="flex items-center justify-between gap-4 p-3 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors">
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-medium text-[var(--text-primary)]">{item.name}</p>
+                                                            <p className="text-sm text-[var(--text-secondary)]">{item.designation}</p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                                            <span className="text-xs text-[var(--text-muted)]">#{item.order}</span>
+                                                            <Button size="sm" variant="outline" onClick={() => openEditAdminMemberModal(item)}>
+                                                                <Edit2 size={14} />
+                                                            </Button>
+                                                            <Button size="sm" variant="destructive" onClick={() => handleDeleteAdminMember(item._id)}>
+                                                                <Trash2 size={14} />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    )}
+
                     {(activeTab === 'pending' || activeTab === 'registered') && (
                         <>
                             {filteredUsers.length === 0 ? (
@@ -1851,6 +2161,129 @@ const AdminDashboard = () => {
                                 <button onClick={() => { setShowNewsModal(false); resetNewsForm(); }} className="px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]">Cancel</button>
                                 <Button onClick={handleSaveNews} disabled={!newsForm.title.trim()}>
                                     {newsModalMode === 'edit' ? 'Save Changes' : 'Publish'}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Notable Alumni Modal */}
+                {showAlumniModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 modal-overlay">
+                        <div className="bg-[var(--bg-secondary)] w-full max-w-lg modal-content max-h-[90vh] overflow-y-auto">
+                            <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between sticky top-0 bg-[var(--bg-secondary)] z-10">
+                                <h3 className="text-lg font-semibold text-[var(--text-primary)]">{alumniModalMode === 'edit' ? 'Edit Notable Alumni' : 'Add Notable Alumni'}</h3>
+                                <button onClick={() => { setShowAlumniModal(false); resetAlumniForm(); }} className="p-1 text-[var(--text-muted)]"><X size={18} /></button>
+                            </div>
+                            <div className="p-4 space-y-4">
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Name *</label>
+                                    <input value={alumniForm.name} onChange={e => setAlumniForm({ ...alumniForm, name: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" placeholder="Alumni name" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Role / Title *</label>
+                                    <input value={alumniForm.role} onChange={e => setAlumniForm({ ...alumniForm, role: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" placeholder="e.g. Software Developer, CEO" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm text-[var(--text-muted)] mb-1">Batch / Class *</label>
+                                        <input value={alumniForm.batch} onChange={e => setAlumniForm({ ...alumniForm, batch: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" placeholder="e.g. 2015" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-[var(--text-muted)] mb-1">Display Order</label>
+                                        <input type="number" min={0} value={alumniForm.order} onChange={e => setAlumniForm({ ...alumniForm, order: parseInt(e.target.value) || 0 })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Photo {alumniModalMode === 'create' ? '*' : '(optional, leave empty to keep current)'}</label>
+                                    <input type="file" accept="image/*" onChange={e => setAlumniImage(e.target.files?.[0] || null)} className="text-sm text-[var(--text-primary)]" />
+                                    {alumniImage && (
+                                        <img src={URL.createObjectURL(alumniImage)} alt="preview" className="mt-2 w-full h-36 object-contain bg-[var(--bg-tertiary)] rounded" />
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Link to Profile (search by name or email)</label>
+                                    <input
+                                        value={alumniUserSearch}
+                                        onChange={e => searchAlumniUsers(e.target.value)}
+                                        className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] rounded"
+                                        placeholder="Search registered users..."
+                                    />
+                                    {alumniForm.profileId && (
+                                        <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-[var(--accent)]/10 rounded-lg border border-[var(--accent)]/20">
+                                            <BadgeCheck size={14} className="text-[var(--accent)] flex-shrink-0" />
+                                            <span className="text-sm text-[var(--accent)] font-medium truncate">Linked: {alumniUserSearch || alumniForm.profileId}</span>
+                                            <button onClick={() => { setAlumniForm({ ...alumniForm, profileId: '' }); setAlumniUserSearch(''); }} className="ml-auto text-xs text-red-400 hover:text-red-300 font-medium">Remove</button>
+                                        </div>
+                                    )}
+                                    {alumniUserResults.length > 0 && (
+                                        <div className="mt-1 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg max-h-48 overflow-y-auto shadow-lg">
+                                            {alumniUserResults.map((u: any) => (
+                                                <button
+                                                    key={u._id}
+                                                    onClick={() => {
+                                                        setAlumniForm({ ...alumniForm, profileId: u._id });
+                                                        setAlumniUserSearch(u.name);
+                                                        setAlumniUserResults([]);
+                                                    }}
+                                                    className="w-full text-left px-3 py-2.5 hover:bg-[var(--bg-tertiary)] flex items-center gap-3 text-sm border-b border-[var(--border-color)] last:border-b-0 transition-colors"
+                                                >
+                                                    <div className="w-8 h-8 rounded-full bg-[var(--accent)]/15 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                                        <Avatar src={u.avatar} iconSize={16} iconClassName="text-[var(--accent)]" imgClassName="w-8 h-8 rounded-full object-cover" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[var(--text-primary)] font-medium truncate">{u.name}</p>
+                                                        <p className="text-xs text-[var(--text-muted)] truncate">{u.email}</p>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
+                                <button onClick={() => { setShowAlumniModal(false); resetAlumniForm(); }} className="px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]">Cancel</button>
+                                <Button onClick={handleSaveAlumni} disabled={!alumniForm.name.trim() || !alumniForm.role.trim() || !alumniForm.batch.trim()}>
+                                    {alumniModalMode === 'edit' ? 'Save Changes' : 'Add Alumni'}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Administration Member Modal */}
+                {showAdminMemberModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 modal-overlay">
+                        <div className="bg-[var(--bg-secondary)] w-full max-w-lg modal-content rounded-xl overflow-hidden">
+                            <div className="p-4 border-b border-[var(--border-color)]/30 flex items-center justify-between">
+                                <h3 className="text-lg font-semibold text-[var(--text-primary)]">{adminMemberMode === 'edit' ? 'Edit Member' : 'Add Member'}</h3>
+                                <button onClick={() => { setShowAdminMemberModal(false); resetAdminMemberForm(); }} className="p-1 text-[var(--text-muted)]"><X size={18} /></button>
+                            </div>
+                            <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+                                <div>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Name *</label>
+                                    <input value={adminMemberForm.name} onChange={e => setAdminMemberForm(p => ({ ...p, name: e.target.value }))} className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-3 py-2 text-[var(--text-primary)]" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Designation *</label>
+                                    <input value={adminMemberForm.designation} onChange={e => setAdminMemberForm(p => ({ ...p, designation: e.target.value }))} className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-3 py-2 text-[var(--text-primary)]" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Category *</label>
+                                    <select value={adminMemberForm.category} onChange={e => setAdminMemberForm(p => ({ ...p, category: e.target.value as 'governing' | 'officials' }))} className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-3 py-2 text-[var(--text-primary)]">
+                                        <option value="governing">Governing Body</option>
+                                        <option value="officials">Key Officials</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Order</label>
+                                    <input type="number" value={adminMemberForm.order} onChange={e => setAdminMemberForm(p => ({ ...p, order: parseInt(e.target.value) || 0 }))} className="w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-3 py-2 text-[var(--text-primary)]" />
+                                </div>
+                            </div>
+                            <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
+                                <button onClick={() => { setShowAdminMemberModal(false); resetAdminMemberForm(); }} className="px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]">Cancel</button>
+                                <Button onClick={handleSaveAdminMember} disabled={!adminMemberForm.name.trim() || !adminMemberForm.designation.trim()}>
+                                    {adminMemberMode === 'edit' ? 'Save Changes' : 'Add Member'}
                                 </Button>
                             </div>
                         </div>

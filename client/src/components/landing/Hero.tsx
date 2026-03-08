@@ -9,10 +9,30 @@ const Hero = ({ data }: { data?: any }) => {
 
     return (
         <div className="relative min-h-[90vh] flex flex-col items-center justify-center overflow-hidden bg-[var(--bg-primary)]">
-            {/* Subtle background gradient */}
-            <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[var(--accent)]/[0.04] rounded-full blur-[120px]" />
-                <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[var(--accent)]/[0.03] rounded-full blur-[100px]" />
+            {/* Samsung-style beam drop + impact on load */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none z-20">
+                <div className="beam-drop">
+                    <div className="beam-tip" />
+                    <div className="beam-particles" />
+                </div>
+                <div className="beam-impact">
+                    <div className="beam-impact-flash" />
+                    <div className="beam-ripple" />
+                    <div className="beam-ripple" />
+                    <div className="beam-ripple" />
+                    <div className="beam-ripple" />
+                    <div className="beam-streak" />
+                </div>
+            </div>
+
+            {/* Samsung-style spotlight sweep (loops after drop) */}
+            <div className="spotlight" />
+
+            {/* Ambient gradient backdrop */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute inset-0 bg-gradient-to-br from-[var(--gradient-start)]/[0.05] via-transparent to-[var(--gradient-end)]/[0.03]" />
+                <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-[var(--accent)]/[0.04] rounded-full blur-[180px] spotlight-pulse" />
+                <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-[var(--gradient-end)]/[0.03] rounded-full blur-[140px]" />
             </div>
 
             {/* Content */}
@@ -78,7 +98,7 @@ const Hero = ({ data }: { data?: any }) => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.6 }}
-                    className="w-full mt-20 sm:mt-24 pt-10 border-t border-[var(--border-color)] overflow-hidden"
+                    className="w-full mt-20 sm:mt-24 pt-10 border-t border-[var(--accent)]/10 overflow-hidden"
                 >
                     <p className="text-xs sm:text-sm font-semibold text-[var(--text-muted)] uppercase tracking-[0.2em] mb-8 sm:mb-10 text-center">
                         Our Alumni Work At

@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 import fs from 'fs';
-import { Readable } from 'stream';
 
 let _bucket: InstanceType<typeof mongoose.mongo.GridFSBucket> | null = null;
 
@@ -19,6 +18,7 @@ export const getGridFSBucket = (): InstanceType<typeof mongoose.mongo.GridFSBuck
 
 /**
  * Store a Buffer directly into GridFS (no temp file needed).
+ * Uses direct write for speed — avoids Readable.from() overhead.
  * @param buffer      The file contents in memory
  * @param gridName    The "filename" stored in GridFS, e.g. "username/profile/123-456.jpg"
  * @param contentType MIME type
@@ -31,13 +31,16 @@ export const storeBufferInGridFS = (
 ): Promise<mongoose.Types.ObjectId> => {
     return new Promise((resolve, reject) => {
         const bucket = getGridFSBucket();
-        const readStream = Readable.from(buffer);
-        const uploadStream = bucket.openUploadStream(gridName, { contentType });
+        const uploadStream = bucket.openUploadStream(gridName, {
+            contentType,
+            metadata: { size: buffer.length, uploadedAt: new Date() },
+        });
 
-        readStream.pipe(uploadStream);
         uploadStream.on('finish', () => resolve(uploadStream.id as mongoose.Types.ObjectId));
         uploadStream.on('error', reject);
-        readStream.on('error', reject);
+
+        // Direct write + end is faster than piping a Readable stream
+        uploadStream.end(buffer);
     });
 };
 

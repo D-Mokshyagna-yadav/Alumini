@@ -198,5 +198,31 @@ router.get('/feed', async (req, res) => {
     }
 });
 
+// GET /api/public/notable-alumni
+import NotableAlumni from '../models/NotableAlumni';
+router.get('/notable-alumni', async (req, res) => {
+    try {
+        const alumni = await NotableAlumni.find().sort({ order: 1, createdAt: -1 });
+        return res.json({ alumni });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// GET /api/public/administration
+import Administration from '../models/Administration';
+router.get('/administration', async (req, res) => {
+    try {
+        const members = await Administration.find().sort({ category: 1, order: 1, createdAt: 1 });
+        const governing = members.filter(m => m.category === 'governing');
+        const officials = members.filter(m => m.category === 'officials');
+        return res.json({ governing, officials });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Server error' });
+    }
+});
+
 export { router as publicRouter };
 

@@ -5,6 +5,8 @@ import Post from '../models/Post';
 import Job from '../models/Job';
 import Notification from '../models/Notification';
 import SiteSettings, { getSettings } from '../models/SiteSettings';
+import NotableAlumni from '../models/NotableAlumni';
+import Administration from '../models/Administration';
 
 const router = express.Router();
 
@@ -634,6 +636,146 @@ router.put('/settings', requireAdmin, async (req, res) => {
         if (typeof autoApproveJobs === 'boolean') settings.autoApproveJobs = autoApproveJobs;
         await settings.save();
         res.json({ message: 'Settings updated', settings });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// ==================== NOTABLE ALUMNI CRUD ====================
+
+// GET /api/admin/notable-alumni
+router.get('/notable-alumni', requireAdmin, async (req, res) => {
+    try {
+        const alumni = await NotableAlumni.find().sort({ order: 1, createdAt: -1 });
+        res.json({ alumni });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// POST /api/admin/notable-alumni
+router.post('/notable-alumni', requireAdmin, async (req, res) => {
+    try {
+        const { name, role, batch, image, profileId, order } = req.body;
+        if (!name || !role || !batch || !image) {
+            return res.status(400).json({ message: 'Name, role, batch and image are required' });
+        }
+        const alumni = await NotableAlumni.create({ name, role, batch, image, profileId: profileId || null, order: order || 0 });
+        res.json({ alumni });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// PUT /api/admin/notable-alumni/:id
+router.put('/notable-alumni/:id', requireAdmin, async (req, res) => {
+    try {
+        const { name, role, batch, image, profileId, order } = req.body;
+        const update: any = {};
+        if (name) update.name = name;
+        if (role) update.role = role;
+        if (batch) update.batch = batch;
+        if (image) update.image = image;
+        if (typeof profileId !== 'undefined') update.profileId = profileId || null;
+        if (typeof order !== 'undefined') update.order = Number(order) || 0;
+        const alumni = await NotableAlumni.findByIdAndUpdate(req.params.id, update, { new: true });
+        if (!alumni) return res.status(404).json({ message: 'Not found' });
+        res.json({ alumni });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// DELETE /api/admin/notable-alumni/:id
+router.delete('/notable-alumni/:id', requireAdmin, async (req, res) => {
+    try {
+        const alumni = await NotableAlumni.findByIdAndDelete(req.params.id);
+        if (!alumni) return res.status(404).json({ message: 'Not found' });
+        res.json({ message: 'Deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// ==================== ADMINISTRATION CRUD ====================
+
+// GET /api/admin/administration
+router.get('/administration', requireAdmin, async (req, res) => {
+    try {
+        const members = await Administration.find().sort({ category: 1, order: 1, createdAt: 1 });
+        res.json({ members });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// POST /api/admin/administration
+router.post('/administration', requireAdmin, async (req, res) => {
+    try {
+        const { name, designation, category, order } = req.body;
+        if (!name || !designation || !category) {
+            return res.status(400).json({ message: 'Name, designation and category are required' });
+        }
+        const member = await Administration.create({ name, designation, category, order: order || 0 });
+        res.json({ member });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// PUT /api/admin/administration/:id
+router.put('/administration/:id', requireAdmin, async (req, res) => {
+    try {
+        const { name, designation, category, order } = req.body;
+        const update: any = {};
+        if (name) update.name = name;
+        if (designation) update.designation = designation;
+        if (category) update.category = category;
+        if (typeof order !== 'undefined') update.order = Number(order) || 0;
+        const member = await Administration.findByIdAndUpdate(req.params.id, update, { new: true });
+        if (!member) return res.status(404).json({ message: 'Not found' });
+        res.json({ member });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// DELETE /api/admin/administration/:id
+router.delete('/administration/:id', requireAdmin, async (req, res) => {
+    try {
+        const member = await Administration.findByIdAndDelete(req.params.id);
+        if (!member) return res.status(404).json({ message: 'Not found' });
+        res.json({ message: 'Deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// POST /api/admin/administration/seed — seed default data if empty
+router.post('/administration/seed', requireAdmin, async (req, res) => {
+    try {
+        const count = await Administration.countDocuments();
+        if (count > 0) return res.json({ message: 'Already seeded', members: await Administration.find().sort({ category: 1, order: 1 }) });
+        const defaults = [
+            { name: 'Dr. M.V. Ramana Rao', designation: 'Chairman', category: 'governing', order: 0 },
+            { name: 'Sri N. Srinivasa Rao', designation: 'Vice Chairman', category: 'governing', order: 1 },
+            { name: 'Sri M. Srinivasa Rao', designation: 'Director (P&D)', category: 'governing', order: 2 },
+            { name: 'Sri D. Panduranga Rao', designation: 'CEO', category: 'governing', order: 3 },
+            { name: 'Dr. T. Vamsee Kiran', designation: 'Principal', category: 'officials', order: 0 },
+            { name: 'Dr. G. Rajesh', designation: 'Dean (Academics)', category: 'officials', order: 1 },
+            { name: 'Dr. A. Guravaiah', designation: 'Dean (R&D)', category: 'officials', order: 2 },
+        ];
+        const members = await Administration.insertMany(defaults);
+        res.json({ message: 'Seeded successfully', members });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error' });

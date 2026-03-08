@@ -27,14 +27,21 @@ const values = [
 
 const Landing = () => {
     const [home, setHome] = useState<HomePayload | null>(null);
+    const [governing, setGoverning] = useState<{ name: string; designation: string }[]>([]);
+    const [officials, setOfficials] = useState<{ name: string; designation: string }[]>([]);
 
     useEffect(() => {
         let mounted = true;
         const load = async () => {
             try {
-                const res = await api.get('/public/home');
+                const [homeRes, adminRes] = await Promise.all([
+                    api.get('/public/home'),
+                    api.get('/public/administration').catch(() => ({ data: { governing: [], officials: [] } })),
+                ]);
                 if (!mounted) return;
-                setHome(res.data.home || null);
+                setHome(homeRes.data.home || null);
+                setGoverning(adminRes.data.governing || []);
+                setOfficials(adminRes.data.officials || []);
             } catch (err) {
                 console.error('Failed to load home content', err);
             }
@@ -48,8 +55,12 @@ const Landing = () => {
             <Hero data={home?.hero} />
             <StatsBar stats={home?.stats} />
 
+            {/* Gradient divider */}
+            <div className="gradient-divider" />
+
             {/* About — Legacy Introduction */}
-            <section className="py-20 bg-[var(--bg-secondary)]">
+            <section className="py-20 bg-[var(--bg-secondary)] relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-[var(--gradient-start)]/[0.04] via-transparent to-[var(--gradient-end)]/[0.03] pointer-events-none" />
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
                         <motion.div
@@ -102,8 +113,11 @@ const Landing = () => {
                 </div>
             </section>
 
+            <div className="gradient-divider" />
+
             {/* Vision & Mission */}
-            <section className="py-24 bg-[var(--bg-primary)]">
+            <section className="py-24 bg-[var(--bg-primary)] relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-tl from-[var(--gradient-end)]/[0.03] via-transparent to-[var(--gradient-start)]/[0.02] pointer-events-none" />
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-16">
                         <h2 className="text-3xl md:text-4xl font-heading font-bold text-[var(--text-primary)] mb-4">Our Purpose</h2>
@@ -151,8 +165,11 @@ const Landing = () => {
             <Leaders data={home?.leaders} />
             <Timeline data={home?.timeline} />
 
+            <div className="gradient-divider" />
+
             {/* Core Values */}
-            <section className="py-20 bg-[var(--bg-primary)]">
+            <section className="py-20 bg-[var(--bg-primary)] relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)]/[0.03] via-transparent to-[var(--gradient-end)]/[0.02] pointer-events-none" />
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <h2 className="text-2xl sm:text-3xl font-heading font-bold text-[var(--text-primary)] text-center mb-12">Our Core Values</h2>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 mb-20">
@@ -175,55 +192,45 @@ const Landing = () => {
                     </div>
 
                     {/* Administration */}
+                    {(governing.length > 0 || officials.length > 0) && (
                     <div className="max-w-4xl mx-auto">
                         <h2 className="text-2xl sm:text-3xl font-heading font-bold text-[var(--text-primary)] text-center mb-12">Administration</h2>
                         <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl shadow-sm border border-[var(--border-color)]/30 rounded-2xl overflow-hidden">
                             <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[var(--border-color)]">
+                                {governing.length > 0 && (
                                 <div className="p-4 sm:p-8">
                                     <h3 className="text-xl font-bold text-[var(--accent)] mb-6">Governing Body</h3>
                                     <ul className="space-y-4">
-                                        <li className="flex justify-between items-center border-b border-[var(--border-color)] pb-2">
-                                            <span className="font-medium text-[var(--text-primary)]">Dr. M.V. Ramana Rao</span>
-                                            <span className="text-sm text-[var(--text-secondary)]">Chairman</span>
-                                        </li>
-                                        <li className="flex justify-between items-center border-b border-[var(--border-color)] pb-2">
-                                            <span className="font-medium text-[var(--text-primary)]">Sri N. Srinivasa Rao</span>
-                                            <span className="text-sm text-[var(--text-secondary)]">Vice Chairman</span>
-                                        </li>
-                                        <li className="flex justify-between items-center border-b border-[var(--border-color)] pb-2">
-                                            <span className="font-medium text-[var(--text-primary)]">Sri M. Srinivasa Rao</span>
-                                            <span className="text-sm text-[var(--text-secondary)]">Director (P&amp;D)</span>
-                                        </li>
-                                        <li className="flex justify-between items-center">
-                                            <span className="font-medium text-[var(--text-primary)]">Sri D. Panduranga Rao</span>
-                                            <span className="text-sm text-[var(--text-secondary)]">CEO</span>
-                                        </li>
+                                        {governing.map((m, i) => (
+                                            <li key={i} className={`flex justify-between items-center${i < governing.length - 1 ? ' border-b border-[var(--border-color)] pb-2' : ''}`}>
+                                                <span className="font-medium text-[var(--text-primary)]">{m.name}</span>
+                                                <span className="text-sm text-[var(--text-secondary)]">{m.designation}</span>
+                                            </li>
+                                        ))}
                                     </ul>
                                 </div>
+                                )}
+                                {officials.length > 0 && (
                                 <div className="p-4 sm:p-8">
                                     <h3 className="text-xl font-bold text-[var(--accent)] mb-6">Key Officials</h3>
                                     <ul className="space-y-4">
-                                        <li className="flex justify-between items-center border-b border-[var(--border-color)] pb-2">
-                                            <span className="font-medium text-[var(--text-primary)]">Dr. T. Vamsee Kiran</span>
-                                            <span className="text-sm text-[var(--text-secondary)]">Principal</span>
-                                        </li>
-                                        <li className="flex justify-between items-center border-b border-[var(--border-color)] pb-2">
-                                            <span className="font-medium text-[var(--text-primary)]">Dr. G. Rajesh</span>
-                                            <span className="text-sm text-[var(--text-secondary)]">Dean (Academics)</span>
-                                        </li>
-                                        <li className="flex justify-between items-center">
-                                            <span className="font-medium text-[var(--text-primary)]">Dr. A. Guravaiah</span>
-                                            <span className="text-sm text-[var(--text-secondary)]">Dean (R&amp;D)</span>
-                                        </li>
+                                        {officials.map((m, i) => (
+                                            <li key={i} className={`flex justify-between items-center${i < officials.length - 1 ? ' border-b border-[var(--border-color)] pb-2' : ''}`}>
+                                                <span className="font-medium text-[var(--text-primary)]">{m.name}</span>
+                                                <span className="text-sm text-[var(--text-secondary)]">{m.designation}</span>
+                                            </li>
+                                        ))}
                                     </ul>
                                 </div>
+                                )}
                             </div>
                         </div>
                     </div>
+                    )}
                 </div>
             </section>
 
-            <NotableAlumni data={home?.notable} />
+            <NotableAlumni />
             <CTA data={home?.cta} />
         </div>
     );

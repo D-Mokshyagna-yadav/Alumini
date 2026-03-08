@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
+import sharp from 'sharp';
 import GalleryAlbum from '../models/GalleryAlbum';
 import User from '../models/User';
 import { storeBufferInGridFS, deleteGridFSFile, getGridFSBucket } from '../config/gridfs';
@@ -134,12 +135,27 @@ router.post('/album/:albumId/images', requireAdmin, async (req, res) => {
             for (const file of files) {
                 const ext = path.extname(file.originalname).toLowerCase();
                 const isVideo = ['.mp4', '.mov', '.avi', '.mkv', '.webm'].includes(ext);
-                const contentType = file.mimetype;
-                const filename = generateFilename(file.originalname);
-                const gridName = `gallery/${folderName}/${filename}`;
+                let buffer = file.buffer;
+                let contentType = file.mimetype;
+                let filename = generateFilename(file.originalname);
 
-                // Store buffer directly in GridFS
-                await storeBufferInGridFS(file.buffer, gridName, contentType);
+                // Convert to lossless WebP — zero quality loss
+                if (!isVideo && file.mimetype.startsWith('image/')) {
+                    try {
+                        const img = sharp(buffer);
+                        const meta = await img.metadata();
+                        if (!(contentType === 'image/gif' && meta.pages && meta.pages > 1)) {
+                            buffer = await img.webp({ lossless: true, effort: 4 }).toBuffer();
+                            filename = filename.replace(/\.[^.]+$/, '.webp');
+                            contentType = 'image/webp';
+                        }
+                    } catch (err) {
+                        console.error('Gallery image conversion failed, storing original:', err);
+                    }
+                }
+
+                const gridName = `gallery/${folderName}/${filename}`;
+                await storeBufferInGridFS(buffer, gridName, contentType);
 
                 newMedia.push({
                     url: `/api/uploads/gallery/${folderName}/${filename}`,
@@ -233,7 +249,7 @@ router.delete('/album/:albumId/images/:imageId', requireAdmin, async (req, res) 
         if (idx === -1) return res.status(404).json({ message: 'Media not found' });
 
         const image = album.images[idx];
-        const gridName = image.url.replace(/^\/uploads\//, '');
+        const gridName = image.url.replace(/^\/?(?:api\/)?uploads\//, '');
         deleteGridFSFile(gridName).catch(e => console.error('GridFS delete error:', e));
 
         album.images.splice(idx, 1);

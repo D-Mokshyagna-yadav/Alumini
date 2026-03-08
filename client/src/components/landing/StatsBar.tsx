@@ -10,7 +10,9 @@ const StatsBar = ({ stats }: { stats?: any[] }) => {
     ];
 
     return (
-        <div className="w-full py-16 sm:py-20 bg-[var(--bg-secondary)]">
+        <div className="w-full py-16 sm:py-20 bg-[var(--bg-secondary)] relative overflow-hidden">
+            {/* Subtle blue gradient accent */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[var(--gradient-start)]/[0.04] via-transparent to-[var(--gradient-end)]/[0.03] pointer-events-none" />
             <div className="max-w-screen-xl mx-auto px-6 sm:px-8 lg:px-16">
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     {items.map((stat: any, index: number) => (

@@ -51,11 +51,12 @@ const Footer = () => {
     }, []);
 
     return (
-        <footer className="bg-[var(--bg-secondary)] border-t border-[var(--border-color)] relative overflow-hidden">
-            {/* Background decoration */}
+        <footer className="bg-[var(--bg-secondary)] border-t border-[var(--accent)]/10 relative overflow-hidden">
+            {/* Background decoration — blue gradient wash */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute -top-40 -right-40 w-80 h-80 bg-[var(--bg-tertiary)] blur-3xl opacity-50" />
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[var(--bg-tertiary)] blur-3xl opacity-50" />
+                <div className="absolute inset-0 bg-gradient-to-b from-[var(--accent)]/[0.04] via-transparent to-transparent" />
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-[var(--accent)]/[0.06] blur-3xl rounded-full" />
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[var(--gradient-end)]/[0.05] blur-3xl rounded-full" />
             </div>
 
             <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20 relative">

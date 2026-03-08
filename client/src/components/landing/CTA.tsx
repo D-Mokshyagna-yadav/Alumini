@@ -16,8 +16,9 @@ const CTA = ({ data }: { data?: Record<string, string> }) => {
                     transition={{ duration: 0.5 }}
                     className="relative"
                 >
-                    {/* Glass Background — frosted blur */}
+                    {/* Glass Background — frosted blur with blue gradient */}
                     <div className="absolute inset-0 bg-[var(--bg-secondary)]/50 backdrop-blur-2xl" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-[var(--gradient-start)]/[0.06] via-transparent to-[var(--gradient-end)]/[0.04] pointer-events-none" />
 
                     <div className="relative z-10 px-6 sm:px-12 lg:px-16 py-16 sm:py-24 text-center">
                         {/* Badge */}

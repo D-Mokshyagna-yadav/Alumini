@@ -113,7 +113,9 @@ app.use((req, res, next) => {
     next();
 });
 
-// Serve uploaded files from GridFS (MongoDB Atlas) with CORS headers
+// Serve uploaded files from GridFS (MongoDB) with CDN-friendly caching headers.
+// Uploads go direct to MongoDB; reads are served with ETag + conditional 304
+// so a CDN in front can cache efficiently without re-fetching.
 import { getGridFSBucket } from './config/gridfs';
 
 app.use('/api/uploads', (req, res) => {
@@ -130,8 +132,24 @@ app.use('/api/uploads', (req, res) => {
             if (!files || files.length === 0) return res.status(404).json({ message: 'File not found' });
 
             const file = files[0];
+            const etag = `"${file._id.toString()}"`;
+            const lastModified = file.uploadDate ? file.uploadDate.toUTCString() : undefined;
+
+            // Conditional request support — CDN and browsers send these to revalidate
+            const ifNoneMatch = req.headers['if-none-match'];
+            const ifModifiedSince = req.headers['if-modified-since'];
+
+            if (ifNoneMatch === etag) return res.status(304).end();
+            if (ifModifiedSince && lastModified && new Date(ifModifiedSince) >= new Date(lastModified)) {
+                return res.status(304).end();
+            }
+
             res.set('Content-Type', file.contentType || 'application/octet-stream');
-            res.set('Cache-Control', 'public, max-age=86400');
+            // Filenames contain unique timestamps — safe to cache long-term + immutable
+            res.set('Cache-Control', 'public, max-age=31536000, immutable');
+            res.set('ETag', etag);
+            if (lastModified) res.set('Last-Modified', lastModified);
+            if (file.length) res.set('Content-Length', String(file.length));
 
             const downloadStream = bucket.openDownloadStreamByName(gridName);
             downloadStream.pipe(res);

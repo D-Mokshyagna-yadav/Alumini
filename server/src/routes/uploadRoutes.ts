@@ -68,8 +68,9 @@ const jobUpload = multer({ storage: memStorage, fileFilter: imageFilter, limits:
 // ── Shared: compress image buffer & store in GridFS ───────
 
 /**
- * Optionally compress an image (>10 MB → lossless webp) then store in GridFS directly from buffer.
- * Returns the public relative URL, e.g. `/api/uploads/username/profile/123-456.jpg`
+ * Compress image to optimized WebP and store in GridFS directly from buffer.
+ * All images are compressed for bandwidth savings — direct MongoDB storage.
+ * Returns the public relative URL, e.g. `/api/uploads/username/profile/123-456.webp`
  */
 const processImageAndStore = async (
     file: Express.Multer.File,
@@ -80,15 +81,20 @@ const processImageAndStore = async (
     let filename = generateFilename(file.originalname);
     let contentType = file.mimetype;
 
-    // Compress large images
-    if (buffer.length > 10 * 1024 * 1024) {
-        try {
-            buffer = await sharp(buffer).webp({ lossless: true }).toBuffer();
+    // Convert to lossless WebP — zero quality loss, smaller than PNG
+    try {
+        const img = sharp(buffer);
+        const meta = await img.metadata();
+        // GIFs with animation → keep as-is to preserve animation
+        if (contentType === 'image/gif' && meta.pages && meta.pages > 1) {
+            // Store animated GIF as-is
+        } else {
+            buffer = await img.webp({ lossless: true, effort: 4 }).toBuffer();
             filename = filename.replace(/\.[^.]+$/, '.webp');
             contentType = 'image/webp';
-        } catch (err) {
-            console.error('Image compression failed:', err);
         }
+    } catch (err) {
+        console.error('Image conversion failed, storing original:', err);
     }
 
     const gridName = `${username}/${folder}/${filename}`;
@@ -189,6 +195,25 @@ router.post('/news-image', requireAuth, newsUpload.single('image'), async (req, 
     }
 });
 
+// POST /api/upload/notable-alumni-image (admin only)
+const alumniUpload = multer({ storage: memStorage, fileFilter: imageFilter, limits: { fileSize: 50 * 1024 * 1024 } });
+router.post('/notable-alumni-image', requireAuth, alumniUpload.single('image'), async (req, res) => {
+    try {
+        const user = await User.findById(req.session!.userId);
+        if (!user || user.role !== 'admin') return res.status(403).json({ message: 'Admin access required' });
+
+        const file = req.file;
+        if (!file) return res.status(400).json({ message: 'No file uploaded' });
+        const username = sanitizeUsername(user.name);
+
+        const fileRel = await processImageAndStore(file, username, 'notable-alumni');
+        res.json({ url: fileRel, relative: fileRel });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Upload failed' });
+    }
+});
+
 // POST /api/upload/job-image
 router.post('/job-image', requireAuth, jobUpload.single('image'), async (req, res) => {
     try {
@@ -225,15 +250,17 @@ router.post('/post-media', requireAuth, postUpload.array('media', 10), async (re
             const relPath = (fn: string) => `/api/uploads/${username}/posts/${fn}`;
 
             if (file.mimetype.startsWith('image/')) {
-                // Compress large images
-                if (buffer.length > 10 * 1024 * 1024) {
-                    try {
-                        buffer = await sharp(buffer).webp({ lossless: true }).toBuffer();
+                // Convert to lossless WebP — zero quality loss
+                try {
+                    const img = sharp(buffer);
+                    const meta = await img.metadata();
+                    if (!(contentType === 'image/gif' && meta.pages && meta.pages > 1)) {
+                        buffer = await img.webp({ lossless: true, effort: 4 }).toBuffer();
                         filename = filename.replace(/\.[^.]+$/, '.webp');
                         contentType = 'image/webp';
-                    } catch (err) {
-                        console.error('Image compression failed:', err);
                     }
+                } catch (err) {
+                    console.error('Image conversion failed, storing original:', err);
                 }
                 const gridName = `${username}/posts/${filename}`;
                 await storeBufferInGridFS(buffer, gridName, contentType);
@@ -259,7 +286,7 @@ router.post('/post-media', requireAuth, postUpload.array('media', 10), async (re
                             ffmpeg(tmpPath)
                                 .setStartTime(0)
                                 .setDuration(90)
-                                .outputOptions(['-c:v libx264', '-preset veryfast', '-crf 23'])
+                                .outputOptions(['-c copy'])
                                 .save(trimmedPath)
                                 .on('end', () => resolve())
                                 .on('error', (e: any) => reject(e));

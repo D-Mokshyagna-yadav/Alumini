@@ -1,7 +1,6 @@
 import express from 'express';
-import fs from 'fs';
-import path from 'path';
 import User, { UserStatus } from '../models/User';
+import { deleteGridFSFile } from '../config/gridfs';
 
 const router = express.Router();
 
@@ -139,40 +138,27 @@ router.put('/profile', requireAuth, async (req, res) => {
         }
 
         // If client is explicitly clearing avatar or coverImage (empty string),
-        // remove the underlying file from uploads before saving.
+        // remove the underlying file from GridFS before saving.
         const existingUser = await User.findById(userId);
-        const sanitize = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, '_');
 
         if (existingUser) {
-            const username = sanitize(existingUser.name);
-
-            const resolveStoredPath = (stored: string | undefined) => {
+            const extractGridName = (stored: string | undefined): string | null => {
                 if (!stored) return null;
-                // If full URL, extract after '/uploads/'
-                const uploadsIndex = stored.indexOf('/uploads/');
                 let rel = stored;
-                if (uploadsIndex >= 0) rel = stored.substring(uploadsIndex + '/uploads/'.length);
-                // if it starts with 'uploads/', '/uploads/', or '/api/uploads/' remove that prefix
+                const idx = rel.indexOf('/uploads/');
+                if (idx >= 0) rel = rel.substring(idx + '/uploads/'.length);
                 rel = rel.replace(/^\/?(?:api\/)?uploads\//, '');
-                return path.join(__dirname, '../../uploads', rel);
+                return rel || null;
             };
 
             if (updates.avatar === '' && existingUser.avatar) {
-                try {
-                    const p = resolveStoredPath(existingUser.avatar as string);
-                    if (p && fs.existsSync(p)) fs.unlinkSync(p);
-                } catch (err) {
-                    console.warn('Failed to remove avatar file:', err);
-                }
+                const gridName = extractGridName(existingUser.avatar as string);
+                if (gridName) deleteGridFSFile(gridName).catch(e => console.warn('Failed to remove avatar from GridFS:', e));
             }
 
             if (updates.coverImage === '' && (existingUser as any).coverImage) {
-                try {
-                    const p = resolveStoredPath((existingUser as any).coverImage as string);
-                    if (p && fs.existsSync(p)) fs.unlinkSync(p);
-                } catch (err) {
-                    console.warn('Failed to remove cover file:', err);
-                }
+                const gridName = extractGridName((existingUser as any).coverImage as string);
+                if (gridName) deleteGridFSFile(gridName).catch(e => console.warn('Failed to remove cover from GridFS:', e));
             }
         }
 

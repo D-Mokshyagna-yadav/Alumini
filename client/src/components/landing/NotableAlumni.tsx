@@ -1,39 +1,66 @@
+import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import resolveMediaUrl from '../../lib/media';
+import api from '../../lib/api';
 
-const alumni = [
-    {
-        id: 1,
-        name: "Abhinav Praneeth S",
-        role: "Software Developer",
-        image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=1000&auto=format&fit=crop",
-        batch: "2011"
-    },
-    {
-        id: 2,
-        name: "Sridevi Kasturi",
-        role: "Mechanical Engineer",
-        image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1000&auto=format&fit=crop",
-        batch: "2012"
-    },
-    {
-        id: 3,
-        name: "Ramakrishna Telaprolu",
-        role: "MBA Graduate",
-        image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=1000&auto=format&fit=crop",
-        batch: "2017"
-    },
-    {
-        id: 4,
-        name: "Prudhvi Nadh Vajhala",
-        role: "Alumnus",
-        image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1000&auto=format&fit=crop",
-        batch: "2014"
-    }
-];
+const NotableAlumni = () => {
+    const [list, setList] = useState<any[]>([]);
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const navigate = useNavigate();
 
-const NotableAlumni = ({ data }: { data?: any[] }) => {
-    const list = data && data.length ? data : alumni;
+    useEffect(() => {
+        let mounted = true;
+        api.get('/public/notable-alumni')
+            .then(res => { if (mounted) setList(res.data.alumni || []); })
+            .catch(() => {});
+        return () => { mounted = false; };
+    }, []);
+
+    // Auto-scroll when more than 4 cards
+    const shouldScroll = list.length > 4;
+
+    useEffect(() => {
+        if (!shouldScroll || !scrollRef.current) return;
+        const el = scrollRef.current;
+        let raf: number;
+        let speed = 0.5; // px per frame
+
+        const step = () => {
+            el.scrollLeft += speed;
+            // Loop back when reaching end
+            if (el.scrollLeft >= el.scrollWidth - el.clientWidth) {
+                el.scrollLeft = 0;
+            }
+            raf = requestAnimationFrame(step);
+        };
+
+        raf = requestAnimationFrame(step);
+
+        const pause = () => cancelAnimationFrame(raf);
+        const resume = () => { raf = requestAnimationFrame(step); };
+
+        el.addEventListener('mouseenter', pause);
+        el.addEventListener('mouseleave', resume);
+        el.addEventListener('touchstart', pause);
+        el.addEventListener('touchend', resume);
+
+        return () => {
+            cancelAnimationFrame(raf);
+            el.removeEventListener('mouseenter', pause);
+            el.removeEventListener('mouseleave', resume);
+            el.removeEventListener('touchstart', pause);
+            el.removeEventListener('touchend', resume);
+        };
+    }, [shouldScroll, list]);
+
+    if (list.length === 0) return null;
+
+    const handleClick = (alum: any) => {
+        if (alum.profileId) {
+            navigate(`/profile/${alum.profileId}`);
+        }
+    };
 
     return (
         <section className="py-20 sm:py-28 bg-[var(--bg-primary)]">
@@ -55,36 +82,75 @@ const NotableAlumni = ({ data }: { data?: any[] }) => {
                     </p>
                 </motion.div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {list.map((alum: any, index: number) => (
-                        <motion.div
-                            key={alum.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: index * 0.08, duration: 0.4 }}
-                            className="group bg-[var(--card-bg)] backdrop-blur-xl rounded-2xl overflow-hidden shadow-sm border border-[var(--border-color)] hover:shadow-md hover:border-[var(--accent)]/30 transition-all duration-200"
-                        >
-                            <div className="relative h-64 overflow-hidden">
-                                <img
-                                    src={resolveMediaUrl(alum.image)}
-                                    alt={alum.name}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                                <div className="absolute bottom-0 left-0 right-0 p-5">
-                                    <h3 className="text-lg font-bold text-white mb-0.5">{alum.name}</h3>
-                                    <p className="text-white/75 text-sm">{alum.role}</p>
+                {shouldScroll ? (
+                    <div
+                        ref={scrollRef}
+                        className="flex gap-6 overflow-x-auto scrollbar-hide pb-4"
+                        style={{ scrollBehavior: 'auto' }}
+                    >
+                        {list.map((alum: any, index: number) => (
+                            <motion.div
+                                key={alum._id || index}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: index * 0.08, duration: 0.4 }}
+                                onClick={() => handleClick(alum)}
+                                className={`group flex-shrink-0 w-[280px] bg-[var(--card-bg)] backdrop-blur-xl rounded-2xl overflow-hidden shadow-sm border border-[var(--border-color)] hover:shadow-md hover:border-[var(--accent)]/30 transition-all duration-200 ${alum.profileId ? 'cursor-pointer' : ''}`}
+                            >
+                                <div className="relative h-64 overflow-hidden">
+                                    <img
+                                        src={resolveMediaUrl(alum.image)}
+                                        alt={alum.name}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                                    <div className="absolute bottom-0 left-0 right-0 p-5">
+                                        <h3 className="text-lg font-bold text-white mb-0.5">{alum.name}</h3>
+                                        <p className="text-white/75 text-sm">{alum.role}</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="p-4 text-center">
-                                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[var(--accent)]/10 rounded-full text-sm font-semibold text-[var(--accent)]">
-                                    Class of {alum.batch}
-                                </span>
-                            </div>
-                        </motion.div>
-                    ))}
-                </div>
+                                <div className="p-4 text-center">
+                                    <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[var(--accent)]/10 rounded-full text-sm font-semibold text-[var(--accent)]">
+                                        Class of {alum.batch}
+                                    </span>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {list.map((alum: any, index: number) => (
+                            <motion.div
+                                key={alum._id || index}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: index * 0.08, duration: 0.4 }}
+                                onClick={() => handleClick(alum)}
+                                className={`group bg-[var(--card-bg)] backdrop-blur-xl rounded-2xl overflow-hidden shadow-sm border border-[var(--border-color)] hover:shadow-md hover:border-[var(--accent)]/30 transition-all duration-200 ${alum.profileId ? 'cursor-pointer' : ''}`}
+                            >
+                                <div className="relative h-64 overflow-hidden">
+                                    <img
+                                        src={resolveMediaUrl(alum.image)}
+                                        alt={alum.name}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                                    <div className="absolute bottom-0 left-0 right-0 p-5">
+                                        <h3 className="text-lg font-bold text-white mb-0.5">{alum.name}</h3>
+                                        <p className="text-white/75 text-sm">{alum.role}</p>
+                                    </div>
+                                </div>
+                                <div className="p-4 text-center">
+                                    <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[var(--accent)]/10 rounded-full text-sm font-semibold text-[var(--accent)]">
+                                        Class of {alum.batch}
+                                    </span>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
             </div>
         </section>
     );
