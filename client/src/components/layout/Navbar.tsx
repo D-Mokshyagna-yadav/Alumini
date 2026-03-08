@@ -69,11 +69,9 @@ const Navbar = () => {
         }).catch(() => {});
 
         // Listen for real-time notifications via socket
-        const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
-        const base = apiOrigin || '';
         const win = window as Window & { __ALUMNI_SOCKET?: Socket };
         if (!win.__ALUMNI_SOCKET) {
-            win.__ALUMNI_SOCKET = io(base || window.location.origin, { withCredentials: true });
+            win.__ALUMNI_SOCKET = io({ withCredentials: true, transports: ['polling', 'websocket'], path: '/socket.io/' });
         }
         const socket: Socket = win.__ALUMNI_SOCKET;
 
@@ -108,36 +106,36 @@ const Navbar = () => {
         <>
             {/* ─── Top Header Bar ─── */}
             <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-[var(--bg-primary)]/80 border-b border-[var(--accent)]/10">
-                <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
+                <div className="max-w-[1400px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
 
                     {/* Logo */}
                     <Link to={isAuthenticated ? '/feed' : '/'} className="flex items-center gap-2.5 shrink-0">
                         <motion.div
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            className="w-9 h-9 bg-[var(--accent)] rounded-xl flex items-center justify-center shadow-sm shadow-[var(--accent)]/20"
+                            className="w-10 h-10 bg-[var(--accent)] rounded-xl flex items-center justify-center shadow-sm shadow-[var(--accent)]/20"
                         >
-                            <GraduationCap size={20} className="text-[var(--bg-primary)]" />
+                            <GraduationCap size={22} className="text-[var(--bg-primary)]" />
                         </motion.div>
-                        <span className="hidden sm:block font-bold text-sm text-[var(--text-primary)] tracking-tight">
+                        <span className="hidden sm:block font-bold text-base text-[var(--text-primary)] tracking-tight">
                             MIC Alumni
                         </span>
                     </Link>
 
                     {/* ─── Desktop Navigation (center) ─── */}
-                    <nav className="hidden md:flex items-center gap-0.5 lg:gap-1">
+                    <nav className="hidden md:flex items-center gap-1 lg:gap-1.5">
                         {links.map(({ name, href, icon: Icon }) => {
                             const active = isActive(href);
                             return (
                                 <Link key={name} to={href}
-                                    className={`relative flex flex-col items-center px-3 lg:px-4 py-1.5 rounded-xl transition-all group ${
+                                    className={`relative flex flex-col items-center px-4 lg:px-5 py-2 rounded-xl transition-all group ${
                                         active
                                             ? 'text-[var(--accent)]'
                                             : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
                                     }`}
                                 >
-                                    <Icon size={18} strokeWidth={active ? 2.5 : 1.5} />
-                                    <span className="text-[10px] mt-0.5 font-medium">{name}</span>
+                                    <Icon size={20} strokeWidth={active ? 2.5 : 1.5} />
+                                    <span className="text-[11px] mt-0.5 font-medium">{name}</span>
                                     {active && (
                                         <motion.div
                                             layoutId="nav-underline"
@@ -153,25 +151,25 @@ const Navbar = () => {
                     <div className="hidden md:flex items-center gap-1.5">
                         {/* Theme Toggle */}
                         <button onClick={toggleTheme}
-                            className="w-8 h-8 flex items-center justify-center rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60 transition-all"
+                            className="w-9 h-9 flex items-center justify-center rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60 transition-all"
                             aria-label="Toggle theme"
                         >
                             {mode === 'auto' ? (
-                                <span className="w-4 h-4 bg-[var(--accent)] text-[var(--bg-primary)] text-[9px] font-bold rounded flex items-center justify-center">A</span>
-                            ) : theme === 'light' ? <Sun size={16} /> : <Moon size={16} />}
+                                <span className="w-5 h-5 bg-[var(--accent)] text-[var(--bg-primary)] text-[10px] font-bold rounded flex items-center justify-center">A</span>
+                            ) : theme === 'light' ? <Sun size={18} /> : <Moon size={18} />}
                         </button>
 
                         {isAuthenticated ? (
                             <>
                                 {/* Notifications */}
                                 <Link to="/notifications"
-                                    className={`relative w-8 h-8 flex items-center justify-center rounded-xl transition-all ${
+                                    className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition-all ${
                                         isActive('/notifications')
                                             ? 'text-[var(--accent)] bg-[var(--accent)]/10'
                                             : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
                                     }`}
                                 >
-                                    <Bell size={16} />
+                                    <Bell size={18} />
                                     {unreadCount > 0 && (
                                         <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-[var(--accent)] text-[var(--bg-primary)] text-[10px] font-bold rounded-full flex items-center justify-center">
                                             {unreadCount > 99 ? '99+' : unreadCount}
@@ -181,13 +179,13 @@ const Navbar = () => {
 
                                 {/* Saved */}
                                 <Link to="/saved"
-                                    className={`w-8 h-8 flex items-center justify-center rounded-xl transition-all ${
+                                    className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${
                                         isActive('/saved')
                                             ? 'text-[var(--accent)] bg-[var(--accent)]/10'
                                             : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
                                     }`}
                                 >
-                                    <Bookmark size={16} />
+                                    <Bookmark size={18} />
                                 </Link>
 
                                  {/* Contact Link */}
@@ -198,7 +196,7 @@ const Navbar = () => {
                                             : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
                                     }`}
                                 >
-                                    <Mail size={14} />
+                                    <Mail size={16} />
                                 </Link>
 
                                 {/* Admin Link (visible for admins) */}
@@ -210,7 +208,7 @@ const Navbar = () => {
                                                 : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
                                         }`}
                                     >
-                                        <Shield size={14} />
+                                        <Shield size={16} />
                                         Admin
                                     </Link>
                                 )}

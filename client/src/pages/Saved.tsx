@@ -11,6 +11,7 @@ import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
 import resolveMediaUrl from '../lib/media';
 import Avatar from '../components/ui/Avatar';
+import ImageCarousel from '../components/ImageCarousel';
 import api from '../lib/api';
 
 interface Post {
@@ -495,16 +496,8 @@ const Saved = () => {
                                             <p className="text-[var(--text-primary)] whitespace-pre-wrap mb-4">{post.content}</p>
                                             
                                             {post.media && post.media.length > 0 && (
-                                                <div className={`overflow-hidden ${post.media.length > 1 ? 'grid grid-cols-2 gap-1' : ''}`}>
-                                                    {post.media.slice(0, 4).map((m, idx) => (
-                                                        <div key={idx} className={post.media.length === 3 && idx === 0 ? 'col-span-2' : ''}>
-                                                            {m.type === 'image' ? (
-                                                                <img src={normalizeMediaUrl(m.url)} alt="" className="w-full max-h-[400px] object-cover" />
-                                                            ) : (
-                                                                <video src={normalizeMediaUrl(m.url)} controls className="w-full max-h-[400px]" />
-                                                            )}
-                                                        </div>
-                                                    ))}
+                                                <div className="group overflow-hidden">
+                                                    <ImageCarousel media={post.media} normalizeMediaUrl={normalizeMediaUrl} />
                                                 </div>
                                             )}
                                             

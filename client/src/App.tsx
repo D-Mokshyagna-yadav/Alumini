@@ -12,6 +12,7 @@ import AccountInfo from './pages/settings/AccountInfo';
 import EmailSettings from './pages/settings/EmailSettings';
 import ChangePassword from './pages/settings/ChangePassword';
 import NotificationPreferences from './pages/settings/NotificationPreferences';
+import PhoneSettings from './pages/settings/PhoneSettings';
 import Directory from './pages/Directory';
 import Events from './pages/Events';
 import MyEvents from './pages/MyEvents';
@@ -113,6 +114,7 @@ function App() {
       <Route path="/settings" element={<ProfessionalRoute><Settings /></ProfessionalRoute>} />
       <Route path="/settings/account-info" element={<ProfessionalRoute><AccountInfo /></ProfessionalRoute>} />
       <Route path="/settings/email" element={<ProfessionalRoute><EmailSettings /></ProfessionalRoute>} />
+      <Route path="/settings/phone" element={<ProfessionalRoute><PhoneSettings /></ProfessionalRoute>} />
       <Route path="/settings/change-password" element={<ProfessionalRoute><ChangePassword /></ProfessionalRoute>} />
       <Route path="/settings/notifications" element={<ProfessionalRoute><NotificationPreferences /></ProfessionalRoute>} />
       <Route path="/saved" element={<ProfessionalRoute><Saved /></ProfessionalRoute>} />

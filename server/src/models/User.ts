@@ -81,6 +81,13 @@ export interface IUser extends Document {
         postComments?: boolean;
         weeklyDigest?: boolean;
     };
+
+    // Privacy settings
+    privacySettings?: {
+        emailVisibility?: 'everyone' | 'connections' | 'only_me';
+        phoneVisibility?: 'everyone' | 'connections' | 'only_me';
+        connectionsVisibility?: 'everyone' | 'connections' | 'only_me';
+    };
     
     createdAt: Date;
     updatedAt: Date;
@@ -163,6 +170,16 @@ const userSchema = new Schema<IUser>({
             weeklyDigest: { type: Boolean, default: true },
         },
         default: {}
+    },
+
+    // Privacy settings
+    privacySettings: {
+        type: {
+            emailVisibility: { type: String, enum: ['everyone', 'connections', 'only_me'], default: 'connections' },
+            phoneVisibility: { type: String, enum: ['everyone', 'connections', 'only_me'], default: 'connections' },
+            connectionsVisibility: { type: String, enum: ['everyone', 'connections', 'only_me'], default: 'everyone' },
+        },
+        default: { emailVisibility: 'connections', phoneVisibility: 'connections', connectionsVisibility: 'everyone' }
     },
 }, { timestamps: true });
 

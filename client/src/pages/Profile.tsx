@@ -1,18 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../lib/api';
 import resolveMediaUrl from '../lib/media';
+import ImageCarousel from '../components/ImageCarousel';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { 
-    User as UserIcon, GraduationCap, Briefcase, Edit3, Camera, Award, Users, 
+    User as UserIcon, GraduationCap, Briefcase, Edit3, Camera, Award, Users, UserPlus,
     MessageCircle, Plus, MapPin, Mail, Phone, Calendar, ExternalLink, Clock,
     Linkedin, Github, Globe, X, Check, Upload, FileText, Star, Building2,
     Link as LinkIcon, Trash2, Edit2, Save
 } from 'lucide-react';
 import Avatar from '../components/ui/Avatar';
+import ConnectionsModal from '../components/ConnectionsModal';
 
 interface Experience {
     id: string;
@@ -65,6 +67,7 @@ const Profile = () => {
     const [cropType, setCropType] = useState<'avatar' | 'cover'>('avatar');
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
+    const cropContainerRef = useRef<HTMLDivElement>(null);
     const [saving, setSaving] = useState(false);
     const [viewUser, setViewUser] = useState<any>(null);
     const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -123,6 +126,9 @@ const Profile = () => {
     const [connectionStatus, setConnectionStatus] = useState<'none'|'pending_sent'|'pending_received'|'accepted'>('none');
     const [connectionRequestId, setConnectionRequestId] = useState<string | null>(null);
     const [showUnconnectModal, setShowUnconnectModal] = useState(false);
+    const [showConnectionsModal, setShowConnectionsModal] = useState(false);
+    const [connectionsModalTab, setConnectionsModalTab] = useState<'all' | 'mutual'>('all');
+    const [mutualConnections, setMutualConnections] = useState<{mutualCount: number; mutuals: {_id: string; name: string; avatar?: string; headline?: string}[]}>({mutualCount: 0, mutuals: []});
     const [userPosts, setUserPosts] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState<'posts' | 'about' | 'experience' | 'comments'>('about');
     const [loadingPosts, setLoadingPosts] = useState(false);
@@ -187,9 +193,13 @@ const Profile = () => {
                 // If viewing someone else's profile, check connection status
                 if (!isOwnProfile) {
                     try {
-                        const statusRes = await api.get(`/connections/status/${targetId}`);
+                        const [statusRes, mutualRes] = await Promise.all([
+                            api.get(`/connections/status/${targetId}`),
+                            api.get(`/connections/mutual/${targetId}`).catch(() => ({ data: { mutualCount: 0, mutuals: [] } }))
+                        ]);
                         setConnectionStatus(statusRes.data.status || 'none');
                         setConnectionRequestId(statusRes.data.requestId || null);
+                        setMutualConnections(mutualRes.data);
                     } catch (err) {
                         console.error('Failed to fetch connection status', err);
                     }
@@ -368,7 +378,7 @@ const Profile = () => {
     };
 
     return (
-        <div className="max-w-[1200px] mx-auto px-4 py-6">
+        <div className="max-w-[1400px] mx-auto px-4 py-6">
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
                 <div className="space-y-5">
                     {/* Profile Header Card */}
@@ -378,7 +388,7 @@ const Profile = () => {
                         className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 overflow-hidden shadow-md shadow-black/5"
                     >
                         {/* Cover Photo */}
-                        <div className="h-[140px] sm:h-[180px] md:h-[200px] relative bg-[var(--accent)]">
+                        <div className="h-[180px] sm:h-[230px] md:h-[270px] relative bg-[var(--accent)]">
                             {coverPreview || profileUser?.coverImage ? (
                                 <img
                                     src={coverPreview || resolveMediaUrl(profileUser?.coverImage)}
@@ -424,66 +434,70 @@ const Profile = () => {
                                         </label>
                                     )}
                                 </motion.div>
-
-                                <div className="flex-1 pt-4 sm:pt-0 sm:pb-2">
-                                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                                        <div className="flex-1">
-                                            <h1 className="text-2xl font-bold text-[var(--text-primary)]">{profileUser?.name || 'Alumni User'}</h1>
-                                            {editMode ? (
-                                                <input 
-                                                    value={headline} 
-                                                    onChange={(e) => setHeadline(e.target.value)} 
-                                                    placeholder="Your professional headline..."
-                                                    className="w-full mt-2 px-4 py-2.5 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--accent)]" 
-                                                />
-                                            ) : (
-                                                profileUser?.headline ? (
-                                                    <p className="text-[var(--text-secondary)] mt-1">{profileUser.headline}</p>
-                                                ) : isOwnProfile ? (
-                                                    <p className="text-[var(--text-muted)] mt-1 italic">Add a professional headline</p>
-                                                ) : null
-                                            )}
-                                            <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-[var(--text-muted)]">
-                                                {(profileUser?.degree || profileUser?.graduationYear) && (
-                                                    <span className="flex items-center gap-1">
-                                                        <GraduationCap size={14} />
-                                                        {profileUser?.degree}{profileUser?.degree && profileUser?.graduationYear ? ' • ' : ''}{profileUser?.graduationYear ? `Class of ${profileUser.graduationYear}` : ''}
-                                                    </span>
-                                                )}
-                                                {(editMode ? currentLocation : profileUser?.currentLocation) && (
-                                                    <span className="flex items-center gap-1">
-                                                        <MapPin size={14} />
-                                                        {editMode ? (
-                                                            <input 
-                                                                value={currentLocation} 
-                                                                onChange={(e) => setCurrentLocation(e.target.value)}
-                                                                className="bg-[var(--bg-tertiary)] px-2 py-1 text-sm w-32"
-                                                            />
-                                                        ) : profileUser?.currentLocation}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            {stats.connections > 0 ? (
-                                                <p className="text-sm text-[var(--accent)] font-semibold mt-1 cursor-pointer hover:underline">{stats.connections} connection{stats.connections !== 1 ? 's' : ''}</p>
+                            </div>
+                            <div className="mt-3">
+                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                                    <div className="flex-1">
+                                        <h1 className="text-2xl font-bold text-[var(--text-primary)]">{profileUser?.name || 'Alumni User'}</h1>
+                                        {editMode ? (
+                                            <input 
+                                                value={headline} 
+                                                onChange={(e) => setHeadline(e.target.value)} 
+                                                placeholder="Your professional headline..."
+                                                className="w-full mt-2 px-4 py-2.5 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--accent)]" 
+                                            />
+                                        ) : (
+                                            profileUser?.headline ? (
+                                                <p className="text-[var(--text-secondary)] mt-1">{profileUser.headline}</p>
                                             ) : isOwnProfile ? (
-                                                <p className="text-sm text-[var(--text-muted)] mt-1">No connections yet</p>
-                                            ) : null}
-                                        </div>
-
-                                        {editMode && (
-                                            <div className="flex items-center gap-2">
-                                                <div className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-tertiary)]">
-                                                    <Building2 size={16} className="text-[var(--text-muted)]" />
-                                                    <input 
-                                                        value={currentCompany} 
-                                                        onChange={(e) => setCurrentCompany(e.target.value)}
-                                                        placeholder="Current company"
-                                                        className="bg-transparent text-sm text-[var(--text-primary)] focus:outline-none w-32"
-                                                    />
-                                                </div>
-                                            </div>
+                                                <p className="text-[var(--text-muted)] mt-1 italic">Add a professional headline</p>
+                                            ) : null
                                         )}
+                                        <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-[var(--text-muted)]">
+                                            {(profileUser?.degree || profileUser?.graduationYear) && (
+                                                <span className="flex items-center gap-1">
+                                                    <GraduationCap size={14} />
+                                                    {profileUser?.degree}{profileUser?.degree && profileUser?.graduationYear ? ' • ' : ''}{profileUser?.graduationYear ? `Class of ${profileUser.graduationYear}` : ''}
+                                                </span>
+                                            )}
+                                            {(editMode ? currentLocation : profileUser?.currentLocation) && (
+                                                <span className="flex items-center gap-1">
+                                                    <MapPin size={14} />
+                                                    {editMode ? (
+                                                        <input 
+                                                            value={currentLocation} 
+                                                            onChange={(e) => setCurrentLocation(e.target.value)}
+                                                            className="bg-[var(--bg-tertiary)] px-2 py-1 text-sm w-32"
+                                                        />
+                                                    ) : profileUser?.currentLocation}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {stats.connections > 0 ? (
+                                            <p 
+                                                className="text-sm text-[var(--accent)] font-semibold mt-1 cursor-pointer hover:underline"
+                                                onClick={() => { setConnectionsModalTab('all'); setShowConnectionsModal(true); }}
+                                            >
+                                                {stats.connections} connection{stats.connections !== 1 ? 's' : ''}
+                                            </p>
+                                        ) : isOwnProfile ? (
+                                            <p className="text-sm text-[var(--text-muted)] mt-1">No connections yet</p>
+                                        ) : null}
                                     </div>
+
+                                    {editMode && (
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-tertiary)]">
+                                                <Building2 size={16} className="text-[var(--text-muted)]" />
+                                                <input 
+                                                    value={currentCompany} 
+                                                    onChange={(e) => setCurrentCompany(e.target.value)}
+                                                    placeholder="Current company"
+                                                    className="bg-transparent text-sm text-[var(--text-primary)] focus:outline-none w-32"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -554,6 +568,23 @@ const Profile = () => {
                                                     <motion.button onClick={handleConnect} className="px-6 py-2.5 border border-[var(--accent)] text-[var(--accent)] font-semibold hover:bg-[var(--accent)]/10 transition-colors flex items-center gap-2">
                                                         <Users size={18} /> Connect
                                                     </motion.button>
+                                                )}
+                                                {mutualConnections.mutualCount > 0 && (
+                                                    <div 
+                                                        className="flex items-center gap-2 ml-1 cursor-pointer hover:opacity-80 transition-opacity"
+                                                        onClick={() => { setConnectionsModalTab('mutual'); setShowConnectionsModal(true); }}
+                                                    >
+                                                        <div className="flex -space-x-2">
+                                                            {mutualConnections.mutuals.slice(0, 3).map(m => (
+                                                                <div key={m._id} className="w-6 h-6 rounded-full overflow-hidden border-2 border-[var(--bg-secondary)] bg-[var(--bg-tertiary)] flex items-center justify-center">
+                                                                    <Avatar src={m.avatar} alt={m.name} iconSize={10} imgClassName="w-full h-full object-cover" iconClassName="text-[var(--text-muted)]" />
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                        <p className="text-xs text-[var(--text-muted)]">
+                                                            {mutualConnections.mutualCount} mutual connection{mutualConnections.mutualCount !== 1 ? 's' : ''}
+                                                        </p>
+                                                    </div>
                                                 )}
                                     </>
                                 )}
@@ -632,35 +663,80 @@ const Profile = () => {
                                 <div className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 p-6 shadow-md shadow-black/5">
                                     <h2 className="text-lg font-bold text-[var(--text-primary)] mb-4">Contact Information</h2>
                                     <div className="space-y-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-[var(--accent)]/10 flex items-center justify-center">
-                                                <Mail size={18} className="text-[var(--accent)]" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs text-[var(--text-muted)]">Email</p>
-                                                <p className="text-sm font-medium text-[var(--text-primary)]">{profileUser?.email}</p>
-                                            </div>
-                                        </div>
-                                        {(editMode || profileUser?.phone) && (
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-[var(--accent-light)] flex items-center justify-center">
-                                                    <Phone size={18} className="text-[var(--text-secondary)]" />
+                                        {(() => {
+                                            const emailVis = profileUser?.privacySettings?.emailVisibility || 'connections';
+                                            const showEmail = isOwnProfile || isAdmin || emailVis === 'everyone' || (emailVis === 'connections' && connectionStatus === 'accepted');
+                                            return showEmail ? (
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-[var(--accent)]/10 flex items-center justify-center">
+                                                        <Mail size={18} className="text-[var(--accent)]" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-[var(--text-muted)]">Email</p>
+                                                        <p className="text-sm font-medium text-[var(--text-primary)]">{profileUser?.email}</p>
+                                                    </div>
                                                 </div>
-                                                <div className="flex-1">
-                                                    <p className="text-xs text-[var(--text-muted)]">Phone</p>
-                                                    {editMode ? (
-                                                        <input
-                                                            value={phone}
-                                                            onChange={(e) => setPhone(e.target.value)}
-                                                            placeholder="+91 XXXXX XXXXX"
-                                                            className="text-sm bg-[var(--bg-tertiary)] px-3 py-1.5 w-full"
-                                                        />
-                                                    ) : (
-                                                        <p className="text-sm font-medium text-[var(--text-primary)]">{profileUser?.phone}</p>
-                                                    )}
+                                            ) : (
+                                                <div className="flex items-center gap-3 opacity-50">
+                                                    <div className="w-10 h-10 bg-[var(--accent)]/10 flex items-center justify-center">
+                                                        <Mail size={18} className="text-[var(--accent)]" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-[var(--text-muted)]">Email</p>
+                                                        <p className="text-sm italic text-[var(--text-muted)]">{emailVis === 'only_me' ? 'Hidden' : 'Visible to connections only'}</p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            );
+                                        })()}
+                                        {(() => {
+                                            const phoneVis = profileUser?.privacySettings?.phoneVisibility || 'connections';
+                                            const showPhone = isOwnProfile || isAdmin || phoneVis === 'everyone' || (phoneVis === 'connections' && connectionStatus === 'accepted');
+                                            if (editMode) {
+                                                return (
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 bg-[var(--accent-light)] flex items-center justify-center">
+                                                            <Phone size={18} className="text-[var(--text-secondary)]" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <p className="text-xs text-[var(--text-muted)]">Phone</p>
+                                                            <input
+                                                                value={phone}
+                                                                onChange={(e) => setPhone(e.target.value)}
+                                                                placeholder="+91 XXXXX XXXXX"
+                                                                className="text-sm bg-[var(--bg-tertiary)] px-3 py-1.5 w-full"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+                                            if (profileUser?.phone && showPhone) {
+                                                return (
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 bg-[var(--accent-light)] flex items-center justify-center">
+                                                            <Phone size={18} className="text-[var(--text-secondary)]" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <p className="text-xs text-[var(--text-muted)]">Phone</p>
+                                                            <p className="text-sm font-medium text-[var(--text-primary)]">{profileUser?.phone}</p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+                                            if (profileUser?.phone && !showPhone) {
+                                                return (
+                                                    <div className="flex items-center gap-3 opacity-50">
+                                                        <div className="w-10 h-10 bg-[var(--accent-light)] flex items-center justify-center">
+                                                            <Phone size={18} className="text-[var(--text-secondary)]" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs text-[var(--text-muted)]">Phone</p>
+                                                            <p className="text-sm italic text-[var(--text-muted)]">{phoneVis === 'only_me' ? 'Hidden' : 'Visible to connections only'}</p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
                                     </div>
 
                                     {/* Social Links */}
@@ -937,8 +1013,8 @@ const Profile = () => {
                                             <>
                                                 <p className="text-[var(--text-primary)] whitespace-pre-wrap">{post.content}</p>
                                                 {post.media && post.media.length > 0 && (
-                                                    <div className="mt-3 overflow-hidden">
-                                                        <img src={resolveMediaUrl(post.media[0].url)} alt="" className="w-full max-h-[300px] object-cover" />
+                                                    <div className="mt-3 overflow-hidden group">
+                                                        <ImageCarousel media={post.media} normalizeMediaUrl={resolveMediaUrl} />
                                                     </div>
                                                 )}
                                             </>
@@ -1168,6 +1244,16 @@ const Profile = () => {
                 )}
             </AnimatePresence>
 
+            {/* Connections List Modal */}
+            <ConnectionsModal
+                key={connectionsModalTab}
+                open={showConnectionsModal}
+                onClose={() => setShowConnectionsModal(false)}
+                userId={id || user?.id || ''}
+                userName={profileUser?.name?.split(' ')[0] || 'User'}
+                defaultTab={connectionsModalTab}
+            />
+
             {/* Crop Modal */}
             {showCropModal && cropImage && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
@@ -1179,6 +1265,7 @@ const Profile = () => {
                         </div>
                         
                         <div 
+                            ref={cropContainerRef}
                             className="relative h-[400px] bg-black overflow-hidden select-none"
                             onMouseDown={(e) => {
                                 const startX = e.clientX;
@@ -1297,29 +1384,58 @@ const Profile = () => {
                                         img.src = cropImage;
                                         img.onload = () => {
                                             const canvas = document.createElement('canvas');
-                                            const size = cropType === 'avatar' ? 400 : 800;
-                                            canvas.width = size;
-                                            canvas.height = cropType === 'avatar' ? size : size / 2;
+                                            const outputW = cropType === 'avatar' ? 400 : 800;
+                                            const outputH = cropType === 'avatar' ? 400 : 400;
+                                            canvas.width = outputW;
+                                            canvas.height = outputH;
                                             const ctx = canvas.getContext('2d');
                                             if (!ctx) return;
 
-                                            const scale = zoom;
-                                            const scaledWidth = img.width * scale;
-                                            const scaledHeight = img.height * scale;
-                                            const centerX = scaledWidth / 2;
-                                            const centerY = scaledHeight / 2;
-                                            const offsetX = centerX + crop.x;
-                                            const offsetY = centerY + crop.y;
-                                            const sourceX = (offsetX - size / 2) / scale;
-                                            const sourceY = (offsetY - canvas.height / 2) / scale;
-                                            const sourceWidth = size / scale;
-                                            const sourceHeight = canvas.height / scale;
+                                            // Visual crop mask dimensions (must match the SVG mask)
+                                            const maskW = cropType === 'avatar' ? 300 : 600;
+                                            const maskH = cropType === 'avatar' ? 300 : 300;
 
-                                            ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, size, canvas.height);
+                                            // Container actual dimensions
+                                            const cEl = cropContainerRef.current;
+                                            const containerW = cEl ? cEl.clientWidth : 600;
+                                            const containerH = cEl ? cEl.clientHeight : 400;
+
+                                            // Image display size before zoom (CSS minWidth/minHeight: 100%)
+                                            const displayW = Math.max(img.naturalWidth, containerW);
+                                            const displayH = Math.max(img.naturalHeight, containerH);
+
+                                            // Total scale: base fit * user zoom
+                                            const totalScaleX = (displayW / img.naturalWidth) * zoom;
+                                            const totalScaleY = (displayH / img.naturalHeight) * zoom;
+
+                                            // Crop center in original image coords
+                                            // Image center is offset by (crop.x, crop.y) from container center
+                                            // So the fixed mask center is at (-crop.x, -crop.y) relative to image center
+                                            const srcCenterX = img.naturalWidth / 2 - crop.x / totalScaleX;
+                                            const srcCenterY = img.naturalHeight / 2 - crop.y / totalScaleY;
+
+                                            // Source region in original image pixels
+                                            const srcW = maskW / totalScaleX;
+                                            const srcH = maskH / totalScaleY;
+                                            const srcX = srcCenterX - srcW / 2;
+                                            const srcY = srcCenterY - srcH / 2;
+
+                                            if (cropType === 'avatar') {
+                                                // Draw circular crop
+                                                ctx.save();
+                                                ctx.beginPath();
+                                                ctx.arc(outputW / 2, outputH / 2, outputW / 2, 0, Math.PI * 2);
+                                                ctx.closePath();
+                                                ctx.clip();
+                                                ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, outputW, outputH);
+                                                ctx.restore();
+                                            } else {
+                                                ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, outputW, outputH);
+                                            }
 
                                             canvas.toBlob((blob) => {
                                                 if (!blob) return;
-                                                const file = new File([blob], `${cropType}.jpg`, { type: 'image/jpeg' });
+                                                const file = new File([blob], `${cropType}.png`, { type: 'image/png' });
                                                 const preview = URL.createObjectURL(blob);
 
                                                 if (cropType === 'avatar') {
@@ -1335,7 +1451,7 @@ const Profile = () => {
                                                 setCrop({ x: 0, y: 0 });
                                                 setZoom(1);
                                                 setEditMode(true);
-                                            }, 'image/jpeg', 0.95);
+                                            }, 'image/png');
                                         };
                                     }}
                                     className="px-5 py-2.5 bg-[var(--accent)] text-[var(--bg-primary)] font-semibold"

@@ -25,7 +25,7 @@ const SocialLayout = ({ children }: SocialLayoutProps) => {
     const location = useLocation();
 
     return (
-        <div className="min-h-screen bg-[var(--bg-primary)] flex">
+        <div className="min-h-screen bg-transparent flex">
             {/* Left Sidebar - Fixed */}
             <aside className="fixed left-0 top-0 h-screen w-[72px] xl:w-[244px] border-r border-[var(--border-color)] bg-[var(--bg-primary)] z-40 flex flex-col py-6 px-3">
                 {/* Logo */}

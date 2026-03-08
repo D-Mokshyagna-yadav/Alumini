@@ -28,7 +28,7 @@ router.get('/directory', requireAuth, async (req, res) => {
         }
 
         let users = await User.find(filter)
-            .select('name email headline currentLocation currentCompany graduationYear degree department avatar isMentor')
+            .select('name email headline currentLocation currentCompany graduationYear degree department avatar coverImage isMentor')
             .sort({ name: 1 });
 
         if (search) {
@@ -128,7 +128,7 @@ router.put('/profile', requireAuth, async (req, res) => {
         const updates = req.body;
 
         // Fields that can be updated
-        const allowedUpdates = ['headline', 'currentLocation', 'currentCompany', 'bio', 'skills', 'isMentor', 'avatar', 'coverImage', 'phone', 'linkedinUrl', 'githubUrl', 'websiteUrl', 'experiences', 'education', 'jobProviderPreference', 'jobSeekerPreference'];
+        const allowedUpdates = ['headline', 'currentLocation', 'currentCompany', 'bio', 'skills', 'isMentor', 'avatar', 'coverImage', 'phone', 'linkedinUrl', 'githubUrl', 'websiteUrl', 'experiences', 'education', 'jobProviderPreference', 'jobSeekerPreference', 'privacySettings'];
         const updateData: any = {};
 
         for (const key of allowedUpdates) {

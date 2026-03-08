@@ -51,7 +51,7 @@ const cardVariants = {
 
 const Developers = () => {
     return (
-        <div className="min-h-screen bg-[var(--bg-primary)] py-16 sm:py-24 relative overflow-hidden">
+        <div className="min-h-screen bg-transparent py-16 sm:py-24 relative overflow-hidden">
             {/* Background decoration */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-gradient-to-br from-[var(--accent)]/8 to-transparent rounded-full blur-3xl" />

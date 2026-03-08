@@ -21,12 +21,12 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     // Initialise socket once (reuses the global singleton for backward compat)
     useEffect(() => {
         const win = window as any;
-        const base = import.meta.env.VITE_API_URL || window.location.origin;
 
         if (!win.__ALUMNI_SOCKET) {
-            win.__ALUMNI_SOCKET = io(base, {
+            win.__ALUMNI_SOCKET = io({
                 withCredentials: true,
                 transports: ['polling', 'websocket'],
+                path: '/socket.io/',
             });
         }
 

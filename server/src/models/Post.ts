@@ -21,7 +21,7 @@ export interface IPost extends Document {
 
 const postSchema = new Schema<IPost>({
     author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    content: { type: String, required: true },
+    content: { type: String, default: '' },
     media: [{
         type: { type: String, enum: ['image', 'video'] },
         url: { type: String }

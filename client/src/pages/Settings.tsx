@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Lock, Bell, ChevronRight, Moon, Sun, User, Briefcase, Search, ShieldCheck } from 'lucide-react';
+import { Lock, Bell, ChevronRight, Moon, Sun, User, Briefcase, Search, ShieldCheck, Eye } from 'lucide-react';
 import Avatar from '../components/ui/Avatar';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -19,10 +19,16 @@ const Settings = () => {
     const [jobSeekerPref, setJobSeekerPref] = useState(user?.jobSeekerPreference || 'active');
     const [savingPrefs, setSavingPrefs] = useState(false);
 
+    const [emailVisibility, setEmailVisibility] = useState(user?.privacySettings?.emailVisibility || 'connections');
+    const [phoneVisibility, setPhoneVisibility] = useState(user?.privacySettings?.phoneVisibility || 'connections');
+    const [connectionsVisibility, setConnectionsVisibility] = useState(user?.privacySettings?.connectionsVisibility || 'everyone');
+    const [savingPrivacy, setSavingPrivacy] = useState(false);
+
     const tabs = [
         { id: 'account', label: 'Account preferences', icon: User },
         { id: 'job-prefs', label: 'Job preferences', icon: Briefcase },
         { id: 'security', label: 'Sign in & security', icon: Lock },
+        { id: 'privacy', label: 'Privacy', icon: Eye },
         { id: 'notifications', label: 'Notifications', icon: Bell },
     ];
 
@@ -296,6 +302,11 @@ const Settings = () => {
                                     onClick={() => navigate('/settings/email')}
                                 />
                                 <SettingsItem 
+                                    label="Phone number" 
+                                    value={user?.phone || 'Not set'} 
+                                    onClick={() => navigate('/settings/phone')}
+                                />
+                                <SettingsItem 
                                     label="Change password" 
                                     onClick={() => navigate('/settings/change-password')}
                                 />
@@ -311,6 +322,110 @@ const Settings = () => {
                                     value="Configure what you receive"
                                     onClick={() => navigate('/settings/notifications')}
                                 />
+                            </SettingsSection>
+                        </div>
+                    )}
+
+                    {activeTab === 'privacy' && (
+                        <div className="space-y-6">
+                            <SettingsSection title="Who can see your contact info">
+                                <div className="p-5 space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Email address visibility</label>
+                                        <p className="text-xs text-[var(--text-muted)] mb-3">Choose who can see your email on your profile</p>
+                                        <div className="flex flex-col gap-2">
+                                            {(['everyone', 'connections', 'only_me'] as const).map(opt => (
+                                                <label key={opt} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                                                    emailVisibility === opt
+                                                        ? 'border-[var(--accent)] bg-[var(--accent)]/5'
+                                                        : 'border-[var(--border-color)]/30 hover:bg-[var(--bg-tertiary)]'
+                                                }`}>
+                                                    <input
+                                                        type="radio"
+                                                        name="emailVisibility"
+                                                        checked={emailVisibility === opt}
+                                                        onChange={() => setEmailVisibility(opt)}
+                                                        className="accent-[var(--accent)]"
+                                                    />
+                                                    <span className="text-sm text-[var(--text-primary)] font-medium">
+                                                        {opt === 'everyone' ? 'Everyone' : opt === 'connections' ? 'Connections only' : 'Only me'}
+                                                    </span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Phone number visibility</label>
+                                        <p className="text-xs text-[var(--text-muted)] mb-3">Choose who can see your phone number on your profile</p>
+                                        <div className="flex flex-col gap-2">
+                                            {(['everyone', 'connections', 'only_me'] as const).map(opt => (
+                                                <label key={opt} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                                                    phoneVisibility === opt
+                                                        ? 'border-[var(--accent)] bg-[var(--accent)]/5'
+                                                        : 'border-[var(--border-color)]/30 hover:bg-[var(--bg-tertiary)]'
+                                                }`}>
+                                                    <input
+                                                        type="radio"
+                                                        name="phoneVisibility"
+                                                        checked={phoneVisibility === opt}
+                                                        onChange={() => setPhoneVisibility(opt)}
+                                                        className="accent-[var(--accent)]"
+                                                    />
+                                                    <span className="text-sm text-[var(--text-primary)] font-medium">
+                                                        {opt === 'everyone' ? 'Everyone' : opt === 'connections' ? 'Connections only' : 'Only me'}
+                                                    </span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <p className="text-xs text-[var(--text-muted)] italic">Note: Admins can always see all contact information regardless of privacy settings.</p>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Connections list visibility</label>
+                                        <p className="text-xs text-[var(--text-muted)] mb-3">Choose who can see your connections on your profile</p>
+                                        <div className="flex flex-col gap-2">
+                                            {(['everyone', 'connections', 'only_me'] as const).map(opt => (
+                                                <label key={opt} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                                                    connectionsVisibility === opt
+                                                        ? 'border-[var(--accent)] bg-[var(--accent)]/5'
+                                                        : 'border-[var(--border-color)]/30 hover:bg-[var(--bg-tertiary)]'
+                                                }`}>
+                                                    <input
+                                                        type="radio"
+                                                        name="connectionsVisibility"
+                                                        checked={connectionsVisibility === opt}
+                                                        onChange={() => setConnectionsVisibility(opt)}
+                                                        className="accent-[var(--accent)]"
+                                                    />
+                                                    <span className="text-sm text-[var(--text-primary)] font-medium">
+                                                        {opt === 'everyone' ? 'Everyone' : opt === 'connections' ? 'Connections only' : 'Only me'}
+                                                    </span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={async () => {
+                                            setSavingPrivacy(true);
+                                            try {
+                                                await api.put('/users/profile', { privacySettings: { emailVisibility, phoneVisibility, connectionsVisibility } });
+                                                await checkAuth();
+                                                toast.show('Privacy settings saved', 'success');
+                                            } catch {
+                                                toast.show('Failed to save privacy settings', 'error');
+                                            } finally {
+                                                setSavingPrivacy(false);
+                                            }
+                                        }}
+                                        disabled={savingPrivacy}
+                                        className="px-6 py-2.5 bg-[var(--accent)] text-[var(--bg-primary)] font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
+                                    >
+                                        {savingPrivacy ? 'Saving...' : 'Save Privacy Settings'}
+                                    </button>
+                                </div>
                             </SettingsSection>
                         </div>
                     )}

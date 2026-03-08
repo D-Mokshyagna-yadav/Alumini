@@ -49,7 +49,7 @@ const Contact = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-[var(--bg-primary)] py-20 relative overflow-hidden">
+        <div className="min-h-screen bg-transparent py-20 relative overflow-hidden">
             {/* Background decoration */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-[var(--accent)]/10 to-transparent blur-3xl" />

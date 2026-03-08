@@ -210,7 +210,7 @@ const NewsAdmin = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[var(--bg-primary)] py-8">
+        <div className="min-h-screen bg-transparent py-8">
             <div className="max-w-4xl mx-auto px-4">
                 <h1 className="text-2xl font-semibold text-[var(--text-primary)] mb-4">Admin — Manage News</h1>
 

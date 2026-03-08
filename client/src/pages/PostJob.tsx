@@ -155,7 +155,7 @@ const PostJob = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-[var(--bg-primary)] py-8">
+        <div className="min-h-screen bg-transparent py-8">
             <div className="max-w-3xl mx-auto px-4">
                 {/* Header */}
                 <div className="bg-[var(--text-secondary)] text-[var(--bg-primary)] px-4 sm:px-6 py-3 sm:py-4 mb-4 sm:mb-6">

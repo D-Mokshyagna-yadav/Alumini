@@ -196,10 +196,8 @@ const Messages = () => {
     useEffect(() => {
         if (!user) return;
 
-        const origin = import.meta.env.VITE_API_ORIGIN || window.location.origin;
-
         if (!socket) {
-            socket = io(origin, { withCredentials: true, transports: ['polling', 'websocket'] });
+            socket = io({ withCredentials: true, transports: ['polling', 'websocket'], path: '/socket.io/' });
         } else if (!socket.connected) {
             try { socket.connect(); } catch { /* ignore */ }
         }

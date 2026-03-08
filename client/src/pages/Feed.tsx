@@ -13,6 +13,7 @@ import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
 import api from '../lib/api';
 import Avatar from '../components/ui/Avatar';
+import ImageCarousel from '../components/ImageCarousel';
 
 interface Comment {
     _id: string;
@@ -77,6 +78,7 @@ const Feed = () => {
     const [showVisibilityMenu, setShowVisibilityMenu] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploading, setUploading] = useState(false);
+    const [uploadSpeed, setUploadSpeed] = useState('');
     const [fileErrors, setFileErrors] = useState<string[]>([]);
     const [activeCommentPost, setActiveCommentPost] = useState<string | null>(null);
     const [commentText, setCommentText] = useState('');
@@ -203,9 +205,20 @@ const Feed = () => {
                 postAttachments.forEach(f => form.append('media', f));
                 setUploading(true);
                 setUploadProgress(0);
+                setUploadSpeed('');
+                const uploadStart = Date.now();
                 const uploadRes = await api.post('/upload/post-media', form, {
                     headers: { 'Content-Type': 'multipart/form-data' },
-                    onUploadProgress: (ev) => { if (ev.total) setUploadProgress(Math.round((ev.loaded / ev.total) * 100)); }
+                    onUploadProgress: (ev) => {
+                        if (ev.total) {
+                            setUploadProgress(Math.round((ev.loaded / ev.total) * 100));
+                            const elapsed = (Date.now() - uploadStart) / 1000;
+                            if (elapsed > 0.3) {
+                                const bps = ev.loaded / elapsed;
+                                setUploadSpeed(bps >= 1024 * 1024 ? `${(bps / (1024 * 1024)).toFixed(1)} MB/s` : `${(bps / 1024).toFixed(0)} KB/s`);
+                            }
+                        }
+                    }
                 });
                 mediaPayload = uploadRes.data.media || [];
                 setUploading(false);
@@ -219,7 +232,11 @@ const Feed = () => {
             setShowPostModal(false);
             const isApproved = res.data.post?.status === 'approved';
             toast.show(isApproved ? 'Post published!' : 'Post submitted for admin approval. It will appear in the feed once approved.', 'success');
-        } catch { toast.show('Failed to create post', 'error'); }
+        } catch {
+            setUploading(false);
+            setUploadProgress(0);
+            toast.show('Failed to create post', 'error');
+        }
     };
 
     const handleLike = async (postId: string) => {
@@ -371,7 +388,7 @@ const Feed = () => {
         list.forEach(f => {
             const prefix = f.type.split('/')[0];
             if (!['image', 'video', 'application', 'text'].includes(prefix)) { errors.push(`${f.name}: Unsupported type`); return; }
-            if (f.type.startsWith('image') && f.size > 10 * 1024 * 1024) { errors.push(`${f.name}: Image too large (max 10MB)`); return; }
+            if (f.type.startsWith('image') && f.size > 15 * 1024 * 1024) { errors.push(`${f.name}: Image too large (max 15MB)`); return; }
             if (f.type.startsWith('video') && f.size > 50 * 1024 * 1024) { errors.push(`${f.name}: Video too large (max 50MB)`); return; }
             valid.push(f);
         });
@@ -399,7 +416,7 @@ const Feed = () => {
     }
 
     return (
-        <div className="max-w-[1100px] mx-auto px-4 py-6">
+        <div className="max-w-[1400px] mx-auto px-4 py-6">
             {/* Mobile Filter */}
             {isAuthenticated && (
                 <div className="lg:hidden mb-4 flex items-center gap-3">
@@ -419,13 +436,17 @@ const Feed = () => {
                 </div>
             )}
 
-            <div className={`grid grid-cols-1 ${isAuthenticated ? 'lg:grid-cols-[220px_1fr_280px]' : 'lg:grid-cols-[1fr_280px]'} gap-5`}>
+            <div className={`grid grid-cols-1 ${isAuthenticated ? 'lg:grid-cols-[240px_1fr_300px]' : 'lg:grid-cols-[1fr_300px]'} gap-6`}>
 
                 {/* Left Sidebar */}
                 {isAuthenticated && (
                     <aside className="hidden lg:block">
                         <div className={`${glass} overflow-hidden sticky top-[72px]`}>
-                            <div className="h-16 bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)] rounded-t-2xl" />
+                            <div className="h-16 bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)] rounded-t-2xl overflow-hidden">
+                                {user?.coverImage && (
+                                    <img src={normalizeMediaUrl(user.coverImage)} alt="" className="w-full h-full object-cover" />
+                                )}
+                            </div>
                             <div className="px-4 -mt-8 flex justify-center">
                                 <Link to="/profile">
                                     <div className="w-16 h-16 bg-[var(--accent)] rounded-full border-[3px] border-[var(--bg-primary)] flex items-center justify-center shadow-lg overflow-hidden">
@@ -586,16 +607,8 @@ const Feed = () => {
 
                                     {/* Post Media */}
                                     {post.media?.length > 0 && (
-                                        <div className={post.media.length > 1 ? 'grid grid-cols-2 gap-0.5' : ''}>
-                                            {post.media.map((m, idx) => (
-                                                <div key={idx} className={post.media.length === 1 ? '' : post.media.length === 3 && idx === 0 ? 'col-span-2' : ''}>
-                                                    {m.type === 'image' ? (
-                                                        <img src={normalizeMediaUrl(m.url)} alt="" className="w-full max-h-[480px] object-cover bg-[var(--bg-tertiary)]" loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                                                    ) : (
-                                                        <video src={normalizeMediaUrl(m.url)} controls className="w-full max-h-[480px]" onError={e => { (e.target as HTMLVideoElement).style.display = 'none'; }} />
-                                                    )}
-                                                </div>
-                                            ))}
+                                        <div className="group">
+                                            <ImageCarousel media={post.media} normalizeMediaUrl={normalizeMediaUrl} />
                                         </div>
                                     )}
 
@@ -897,16 +910,8 @@ const Feed = () => {
 
                                         {/* Media */}
                                         {detailedPost.media?.length > 0 && (
-                                            <div className={detailedPost.media.length > 1 ? 'grid grid-cols-2 gap-0.5' : ''}>
-                                                {detailedPost.media.map((m, idx) => (
-                                                    <div key={idx} className={detailedPost.media.length === 1 ? '' : detailedPost.media.length === 3 && idx === 0 ? 'col-span-2' : ''}>
-                                                        {m.type === 'image' ? (
-                                                            <img src={normalizeMediaUrl(m.url)} alt="" className="w-full max-h-[480px] object-cover bg-[var(--bg-tertiary)]" loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                                                        ) : (
-                                                            <video src={normalizeMediaUrl(m.url)} controls className="w-full max-h-[480px]" onError={e => { (e.target as HTMLVideoElement).style.display = 'none'; }} />
-                                                        )}
-                                                    </div>
-                                                ))}
+                                            <div className="group">
+                                                <ImageCarousel media={detailedPost.media} normalizeMediaUrl={normalizeMediaUrl} />
                                             </div>
                                         )}
 
@@ -1126,7 +1131,7 @@ const Feed = () => {
                                         <div className="w-full bg-[var(--bg-tertiary)] h-1.5 rounded-full overflow-hidden">
                                             <motion.div initial={{ width: 0 }} animate={{ width: `${uploadProgress}%` }} className="h-full bg-[var(--accent)] rounded-full" />
                                         </div>
-                                        <p className="text-[10px] text-[var(--text-muted)] mt-1.5">Uploading — {uploadProgress}%</p>
+                                        <p className="text-[10px] text-[var(--text-muted)] mt-1.5">Uploading — {uploadProgress}%{uploadSpeed && ` · ${uploadSpeed}`}</p>
                                     </div>
                                 )}
                             </div>

@@ -18,7 +18,7 @@ const About = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-[var(--bg-primary)]">
+        <div className="min-h-screen bg-transparent">
             {/* Hero Section */}
             <div className="bg-[var(--accent)] text-[var(--bg-primary)] py-24 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10 bg-[url('https://images.unsplash.com/photo-1541339907198-e021fc012e06?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80')] bg-cover bg-center" />

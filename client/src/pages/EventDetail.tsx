@@ -317,7 +317,7 @@ const EventDetail = () => {
     const currentState = event.eventState || 'upcoming';
 
     return (
-        <div className="min-h-screen bg-[var(--bg-primary)]">
+        <div className="min-h-screen bg-transparent">
             {/* Hero Banner */}
             <div className="relative w-full bg-black overflow-hidden flex justify-center">
                 {event.bannerImage ? (

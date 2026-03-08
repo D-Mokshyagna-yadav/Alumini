@@ -69,11 +69,9 @@ const Notifications = () => {
     // socket (reuse global on window to avoid duplicate connections)
     useEffect(() => {
         let mounted = true;
-        const apiOrigin = import.meta.env.VITE_API_ORIGIN || '';
-        const base = apiOrigin || '';
         const win: any = window;
         if (!win.__ALUMNI_SOCKET) {
-            win.__ALUMNI_SOCKET = io(base || (location.origin), { withCredentials: true });
+            win.__ALUMNI_SOCKET = io({ withCredentials: true, transports: ['polling', 'websocket'], path: '/socket.io/' });
         }
         const socket: Socket = win.__ALUMNI_SOCKET;
 

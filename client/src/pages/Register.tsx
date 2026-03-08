@@ -131,7 +131,7 @@ const Register = () => {
     const inputClass = "w-full px-4 py-3 bg-[var(--bg-tertiary)]/60 border border-[var(--border-color)]/40 rounded-xl text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 focus:border-[var(--accent)]/40 transition-all";
 
     return (
-        <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col">
+        <div className="min-h-screen bg-transparent flex flex-col">
             <header className="py-4 px-6">
                 <Link to="/" className="flex items-center gap-2">
                     <div className="w-10 h-10 bg-[var(--accent)] rounded-xl flex items-center justify-center">

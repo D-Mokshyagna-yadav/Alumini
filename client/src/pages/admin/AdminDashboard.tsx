@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, Clock, Users, UserCheck, UserX, Search, ChevronDown, ChevronUp, Eye, EyeOff, Plus, Edit2, Trash2, X, Lock, FileText, Briefcase, Calendar, Shield, ShieldOff, Image as ImageIcon, Upload, FolderPlus, ThumbsUp, MessageCircle, MapPin, Phone, Mail, GraduationCap, Building2, BadgeCheck, Heart, ToggleLeft, ToggleRight, Newspaper, Star, Landmark } from 'lucide-react';
 import { resolveMediaUrl } from '../../lib/media';
+import ImageCarousel from '../../components/ImageCarousel';
 import { useConfirm } from '../../context/ConfirmContext';
 import { Button } from '../../components/ui/Button';
 import api from '../../lib/api';
@@ -1125,8 +1126,8 @@ const AdminDashboard = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-[var(--bg-primary)] py-8">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-transparent py-8">
+            <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
                     <h1 className="text-xl sm:text-3xl font-heading font-bold text-[var(--text-primary)]">Admin Dashboard</h1>
                     <div className="flex items-center gap-2 flex-wrap">
@@ -2038,16 +2039,8 @@ const AdminDashboard = () => {
 
                                     {/* Media */}
                                     {previewPost.media?.length > 0 && (
-                                        <div className={previewPost.media.length > 1 ? 'grid grid-cols-2 gap-1' : ''}>
-                                            {previewPost.media.map((m: any, idx: number) => (
-                                                <div key={idx}>
-                                                    {m.type === 'video' ? (
-                                                        <video src={resolveMediaUrl(m.url)} controls className="w-full max-h-[360px]" />
-                                                    ) : (
-                                                        <img src={resolveMediaUrl(m.url)} alt="" className="w-full max-h-[360px] object-cover" />
-                                                    )}
-                                                </div>
-                                            ))}
+                                        <div className="group">
+                                            <ImageCarousel media={previewPost.media} normalizeMediaUrl={resolveMediaUrl} />
                                         </div>
                                     )}
 

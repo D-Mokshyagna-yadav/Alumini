@@ -35,6 +35,202 @@ router.get('/stats/:userId', requireAuth, async (req, res) => {
     }
 });
 
+// GET /api/connections/user/:userId - Get accepted connections for a specific user (with privacy check)
+router.get('/user/:userId', requireAuth, async (req, res) => {
+    try {
+        const currentUserId = req.session?.userId as string | undefined;
+        const { userId } = req.params;
+        const isOwnProfile = currentUserId === userId;
+
+        // Check privacy settings
+        const targetUser = await User.findById(userId).select('privacySettings');
+        if (!targetUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const visibility = targetUser.privacySettings?.connectionsVisibility || 'everyone';
+
+        // Check if current user is admin
+        const currentUser = await User.findById(currentUserId).select('role');
+        const isAdmin = currentUser?.role === 'admin';
+
+        if (!isOwnProfile && !isAdmin) {
+            if (visibility === 'only_me') {
+                return res.json({ connections: [], restricted: true });
+            }
+            if (visibility === 'connections') {
+                // Check if current user is connected to target user
+                const isConnected = await Connection.findOne({
+                    $or: [
+                        { requester: currentUserId, recipient: userId },
+                        { requester: userId, recipient: currentUserId }
+                    ],
+                    status: ConnectionStatus.ACCEPTED
+                });
+                if (!isConnected) {
+                    return res.json({ connections: [], restricted: true });
+                }
+            }
+        }
+
+        const connections = await Connection.find({
+            $or: [{ requester: userId }, { recipient: userId }],
+            status: ConnectionStatus.ACCEPTED
+        }).populate('requester recipient', 'name avatar headline');
+
+        const friends = connections.map(conn => {
+            const isRequester = conn.requester._id.toString() === userId;
+            return isRequester ? conn.recipient : conn.requester;
+        });
+
+        // Calculate mutual connections for each friend (if viewing someone else's profile)
+        let friendsWithMutuals = friends;
+        if (currentUserId && currentUserId !== userId) {
+            // Get current user's connections
+            const myConnections = await Connection.find({
+                $or: [{ requester: currentUserId }, { recipient: currentUserId }],
+                status: ConnectionStatus.ACCEPTED
+            });
+            const myFriendIds = new Set(myConnections.map(c => {
+                const isReq = c.requester.toString() === currentUserId;
+                return isReq ? c.recipient.toString() : c.requester.toString();
+            }));
+
+            friendsWithMutuals = friends.map((f: any) => {
+                const fObj = f.toObject ? f.toObject() : f;
+                fObj.isMutual = myFriendIds.has(fObj._id.toString());
+                return fObj;
+            });
+        }
+
+        res.json({ connections: friendsWithMutuals, restricted: false });
+    } catch (error) {
+        console.error('Error fetching user connections:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// GET /api/connections/mutual/:userId - Get mutual connections count with a specific user
+router.get('/mutual/:userId', requireAuth, async (req, res) => {
+    try {
+        const currentUserId = req.session?.userId as string | undefined;
+        const { userId } = req.params;
+
+        if (currentUserId === userId) {
+            return res.json({ mutualCount: 0, mutuals: [] });
+        }
+
+        // Get both users' connections
+        const [myConns, theirConns] = await Promise.all([
+            Connection.find({
+                $or: [{ requester: currentUserId }, { recipient: currentUserId }],
+                status: ConnectionStatus.ACCEPTED
+            }),
+            Connection.find({
+                $or: [{ requester: userId }, { recipient: userId }],
+                status: ConnectionStatus.ACCEPTED
+            })
+        ]);
+
+        const myFriendIds = new Set(myConns.map(c => {
+            const isReq = c.requester.toString() === currentUserId;
+            return isReq ? c.recipient.toString() : c.requester.toString();
+        }));
+
+        const theirFriendIds = theirConns.map(c => {
+            const isReq = c.requester.toString() === userId;
+            return isReq ? c.recipient.toString() : c.requester.toString();
+        });
+
+        const mutualIds = theirFriendIds.filter(id => myFriendIds.has(id));
+
+        // Fetch mutual user details
+        const mutuals = await User.find({ _id: { $in: mutualIds } }).select('name avatar headline').limit(5);
+
+        res.json({ mutualCount: mutualIds.length, mutuals });
+    } catch (error) {
+        console.error('Error fetching mutual connections:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// POST /api/connections/mutual-batch - Get mutual connections for multiple users at once
+router.post('/mutual-batch', requireAuth, async (req, res) => {
+    try {
+        const currentUserId = req.session?.userId as string | undefined;
+        const { userIds } = req.body;
+
+        if (!Array.isArray(userIds) || userIds.length === 0) {
+            return res.json({ mutuals: {} });
+        }
+
+        // Limit to prevent abuse
+        const limitedIds = userIds.slice(0, 50);
+
+        // Get current user's connections once
+        const myConns = await Connection.find({
+            $or: [{ requester: currentUserId }, { recipient: currentUserId }],
+            status: ConnectionStatus.ACCEPTED
+        });
+        const myFriendIds = new Set(myConns.map(c => {
+            const isReq = c.requester.toString() === currentUserId;
+            return isReq ? c.recipient.toString() : c.requester.toString();
+        }));
+
+        // Get all connections for the requested users in one query
+        const allConns = await Connection.find({
+            $or: [
+                { requester: { $in: limitedIds } },
+                { recipient: { $in: limitedIds } }
+            ],
+            status: ConnectionStatus.ACCEPTED
+        });
+
+        // Build per-user friend sets
+        const userFriendsMap: Record<string, string[]> = {};
+        for (const uid of limitedIds) {
+            userFriendsMap[uid] = [];
+        }
+        for (const c of allConns) {
+            const req = c.requester.toString();
+            const rec = c.recipient.toString();
+            if (userFriendsMap[req] !== undefined) userFriendsMap[req].push(rec);
+            if (userFriendsMap[rec] !== undefined) userFriendsMap[rec].push(req);
+        }
+
+        // Calculate mutuals for each user
+        const mutualIdsAll = new Set<string>();
+        const result: Record<string, { mutualCount: number; mutualIds: string[] }> = {};
+        for (const uid of limitedIds) {
+            const theirFriends = userFriendsMap[uid] || [];
+            const mIds = theirFriends.filter(id => myFriendIds.has(id));
+            result[uid] = { mutualCount: mIds.length, mutualIds: mIds.slice(0, 4) };
+            mIds.slice(0, 4).forEach(id => mutualIdsAll.add(id));
+        }
+
+        // Fetch user details for all mutual users at once
+        const mutualUsers = await User.find({ _id: { $in: [...mutualIdsAll] } }).select('name avatar headline');
+        const mutualUserMap: Record<string, any> = {};
+        for (const u of mutualUsers) {
+            mutualUserMap[u._id.toString()] = { _id: u._id, name: u.name, avatar: u.avatar, headline: u.headline };
+        }
+
+        // Build final response
+        const mutuals: Record<string, { mutualCount: number; mutuals: any[] }> = {};
+        for (const uid of limitedIds) {
+            mutuals[uid] = {
+                mutualCount: result[uid].mutualCount,
+                mutuals: result[uid].mutualIds.map(id => mutualUserMap[id]).filter(Boolean)
+            };
+        }
+
+        res.json({ mutuals });
+    } catch (error) {
+        console.error('Error fetching batch mutual connections:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 // GET /api/connections/my-connections - Get all accepted connections
 router.get('/my-connections', requireAuth, async (req, res) => {
     try {

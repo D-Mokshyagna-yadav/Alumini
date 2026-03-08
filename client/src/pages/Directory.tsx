@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
     Search, MapPin, GraduationCap,
@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import api from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import Avatar from '../components/ui/Avatar';
+import resolveMediaUrl from '../lib/media';
 import { useAuth } from '../context/AuthContext';
 
 interface Alumni {
@@ -20,6 +21,7 @@ interface Alumni {
     department?: string;
     currentCompany?: string;
     avatar?: string;
+    coverImage?: string;
 }
 
 interface ConnectionPerson {
@@ -53,9 +55,25 @@ const Directory = () => {
     const [pendingSent, setPendingSent] = useState<PendingRequest[]>([]);
     const [myConnections, setMyConnections] = useState<ConnectionPerson[]>([]);
     const [networkLoading, setNetworkLoading] = useState(false);
+    const [mutualData, setMutualData] = useState<Record<string, { mutualCount: number; mutuals: { _id: string; name: string; avatar?: string; headline?: string }[] }>>({});
+    const [mutualPopup, setMutualPopup] = useState<string | null>(null);
+    const mutualPopupRef = useRef<HTMLDivElement>(null);
+
+    // Close mutual popup on click outside
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (mutualPopupRef.current && !mutualPopupRef.current.contains(e.target as Node)) {
+                setMutualPopup(null);
+            }
+        };
+        if (mutualPopup) document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [mutualPopup]);
 
     useEffect(() => {
         fetchAlumni();
+        // Fetch pending requests count on mount so badge shows on Explore tab
+        api.get('/connections/pending-received').then(res => setPendingReceived(res.data)).catch(() => {});
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -63,9 +81,17 @@ const Directory = () => {
         try {
             const res = await api.get('/users/directory');
             setAlumni(res.data.users);
-            res.data.users.forEach((user: Alumni) => {
+            const users = res.data.users as Alumni[];
+            users.forEach((user: Alumni) => {
                 checkConnectionStatus(user._id);
             });
+            // Fetch mutual connections in batch
+            if (users.length > 0) {
+                const userIds = users.map(u => u._id);
+                api.post('/connections/mutual-batch', { userIds })
+                    .then(r => setMutualData(r.data.mutuals || {}))
+                    .catch(() => {});
+            }
         } catch (error) {
             console.error('Failed to fetch alumni:', error);
         } finally {
@@ -234,7 +260,7 @@ const Directory = () => {
     };
 
     return (
-        <div className="max-w-[1128px] mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <div className="max-w-[1400px] mx-auto px-3 sm:px-4 py-4 sm:py-6">
             {/* Main Tab Switcher */}
             <div className="flex gap-1 mb-5 bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-1.5">
                 <button
@@ -318,57 +344,108 @@ const Directory = () => {
                     <p className="text-sm text-[var(--text-muted)] mt-1">Try adjusting your search or filters</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                     {filteredAlumni.map((person, index) => (
                         <motion.div
                             key={person._id}
                             initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: Math.min(index * 0.03, 0.5) }}
-                            className="group bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl overflow-hidden hover:border-[var(--border-color)]/60 transition-all"
+                            className="group bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl hover:border-[var(--border-color)]/60 transition-all"
                         >
                             {/* Card Header */}
-                            <div className="h-14 bg-gradient-to-r from-[var(--accent)]/10 via-[var(--accent)]/5 to-transparent" />
+                            <div className="h-20 bg-gradient-to-r from-[var(--accent)]/10 via-[var(--accent)]/5 to-transparent overflow-hidden rounded-t-2xl">
+                                {person.coverImage && (
+                                    <img src={resolveMediaUrl(person.coverImage)} alt="" className="w-full h-full object-cover" />
+                                )}
+                            </div>
 
                             {/* Card Body */}
-                            <div className="px-4 pb-4 -mt-7">
+                            <div className="px-5 pb-5 -mt-8">
                                 {/* Avatar */}
                                 <Link to={`/profile/${person._id}`} className="inline-block mb-3">
-                                    <div className="w-14 h-14 rounded-xl bg-[var(--accent)] border-2 border-[var(--bg-secondary)] flex items-center justify-center overflow-hidden">
-                                        <Avatar src={person.avatar} iconSize={24} />
+                                    <div className="w-16 h-16 rounded-full bg-[var(--accent)] border-[3px] border-[var(--bg-secondary)] flex items-center justify-center overflow-hidden">
+                                        <Avatar src={person.avatar} iconSize={28} />
                                     </div>
                                 </Link>
 
                                 {/* Info */}
-                                <div className="min-w-0 mb-3">
-                                    <h3 className="font-semibold text-[var(--text-primary)] truncate text-sm">
+                                <div className="min-w-0 mb-4">
+                                    <h3 className="font-semibold text-[var(--text-primary)] truncate text-base">
                                         <Link to={`/profile/${person._id}`} className="hover:underline">{person.name}</Link>
                                     </h3>
-                                    <p className="text-xs text-[var(--text-secondary)] truncate mt-0.5">
+                                    <p className="text-sm text-[var(--text-secondary)] truncate mt-0.5">
                                         {person.headline || `${person.degree} · ${person.department || 'MIC College'}`}
                                     </p>
-                                    <div className="flex items-center gap-2 mt-1.5 text-[10px] text-[var(--text-muted)]">
+                                    <div className="flex items-center gap-2 mt-2 text-xs text-[var(--text-muted)]">
                                         <span className="flex items-center gap-0.5">
-                                            <GraduationCap size={10} /> {person.graduationYear}
+                                            <GraduationCap size={12} /> {person.graduationYear}
                                         </span>
                                         {person.currentLocation && (
                                             <>
                                                 <span>·</span>
                                                 <span className="flex items-center gap-0.5 truncate">
-                                                    <MapPin size={10} /> {person.currentLocation}
+                                                    <MapPin size={12} /> {person.currentLocation}
                                                 </span>
                                             </>
                                         )}
                                     </div>
                                 </div>
 
+                                {/* Mutual Connections */}
+                                {mutualData[person._id]?.mutualCount > 0 && (
+                                    <div className="relative mb-3">
+                                        <button
+                                            onClick={(e) => { e.preventDefault(); setMutualPopup(mutualPopup === person._id ? null : person._id); }}
+                                            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                                        >
+                                            <div className="flex -space-x-2">
+                                                {mutualData[person._id].mutuals.slice(0, 4).map(m => (
+                                                    <div key={m._id} className="w-6 h-6 rounded-full overflow-hidden border-2 border-[var(--bg-secondary)] bg-[var(--bg-tertiary)] flex items-center justify-center">
+                                                        <Avatar src={m.avatar} alt={m.name} iconSize={10} imgClassName="w-full h-full object-cover" iconClassName="text-[var(--text-muted)]" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <span className="text-[11px] text-[var(--text-muted)]">
+                                                {mutualData[person._id].mutualCount} mutual{mutualData[person._id].mutualCount !== 1 ? 's' : ''}
+                                            </span>
+                                        </button>
+                                        {mutualPopup === person._id && (
+                                            <div ref={mutualPopupRef} className="absolute left-0 bottom-full mb-1 z-50 bg-[var(--bg-secondary)] border border-[var(--border-color)]/40 rounded-xl shadow-lg p-3 w-56">
+                                                <p className="text-xs font-semibold text-[var(--text-primary)] mb-2">Mutual connections</p>
+                                                <div className="space-y-2">
+                                                    {mutualData[person._id].mutuals.map(m => (
+                                                        <Link
+                                                            key={m._id}
+                                                            to={`/profile/${m._id}`}
+                                                            onClick={() => setMutualPopup(null)}
+                                                            className="flex items-center gap-2 hover:bg-[var(--bg-tertiary)] rounded-lg p-1.5 transition-colors"
+                                                        >
+                                                            <div className="w-7 h-7 rounded-full overflow-hidden bg-[var(--bg-tertiary)] flex items-center justify-center shrink-0">
+                                                                <Avatar src={m.avatar} alt={m.name} iconSize={12} imgClassName="w-full h-full object-cover" iconClassName="text-[var(--text-muted)]" />
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <p className="text-xs font-medium text-[var(--text-primary)] truncate">{m.name}</p>
+                                                                {m.headline && <p className="text-[10px] text-[var(--text-muted)] truncate">{m.headline}</p>}
+                                                            </div>
+                                                        </Link>
+                                                    ))}
+                                                    {mutualData[person._id].mutualCount > 4 && (
+                                                        <p className="text-[10px] text-[var(--text-muted)] text-center pt-1">+{mutualData[person._id].mutualCount - 4} more</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
                                 {/* Action */}
                                 <div className="flex gap-2">
                                     <Link
                                         to={`/profile/${person._id}`}
-                                        className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-[var(--bg-tertiary)]/60 text-[var(--text-secondary)] font-medium text-xs rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
+                                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[var(--bg-tertiary)]/60 text-[var(--text-secondary)] font-medium text-sm rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors"
                                     >
-                                        <User size={13} /> Profile
+                                        <User size={14} /> Profile
                                     </Link>
                                     <ConnectionButton person={person} />
                                 </div>
@@ -434,7 +511,7 @@ const Directory = () => {
                                                 className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-4 flex items-center gap-4"
                                             >
                                                 <Link to={`/profile/${req.user._id}`}>
-                                                    <div className="w-12 h-12 rounded-xl bg-[var(--accent)] flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                    <div className="w-12 h-12 rounded-full bg-[var(--accent)] flex items-center justify-center overflow-hidden flex-shrink-0">
                                                         <Avatar src={req.user.avatar} iconSize={20} />
                                                     </div>
                                                 </Link>
@@ -482,7 +559,7 @@ const Directory = () => {
                                                 className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-4 flex items-center gap-4"
                                             >
                                                 <Link to={`/profile/${req.user._id}`}>
-                                                    <div className="w-12 h-12 rounded-xl bg-[var(--accent)] flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                    <div className="w-12 h-12 rounded-full bg-[var(--accent)] flex items-center justify-center overflow-hidden flex-shrink-0">
                                                         <Avatar src={req.user.avatar} iconSize={20} />
                                                     </div>
                                                 </Link>
@@ -527,7 +604,7 @@ const Directory = () => {
                                                 className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-4 flex items-center gap-4"
                                             >
                                                 <Link to={`/profile/${person._id}`}>
-                                                    <div className="w-12 h-12 rounded-xl bg-[var(--accent)] flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                    <div className="w-12 h-12 rounded-full bg-[var(--accent)] flex items-center justify-center overflow-hidden flex-shrink-0">
                                                         <Avatar src={person.avatar} iconSize={20} />
                                                     </div>
                                                 </Link>

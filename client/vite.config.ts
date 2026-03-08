@@ -15,6 +15,11 @@ export default defineConfig({
     // (when strictPort is false Vite will try the next available port)
     strictPort: false,
     proxy: {
+      '/socket.io': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        ws: true,
+      },
       '/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,

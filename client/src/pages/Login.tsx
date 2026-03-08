@@ -42,7 +42,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     };
 
     return (
-        <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col relative overflow-hidden">
+        <div className="min-h-screen bg-transparent flex flex-col relative overflow-hidden">
             {/* Animated Background */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <motion.div

@@ -36,6 +36,12 @@ interface User {
     jobProviderPreference?: 'provider' | 'referrer' | 'not_provider';
     jobSeekerPreference?: 'active' | 'casual' | 'not_interested';
     isVerified?: boolean;
+    // Privacy settings
+    privacySettings?: {
+        emailVisibility?: 'everyone' | 'connections' | 'only_me';
+        phoneVisibility?: 'everyone' | 'connections' | 'only_me';
+        connectionsVisibility?: 'everyone' | 'connections' | 'only_me';
+    };
 }
 
 interface AuthContextType {
@@ -91,9 +97,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Setup a shared socket to listen for events that should refresh auth state
     useEffect(() => {
         const win = window as any;
-        const base = import.meta.env.VITE_API_URL || window.location.origin;
         if (!win.__ALUMNI_SOCKET) {
-            win.__ALUMNI_SOCKET = io(base, { withCredentials: true, transports: ['polling', 'websocket'] });
+            win.__ALUMNI_SOCKET = io({ withCredentials: true, transports: ['polling', 'websocket'], path: '/socket.io/' });
         }
         const socket: Socket = win.__ALUMNI_SOCKET;
 

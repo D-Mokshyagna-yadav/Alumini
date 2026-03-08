@@ -66,9 +66,9 @@
     --bg-primary: #ffffff;
     --bg-secondary: #f7f7f7;
     --bg-tertiary: #efefef;
-    --text-primary: #001D39;
-    --text-secondary: #0A4174;
-    --text-muted: #49769F;
+    --text-primary: #0a0a0a;
+    --text-secondary: #1a1a2e;
+    --text-muted: #555e6e;
     --accent: #0A4174;
     --accent-hover: #001D39;
     --accent-light: #BDD8E9;
@@ -86,19 +86,19 @@
   }
 
   .dark {
-    --bg-primary: #000000;
-    --bg-secondary: #0a0a0a;
-    --bg-tertiary: #141414;
-    --text-primary: #BDD8E9;
-    --text-secondary: #7BBDE8;
-    --text-muted: #4E8EA2;
+    --bg-primary: #03060d;
+    --bg-secondary: #070c18;
+    --bg-tertiary: #0c1220;
+    --text-primary: #ffffff;
+    --text-secondary: #e0e8f0;
+    --text-muted: #8fa4b8;
     --accent: #7BBDE8;
     --accent-hover: #BDD8E9;
     --accent-light: #0A4174;
     --border-color: rgba(123, 189, 232, 0.12);
-    --card-bg: rgba(10, 10, 10, 0.90);
+    --card-bg: rgba(4, 8, 16, 0.92);
     --card-border: rgba(123, 189, 232, 0.08);
-    --nav-bg: rgba(0, 0, 0, 0.92);
+    --nav-bg: rgba(3, 6, 13, 0.95);
     --glow-color: rgba(123, 189, 232, 0.06);
     --gradient-start: #7BBDE8;
     --gradient-mid: #4E8EA2;
@@ -111,6 +111,25 @@
   body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
+  }
+
+  :root body,
+  .light body,
+  body.light {
+    background: linear-gradient(160deg, #ffffff 0%, #f0f4f8 25%, #e8f0fa 50%, #f5f8fc 75%, #ffffff 100%);
+    background-attachment: fixed;
+  }
+
+  .dark body,
+  body.dark {
+    background: linear-gradient(160deg, #020408 0%, #0a1628 30%, #081430 50%, #040a14 75%, #020306 100%);
+    background-attachment: fixed;
+  }
+
+  /* White icons in dark mode */
+  .dark svg.lucide,
+  .dark svg[class*="lucide-"] {
+    color: #ffffff !important;
   }
 
   /* Global subtle interactive transitions */
