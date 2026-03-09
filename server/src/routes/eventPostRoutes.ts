@@ -3,6 +3,7 @@ import EventPost from '../models/EventPost';
 import Event from '../models/Event';
 import User from '../models/User';
 import Notification from '../models/Notification';
+import { cacheMiddleware, TTL } from '../config/cache';
 
 const router = express.Router();
 
@@ -12,7 +13,7 @@ const requireAuth = async (req: express.Request, res: express.Response, next: ex
 };
 
 // GET /api/event-posts/:eventId - Get all posts for an event
-router.get('/:eventId', async (req, res) => {
+router.get('/:eventId', cacheMiddleware(TTL.SHORT), async (req, res) => {
     try {
         const posts = await EventPost.find({ event: req.params.eventId })
             .populate('author', 'name graduationYear avatar')

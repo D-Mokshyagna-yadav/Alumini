@@ -1,6 +1,7 @@
 import express from 'express';
 import Group from '../models/Group';
 import User, { UserStatus } from '../models/User';
+import { cacheMiddleware, TTL } from '../config/cache';
 
 const router = express.Router();
 
@@ -16,7 +17,7 @@ const requireAuth = async (req: express.Request, res: express.Response, next: ex
 };
 
 // GET /api/groups - Get user's groups
-router.get('/', requireAuth, async (req, res) => {
+router.get('/', requireAuth, cacheMiddleware(TTL.MEDIUM), async (req, res) => {
     try {
         const groups = await Group.find({ members: req.session!.userId })
             .populate('members', 'name avatar')
@@ -69,7 +70,7 @@ router.post('/', requireAuth, async (req, res) => {
 });
 
 // GET /api/groups/:id - Get group details
-router.get('/:id', requireAuth, async (req, res) => {
+router.get('/:id', requireAuth, cacheMiddleware(TTL.MEDIUM), async (req, res) => {
     try {
         const group = await Group.findById(req.params.id)
             .populate('members', 'name avatar headline')

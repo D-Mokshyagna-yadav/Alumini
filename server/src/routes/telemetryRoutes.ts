@@ -1,6 +1,7 @@
 import express from 'express';
 import Telemetry from '../models/Telemetry';
 import User from '../models/User';
+import { cacheMiddleware, TTL } from '../config/cache';
 
 const router = express.Router();
 
@@ -30,7 +31,7 @@ router.post('/share', async (req, res) => {
 });
 
 // GET /api/telemetry/list - admin only, paginated
-router.get('/list', async (req, res) => {
+router.get('/list', cacheMiddleware(TTL.MEDIUM), async (req, res) => {
     try {
         const userId = (req as any).session?.userId;
         if (!userId) return res.status(401).json({ message: 'Unauthorized' });

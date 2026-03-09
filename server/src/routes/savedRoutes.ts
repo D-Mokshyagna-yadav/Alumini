@@ -2,6 +2,7 @@ import express from 'express';
 import SavedCollection from '../models/SavedCollection';
 import Post from '../models/Post';
 import User, { UserStatus } from '../models/User';
+import { cacheMiddleware, TTL } from '../config/cache';
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ const requireAuth = async (req: express.Request, res: express.Response, next: ex
     next();
 };
 
-router.get('/collections', requireAuth, async (req, res) => {
+router.get('/collections', requireAuth, cacheMiddleware(TTL.USER, true), async (req, res) => {
     try {
         const userId = req.session!.userId;
         let collections = await SavedCollection.find({ user: userId }).sort({ isDefault: -1, updatedAt: -1 });
@@ -58,7 +59,7 @@ router.get('/collections', requireAuth, async (req, res) => {
     }
 });
 
-router.get('/collections/:id', requireAuth, async (req, res) => {
+router.get('/collections/:id', requireAuth, cacheMiddleware(TTL.USER, true), async (req, res) => {
     try {
         const userId = req.session!.userId;
         const collection = await SavedCollection.findOne({ _id: req.params.id, user: userId })
@@ -266,7 +267,7 @@ router.delete('/collections/:collectionId/remove/:postId', requireAuth, async (r
     }
 });
 
-router.get('/all', requireAuth, async (req, res) => {
+router.get('/all', requireAuth, cacheMiddleware(TTL.USER, true), async (req, res) => {
     try {
         const userId = req.session!.userId;
         const collections = await SavedCollection.find({ user: userId });
@@ -283,7 +284,7 @@ router.get('/all', requireAuth, async (req, res) => {
     }
 });
 
-router.get('/check/:postId', requireAuth, async (req, res) => {
+router.get('/check/:postId', requireAuth, cacheMiddleware(TTL.USER, true), async (req, res) => {
     try {
         const userId = req.session!.userId;
         const postId = req.params.postId;

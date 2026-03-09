@@ -2,6 +2,7 @@ import express from 'express';
 import Event, { EventStatus, EventState } from '../models/Event';
 import User, { UserStatus } from '../models/User';
 import Notification from '../models/Notification';
+import { cacheMiddleware, TTL } from '../config/cache';
 
 const router = express.Router();
 
@@ -43,7 +44,7 @@ router.post('/', requireAdmin, async (req, res) => {
 });
 
 // GET /api/events - Public list of approved events
-router.get('/', async (req, res) => {
+router.get('/', cacheMiddleware(TTL.MEDIUM), async (req, res) => {
     try {
         const events = await Event.find({ status: EventStatus.APPROVED })
             .sort({ date: 1 })
@@ -77,7 +78,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/events/counts - return counts for All / Upcoming / Completed (approved events only)
-router.get('/counts', async (req, res) => {
+router.get('/counts', cacheMiddleware(TTL.MEDIUM), async (req, res) => {
     try {
         const todayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
@@ -93,7 +94,7 @@ router.get('/counts', async (req, res) => {
 });
 
 // GET /api/events/my - return events created by current user (including statuses)
-router.get('/my', requireAuth, async (req, res) => {
+router.get('/my', requireAuth, cacheMiddleware(TTL.USER, true), async (req, res) => {
     try {
         const user = await User.findById(req.session!.userId);
         if (!user) return res.status(404).json({ message: 'User not found' });
@@ -132,7 +133,7 @@ function computeEventState(event: any): EventState {
 }
 
 // GET /api/events/:id - Get single event (if approved or admin/creator)
-router.get('/:id', requireAuth, async (req, res) => {
+router.get('/:id', requireAuth, cacheMiddleware(TTL.MEDIUM), async (req, res) => {
     try {
         const event = await Event.findById(req.params.id).populate('createdBy', '-passwordHash');
         if (!event) return res.status(404).json({ message: 'Event not found' });
@@ -184,7 +185,7 @@ router.get('/:id', requireAuth, async (req, res) => {
 });
 
 // GET /api/events/:id/attendees - list attendees (public for approved events)
-router.get('/:id/attendees', async (req, res) => {
+router.get('/:id/attendees', cacheMiddleware(TTL.MEDIUM), async (req, res) => {
     try {
         const event = await Event.findById(req.params.id).populate('attendees', 'name avatar graduationYear email');
         if (!event) return res.status(404).json({ message: 'Event not found' });

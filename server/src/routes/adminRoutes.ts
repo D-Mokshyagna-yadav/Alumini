@@ -7,6 +7,7 @@ import Notification from '../models/Notification';
 import SiteSettings, { getSettings } from '../models/SiteSettings';
 import NotableAlumni from '../models/NotableAlumni';
 import Administration from '../models/Administration';
+import { cacheMiddleware, TTL } from '../config/cache';
 
 const router = express.Router();
 
@@ -25,7 +26,7 @@ const requireAdmin = async (req: express.Request, res: express.Response, next: e
 };
 
 // GET /api/admin/pending-users - Get all pending verification users
-router.get('/pending-users', requireAdmin, async (req, res) => {
+router.get('/pending-users', requireAdmin, cacheMiddleware(TTL.SHORT), async (req, res) => {
     try {
         const pendingUsers = await User.find({ status: UserStatus.PENDING })
             .select('-passwordHash')
@@ -107,7 +108,7 @@ router.post('/reject-user/:id', requireAdmin, async (req, res) => {
 });
 
 // GET /api/admin/all-users - Get all users with filters
-router.get('/all-users', requireAdmin, async (req, res) => {
+router.get('/all-users', requireAdmin, cacheMiddleware(TTL.SHORT), async (req, res) => {
     try {
         const { status, role } = req.query;
         const filter: any = {};
@@ -127,7 +128,7 @@ router.get('/all-users', requireAdmin, async (req, res) => {
 });
 
 // GET /api/admin/analytics - Get basic analytics
-router.get('/analytics', requireAdmin, async (req, res) => {
+router.get('/analytics', requireAdmin, cacheMiddleware(TTL.MEDIUM), async (req, res) => {
     try {
         const totalUsers = await User.countDocuments({ status: { $ne: UserStatus.REJECTED } });
         const pendingUsers = await User.countDocuments({ status: UserStatus.PENDING });
@@ -147,7 +148,7 @@ router.get('/analytics', requireAdmin, async (req, res) => {
 });
 
 // GET /api/admin/pending-events - Get all pending events
-router.get('/pending-events', requireAdmin, async (req, res) => {
+router.get('/pending-events', requireAdmin, cacheMiddleware(TTL.SHORT), async (req, res) => {
     try {
         const events = await Event.find({ status: EventStatus.PENDING }).populate('createdBy', '-passwordHash').sort({ createdAt: -1 });
         res.json({ events });
@@ -331,7 +332,7 @@ router.post('/create-user', requireAdmin, async (req, res) => {
 });
 
 // GET /api/admin/user/:id - Get a single user's full details
-router.get('/user/:id', requireAdmin, async (req, res) => {
+router.get('/user/:id', requireAdmin, cacheMiddleware(TTL.SHORT), async (req, res) => {
     try {
         const user = await User.findById(req.params.id).select('-passwordHash');
         if (!user) {
@@ -347,7 +348,7 @@ router.get('/user/:id', requireAdmin, async (req, res) => {
 // ========================= POST MANAGEMENT =========================
 
 // GET /api/admin/all-posts - Get all posts
-router.get('/all-posts', requireAdmin, async (req, res) => {
+router.get('/all-posts', requireAdmin, cacheMiddleware(TTL.SHORT), async (req, res) => {
     try {
         const posts = await Post.find()
             .populate('author', 'name avatar headline graduationYear degree')
@@ -388,7 +389,7 @@ router.delete('/post/:id', requireAdmin, async (req, res) => {
 // ========================= JOB MANAGEMENT =========================
 
 // GET /api/admin/all-jobs - Get all jobs
-router.get('/all-jobs', requireAdmin, async (req, res) => {
+router.get('/all-jobs', requireAdmin, cacheMiddleware(TTL.SHORT), async (req, res) => {
     try {
         const jobs = await Job.find()
             .populate('postedBy', 'name avatar graduationYear')
@@ -428,7 +429,7 @@ router.delete('/job/:id', requireAdmin, async (req, res) => {
 // ========================= EVENT MANAGEMENT =========================
 
 // GET /api/admin/all-events - Get all events
-router.get('/all-events', requireAdmin, async (req, res) => {
+router.get('/all-events', requireAdmin, cacheMiddleware(TTL.SHORT), async (req, res) => {
     try {
         const { status } = req.query;
         const filter: any = {};
@@ -471,7 +472,7 @@ router.delete('/event/:id', requireAdmin, async (req, res) => {
 // ========================= ENHANCED ANALYTICS =========================
 
 // GET /api/admin/analytics-full - Get comprehensive analytics
-router.get('/analytics-full', requireAdmin, async (req, res) => {
+router.get('/analytics-full', requireAdmin, cacheMiddleware(TTL.MEDIUM), async (req, res) => {
     try {
         const [totalUsers, pendingUsers, activeUsers, rejectedUsers, totalPosts, pendingPosts, totalJobs, pendingJobs, totalEvents, pendingEvents] = await Promise.all([
             User.countDocuments({ status: { $ne: UserStatus.REJECTED } }),
@@ -616,7 +617,7 @@ router.post('/reject-job/:id', requireAdmin, async (req, res) => {
 // ========================= SITE SETTINGS =========================
 
 // GET /api/admin/settings - Get site settings (auto-approval toggles etc.)
-router.get('/settings', requireAdmin, async (_req, res) => {
+router.get('/settings', requireAdmin, cacheMiddleware(TTL.STATIC), async (_req, res) => {
     try {
         const settings = await getSettings();
         res.json({ settings });
@@ -645,7 +646,7 @@ router.put('/settings', requireAdmin, async (req, res) => {
 // ==================== NOTABLE ALUMNI CRUD ====================
 
 // GET /api/admin/notable-alumni
-router.get('/notable-alumni', requireAdmin, async (req, res) => {
+router.get('/notable-alumni', requireAdmin, cacheMiddleware(TTL.STATIC), async (req, res) => {
     try {
         const alumni = await NotableAlumni.find().sort({ order: 1, createdAt: -1 });
         res.json({ alumni });
@@ -705,7 +706,7 @@ router.delete('/notable-alumni/:id', requireAdmin, async (req, res) => {
 // ==================== ADMINISTRATION CRUD ====================
 
 // GET /api/admin/administration
-router.get('/administration', requireAdmin, async (req, res) => {
+router.get('/administration', requireAdmin, cacheMiddleware(TTL.STATIC), async (req, res) => {
     try {
         const members = await Administration.find().sort({ category: 1, order: 1, createdAt: 1 });
         res.json({ members });

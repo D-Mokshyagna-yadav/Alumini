@@ -1,6 +1,7 @@
 import express from 'express';
 import User, { UserStatus } from '../models/User';
 import { deleteGridFSFile } from '../config/gridfs';
+import { cacheMiddleware, TTL } from '../config/cache';
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ const requireAuth = async (req: express.Request, res: express.Response, next: ex
 };
 
 // GET /api/users/directory - Get all verified/active users for directory
-router.get('/directory', requireAuth, async (req, res) => {
+router.get('/directory', requireAuth, cacheMiddleware(TTL.MEDIUM), async (req, res) => {
     try {
         const { search, batch, mentorOnly } = req.query;
         const filter: any = { status: UserStatus.ACTIVE };
@@ -52,7 +53,7 @@ router.get('/directory', requireAuth, async (req, res) => {
 });
 
 // GET /api/users/search/all - Search all active users (for sharing, etc.)
-router.get('/search/all', requireAuth, async (req, res) => {
+router.get('/search/all', requireAuth, cacheMiddleware(TTL.SHORT), async (req, res) => {
     try {
         const { q } = req.query;
         const currentUserId = req.session!.userId;
@@ -102,7 +103,7 @@ router.post('/:id/view', requireAuth, async (req, res) => {
 });
 
 // GET /api/users/:id - Get single user profile
-router.get('/:id', requireAuth, async (req, res) => {
+router.get('/:id', requireAuth, cacheMiddleware(TTL.USER), async (req, res) => {
     try {
         const user = await User.findById(req.params.id)
             .select('-passwordHash');
@@ -119,7 +120,7 @@ router.get('/:id', requireAuth, async (req, res) => {
 });
 
 // GET /api/users/me/saved - Get current user's saved posts
-router.get('/me/saved', requireAuth, async (req, res) => {
+router.get('/me/saved', requireAuth, cacheMiddleware(TTL.USER, true), async (req, res) => {
     try {
         const user = await User.findById(req.session!.userId).populate({
             path: 'savedPosts',
@@ -271,7 +272,7 @@ router.post('/settings/password', requireAuth, async (req, res) => {
 });
 
 // GET /api/users/settings/notifications - Get notification preferences
-router.get('/settings/notifications', requireAuth, async (req, res) => {
+router.get('/settings/notifications', requireAuth, cacheMiddleware(TTL.USER, true), async (req, res) => {
     try {
         const userId = req.session!.userId;
         const user = await User.findById(userId).select('notificationPreferences');

@@ -2,6 +2,7 @@ import express from 'express';
 import User from '../models/User';
 import { UserStatus } from '../models/User';
 import Notification from '../models/Notification';
+import { cacheMiddleware, TTL } from '../config/cache';
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ const requireAuth = async (req: express.Request, res: express.Response, next: ex
 };
 
 // GET /api/notifications - return user's notifications
-router.get('/', requireAuth, async (req, res) => {
+router.get('/', requireAuth, cacheMiddleware(TTL.SHORT, true), async (req, res) => {
     try {
         const notifications = await Notification.find({ recipient: req.session!.userId })
             .sort({ createdAt: -1 })

@@ -4,6 +4,7 @@ import User, { UserStatus } from '../models/User';
 import Connection from '../models/Connection';
 import Notification from '../models/Notification';
 import { getSettings } from '../models/SiteSettings';
+import { cacheMiddleware, TTL } from '../config/cache';
 
 const router = express.Router();
 
@@ -21,7 +22,7 @@ const requireAuth = async (req: express.Request, res: express.Response, next: ex
 };
 
 // GET /api/posts - Get all posts (feed) - only approved posts
-router.get('/', requireAuth, async (req, res) => {
+router.get('/', requireAuth, cacheMiddleware(TTL.SHORT, true), async (req, res) => {
     try {
         const userId = req.session!.userId;
 
@@ -240,7 +241,7 @@ router.post('/:id/comment', requireAuth, async (req, res) => {
 });
 
 // GET /api/posts/detail/:id - Get single post with populated likes for detail view
-router.get('/detail/:id', requireAuth, async (req, res) => {
+router.get('/detail/:id', requireAuth, cacheMiddleware(TTL.SHORT), async (req, res) => {
     try {
         const post = await Post.findById(req.params.id)
             .populate('author', 'name headline avatar graduationYear degree')
@@ -259,7 +260,7 @@ router.get('/detail/:id', requireAuth, async (req, res) => {
 });
 
 // GET /api/posts/user/:userId - Get posts by a specific user
-router.get('/user/:userId', requireAuth, async (req, res) => {
+router.get('/user/:userId', requireAuth, cacheMiddleware(TTL.SHORT), async (req, res) => {
     try {
         const currentUserId = req.session!.userId;
         const targetUserId = req.params.userId;
@@ -430,7 +431,7 @@ router.put('/:postId/comments/:commentId', requireAuth, async (req, res) => {
 });
 
 // GET /api/posts/user-comments/:userId - Get all comments by a user with associated post data
-router.get('/user-comments/:userId', requireAuth, async (req, res) => {
+router.get('/user-comments/:userId', requireAuth, cacheMiddleware(TTL.SHORT), async (req, res) => {
     try {
         const targetUserId = req.params.userId;
 

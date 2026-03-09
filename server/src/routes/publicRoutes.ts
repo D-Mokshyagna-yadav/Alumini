@@ -3,6 +3,7 @@ import PublicContent from '../models/PublicContent';
 import NewsItem from '../models/NewsItem';
 import Post from '../models/Post';
 import User from '../models/User';
+import { cacheMiddleware, invalidatePrefix, TTL } from '../config/cache';
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ const requireAdmin = async (req: express.Request, res: express.Response, next: e
 };
 
 // GET /api/public/branding
-router.get('/branding', async (req, res) => {
+router.get('/branding', cacheMiddleware(TTL.STATIC), async (req, res) => {
     try {
         const doc = await PublicContent.findOne({ key: 'branding' });
         return res.json({ branding: doc ? doc.data : {} });
@@ -26,7 +27,7 @@ router.get('/branding', async (req, res) => {
 });
 
 // GET /api/public/home
-router.get('/home', async (req, res) => {
+router.get('/home', cacheMiddleware(TTL.STATIC), async (req, res) => {
     try {
         const doc = await PublicContent.findOne({ key: 'home' });
         return res.json({ home: doc ? doc.data : {} });
@@ -37,7 +38,7 @@ router.get('/home', async (req, res) => {
 });
 
 // GET /api/public/about
-router.get('/about', async (req, res) => {
+router.get('/about', cacheMiddleware(TTL.STATIC), async (req, res) => {
     try {
         const doc = await PublicContent.findOne({ key: 'about' });
         return res.json({ about: doc ? doc.data : {} });
@@ -59,6 +60,7 @@ router.put('/content/:key', requireAdmin, async (req, res) => {
             { upsert: true, new: true }
         );
 
+        invalidatePrefix('/api/public');
         return res.json({ message: 'Content updated', content: updated });
     } catch (error) {
         console.error(error);
@@ -67,7 +69,7 @@ router.put('/content/:key', requireAdmin, async (req, res) => {
 });
 
 // GET /api/public/news - list news items
-router.get('/news', async (req, res) => {
+router.get('/news', cacheMiddleware(TTL.MEDIUM), async (req, res) => {
     try {
         // If requester is admin, return all items (including drafts). Otherwise exclude drafts.
         let query: any = {};
@@ -89,7 +91,7 @@ router.get('/news', async (req, res) => {
 });
 
 // GET /api/public/news/:id - get single news item
-router.get('/news/:id', async (req, res) => {
+router.get('/news/:id', cacheMiddleware(TTL.MEDIUM), async (req, res) => {
     try {
         const id = req.params.id;
         // If the item is a draft, only admins should see it.
@@ -132,6 +134,7 @@ router.post('/news', requireAdmin, async (req, res) => {
         if (publishedAt) payload.publishedAt = new Date(publishedAt);
         if (typeof priority !== 'undefined') payload.priority = Number(priority) || 0;
         const created = await NewsItem.create(payload);
+        invalidatePrefix('/api/public/news');
         // Broadcast news update via socket.io
         try { const io = (req as any).io; if (io) io.emit('news_updated', { item: created }); } catch (e) { }
         return res.json({ message: 'News created', item: created });
@@ -159,6 +162,7 @@ router.put('/news/:id', requireAdmin, async (req, res) => {
 
         const updated = await NewsItem.findByIdAndUpdate(id, update, { new: true });
         if (!updated) return res.status(404).json({ message: 'Not found' });
+        invalidatePrefix('/api/public/news');
         // Broadcast news update via socket.io
         try { const io = (req as any).io; if (io) io.emit('news_updated', { item: updated }); } catch (e) { }
         return res.json({ message: 'Updated', item: updated });
@@ -174,6 +178,7 @@ router.delete('/news/:id', requireAdmin, async (req, res) => {
         const id = req.params.id;
         const removed = await NewsItem.findByIdAndDelete(id);
         if (!removed) return res.status(404).json({ message: 'Not found' });
+        invalidatePrefix('/api/public/news');
         // Broadcast news deletion via socket.io
         try { const io = (req as any).io; if (io) io.emit('news_deleted', { newsId: id }); } catch (e) { }
         return res.json({ message: 'Deleted' });
@@ -184,7 +189,7 @@ router.delete('/news/:id', requireAdmin, async (req, res) => {
 });
 
 // GET /api/public/feed - Public feed (public posts only, no auth required)
-router.get('/feed', async (req, res) => {
+router.get('/feed', cacheMiddleware(TTL.MEDIUM), async (req, res) => {
     try {
         const posts = await Post.find({ visibility: 'public', $or: [{ status: 'approved' }, { status: { $exists: false } }] })
             .populate('author', 'name headline avatar graduationYear degree')
@@ -200,7 +205,7 @@ router.get('/feed', async (req, res) => {
 
 // GET /api/public/notable-alumni
 import NotableAlumni from '../models/NotableAlumni';
-router.get('/notable-alumni', async (req, res) => {
+router.get('/notable-alumni', cacheMiddleware(TTL.STATIC), async (req, res) => {
     try {
         const alumni = await NotableAlumni.find().sort({ order: 1, createdAt: -1 });
         return res.json({ alumni });
@@ -212,7 +217,7 @@ router.get('/notable-alumni', async (req, res) => {
 
 // GET /api/public/administration
 import Administration from '../models/Administration';
-router.get('/administration', async (req, res) => {
+router.get('/administration', cacheMiddleware(TTL.STATIC), async (req, res) => {
     try {
         const members = await Administration.find().sort({ category: 1, order: 1, createdAt: 1 });
         const governing = members.filter(m => m.category === 'governing');

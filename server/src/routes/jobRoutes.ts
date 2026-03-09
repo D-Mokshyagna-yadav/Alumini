@@ -4,6 +4,7 @@ import { UserStatus } from '../models/User';
 import Job from '../models/Job';
 import Notification from '../models/Notification';
 import { getSettings } from '../models/SiteSettings';
+import { cacheMiddleware, TTL } from '../config/cache';
 
 const router = express.Router();
 
@@ -49,7 +50,7 @@ router.get('/:id/applicants', requireAuth, async (req, res) => {
 });
 
 // GET /api/jobs - list jobs (only approved, plus own pending)
-router.get('/', async (req, res) => {
+router.get('/', cacheMiddleware(TTL.MEDIUM), async (req, res) => {
     try {
         const userId = req.session?.userId;
         // Show approved jobs + user's own pending/rejected jobs
@@ -92,7 +93,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/jobs/preferences - get current user's job portal preferences
-router.get('/preferences', requireAuth, async (req, res) => {
+router.get('/preferences', requireAuth, cacheMiddleware(TTL.USER, true), async (req, res) => {
     try {
         const user = await User.findById(req.session!.userId);
         if (!user) return res.status(404).json({ message: 'User not found' });

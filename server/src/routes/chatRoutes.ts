@@ -1,12 +1,13 @@
 import express from 'express';
 import { getConversations, getMessages, sendMessage, deleteMessage, getGroupMessages, editMessage, markDelivered, markRead } from '../controllers/chatController';
 import { Conversation } from '../models/Conversation';
+import { cacheMiddleware, TTL } from '../config/cache';
 
 const router = express.Router();
 
-router.get('/conversations', getConversations);
-router.get('/messages/:conversationId', getMessages);
-router.get('/group/:groupId/messages', getGroupMessages);
+router.get('/conversations', cacheMiddleware(TTL.SHORT, true), getConversations);
+router.get('/messages/:conversationId', cacheMiddleware(TTL.SHORT, true), getMessages);
+router.get('/group/:groupId/messages', cacheMiddleware(TTL.SHORT, true), getGroupMessages);
 router.post('/message', sendMessage);
 router.put('/message/:messageId', editMessage);
 router.delete('/message/:messageId', deleteMessage);

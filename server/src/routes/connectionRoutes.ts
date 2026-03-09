@@ -3,6 +3,7 @@ import Connection, { ConnectionStatus } from '../models/Connection';
 import User, { UserStatus } from '../models/User';
 import Post from '../models/Post';
 import Notification from '../models/Notification';
+import { cacheMiddleware, TTL } from '../config/cache';
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ const requireAuth = async (req: express.Request, res: express.Response, next: ex
 };
 
 // GET /api/connections/stats/:userId - Get stats for a user (connections count, posts count)
-router.get('/stats/:userId', requireAuth, async (req, res) => {
+router.get('/stats/:userId', requireAuth, cacheMiddleware(TTL.SHORT), async (req, res) => {
     try {
         const { userId } = req.params;
         
@@ -39,7 +40,7 @@ router.get('/stats/:userId', requireAuth, async (req, res) => {
 });
 
 // GET /api/connections/user/:userId - Get accepted connections for a specific user (with privacy check)
-router.get('/user/:userId', requireAuth, async (req, res) => {
+router.get('/user/:userId', requireAuth, cacheMiddleware(TTL.SHORT), async (req, res) => {
     try {
         const currentUserId = req.session?.userId as string | undefined;
         const { userId } = req.params;
@@ -116,7 +117,7 @@ router.get('/user/:userId', requireAuth, async (req, res) => {
 });
 
 // GET /api/connections/mutual/:userId - Get mutual connections count with a specific user
-router.get('/mutual/:userId', requireAuth, async (req, res) => {
+router.get('/mutual/:userId', requireAuth, cacheMiddleware(TTL.SHORT), async (req, res) => {
     try {
         const currentUserId = req.session?.userId as string | undefined;
         const { userId } = req.params;
@@ -237,7 +238,7 @@ router.post('/mutual-batch', requireAuth, async (req, res) => {
 });
 
 // GET /api/connections/my-connections - Get all accepted connections
-router.get('/my-connections', requireAuth, async (req, res) => {
+router.get('/my-connections', requireAuth, cacheMiddleware(TTL.SHORT, true), async (req, res) => {
     try {
         const userId = req.session?.userId as string | undefined;
         const connections = await Connection.find({
@@ -261,7 +262,7 @@ router.get('/my-connections', requireAuth, async (req, res) => {
 });
 
 // GET /api/connections/pending-received - Get incoming pending requests
-router.get('/pending-received', requireAuth, async (req, res) => {
+router.get('/pending-received', requireAuth, cacheMiddleware(TTL.SHORT, true), async (req, res) => {
     try {
         const userId = req.session?.userId as string | undefined;
         const connections = await Connection.find({
@@ -285,7 +286,7 @@ router.get('/pending-received', requireAuth, async (req, res) => {
 });
 
 // GET /api/connections/pending-sent - Get outgoing pending requests
-router.get('/pending-sent', requireAuth, async (req, res) => {
+router.get('/pending-sent', requireAuth, cacheMiddleware(TTL.SHORT, true), async (req, res) => {
     try {
         const userId = req.session?.userId as string | undefined;
         const connections = await Connection.find({
@@ -357,7 +358,7 @@ router.post('/status-batch', requireAuth, async (req, res) => {
 });
 
 // GET /api/connections/status/:userId - Get status with a specific user
-router.get('/status/:otherId', requireAuth, async (req, res) => {
+router.get('/status/:otherId', requireAuth, cacheMiddleware(TTL.SHORT, true), async (req, res) => {
     try {
         const userId = req.session?.userId as string | undefined;
         const { otherId } = req.params;

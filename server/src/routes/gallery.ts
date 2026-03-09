@@ -5,6 +5,7 @@ import sharp from 'sharp';
 import GalleryAlbum from '../models/GalleryAlbum';
 import User from '../models/User';
 import { storeBufferInGridFS, deleteGridFSFile, getGridFSBucket } from '../config/gridfs';
+import { cacheMiddleware, TTL } from '../config/cache';
 
 const router = express.Router();
 
@@ -49,7 +50,7 @@ const requireAdmin = async (req: express.Request, res: express.Response, next: e
 // ── Routes ─────────────────────────────────────────────────
 
 // GET / – list all albums
-router.get('/', async (_req, res) => {
+router.get('/', cacheMiddleware(TTL.MEDIUM), async (_req, res) => {
     try {
         const albums = await GalleryAlbum.find().sort({ createdAt: -1 }).populate('createdBy', 'name avatar');
         const formatted = albums.map(album => ({

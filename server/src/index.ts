@@ -86,6 +86,7 @@ import { publicRouter } from './routes/publicRoutes';
 import galleryRouter from './routes/gallery';
 import savedRouter from './routes/savedRoutes';
 import runGC from './scripts/gcUploads';
+import { autoInvalidate } from './config/cache';
 
 // ... (other imports)
 
@@ -94,6 +95,9 @@ app.use((req, res, next) => {
     (req as any).io = io;
     next();
 });
+
+// Auto-invalidate cache on successful mutations (POST/PUT/DELETE/PATCH → 2xx)
+app.use(autoInvalidate());
 
 // Middleware: sanitize absolute localhost URLs in JSON responses so images work on any LAN IP.
 // Old records in MongoDB may have been stored with http://localhost:5000/api/uploads/... —

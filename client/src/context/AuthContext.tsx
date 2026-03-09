@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import api from '../lib/api';
+import api, { flushClientCache } from '../lib/api';
 import { io, Socket } from 'socket.io-client';
 
 // Configure axios defaults
@@ -142,6 +142,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
             await api.post('/auth/logout');
         } finally {
+            flushClientCache();
             setUser(null);
         }
     };
