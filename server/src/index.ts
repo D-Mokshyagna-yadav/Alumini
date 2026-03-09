@@ -129,8 +129,21 @@ app.use('/api/uploads', (req, res) => {
     if (!gridName) return res.status(404).end();
 
     const bucket = getGridFSBucket();
-    bucket.find({ filename: gridName }).toArray()
-        .then(files => {
+
+    // Helper: try finding the file, with a .webp fallback for images that were
+    // auto-converted by processImageAndStore but stored in DB with original ext.
+    const findWithFallback = async (name: string) => {
+        let files = await bucket.find({ filename: name }).toArray();
+        if ((!files || files.length === 0) && /\.(jpe?g|png|gif)$/i.test(name)) {
+            const webpName = name.replace(/\.[^.]+$/, '.webp');
+            files = await bucket.find({ filename: webpName }).toArray();
+            if (files && files.length > 0) return { files, resolvedName: webpName };
+        }
+        return { files, resolvedName: name };
+    };
+
+    findWithFallback(gridName)
+        .then(({ files, resolvedName }) => {
             if (!files || files.length === 0) return res.status(404).json({ message: 'File not found' });
 
             const file = files[0];
@@ -169,14 +182,14 @@ app.use('/api/uploads', (req, res) => {
                 res.set('Content-Range', `bytes ${start}-${end}/${fileLength}`);
                 res.set('Content-Length', String(chunkSize));
 
-                const downloadStream = bucket.openDownloadStreamByName(gridName, { start, end: end + 1 });
+                const downloadStream = bucket.openDownloadStreamByName(resolvedName, { start, end: end + 1 });
                 downloadStream.pipe(res);
                 downloadStream.on('error', () => {
                     if (!res.headersSent) res.status(404).end();
                 });
             } else {
                 if (fileLength) res.set('Content-Length', String(fileLength));
-                const downloadStream = bucket.openDownloadStreamByName(gridName);
+                const downloadStream = bucket.openDownloadStreamByName(resolvedName);
                 downloadStream.pipe(res);
                 downloadStream.on('error', () => {
                     if (!res.headersSent) res.status(404).end();

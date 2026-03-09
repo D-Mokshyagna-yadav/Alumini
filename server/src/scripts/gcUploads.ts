@@ -3,6 +3,9 @@ import Post from '../models/Post';
 import Event from '../models/Event';
 import { Message } from '../models/Message';
 import GalleryAlbum from '../models/GalleryAlbum';
+import NotableAlumni from '../models/NotableAlumni';
+import NewsItem from '../models/NewsItem';
+import Job from '../models/Job';
 import { getGridFSBucket } from '../config/gridfs';
 
 /**
@@ -27,44 +30,63 @@ export const runGC = async () => {
             return rel || null;
         };
 
+        // Helper: add a path and its .webp variant (images are auto-converted
+        // to WebP on upload, but DB may store the original extension).
+        const addRef = (val: string | undefined) => {
+            const r = strip(val);
+            if (!r) return;
+            referenced.add(r);
+            if (/\.(jpe?g|png|gif)$/i.test(r)) {
+                referenced.add(r.replace(/\.[^.]+$/, '.webp'));
+            }
+        };
+
         const users = await User.find().select('avatar coverImage').lean();
         for (const u of users) {
-            const a = strip((u as any).avatar);
-            if (a) referenced.add(a);
-            const c = strip((u as any).coverImage);
-            if (c) referenced.add(c);
+            addRef((u as any).avatar);
+            addRef((u as any).coverImage);
         }
 
         const posts = await Post.find().select('media.url').lean();
         for (const p of posts) {
             for (const m of (p as any).media || []) {
-                const r = strip(m?.url);
-                if (r) referenced.add(r);
+                addRef(m?.url);
             }
         }
 
         const events = await Event.find().select('bannerImage').lean();
         for (const ev of events) {
-            const r = strip((ev as any).bannerImage);
-            if (r) referenced.add(r);
+            addRef((ev as any).bannerImage);
         }
 
         const messages = await Message.find().select('media.url').lean();
         for (const msg of messages) {
             for (const m of (msg as any).media || []) {
-                const r = strip(m?.url);
-                if (r) referenced.add(r);
+                addRef(m?.url);
             }
         }
 
         const albums = await GalleryAlbum.find().select('images.url coverImage').lean();
         for (const album of albums) {
-            const c = strip((album as any).coverImage);
-            if (c) referenced.add(c);
+            addRef((album as any).coverImage);
             for (const img of (album as any).images || []) {
-                const r = strip(img?.url);
-                if (r) referenced.add(r);
+                addRef(img?.url);
             }
+        }
+
+        const notableAlumni = await NotableAlumni.find().select('image').lean();
+        for (const na of notableAlumni) {
+            addRef((na as any).image);
+        }
+
+        const newsItems = await NewsItem.find().select('image').lean();
+        for (const ni of newsItems) {
+            addRef((ni as any).image);
+        }
+
+        const jobs = await Job.find().select('image').lean();
+        for (const j of jobs) {
+            addRef((j as any).image);
         }
 
         // 2. Walk GridFS uploads.files collection
