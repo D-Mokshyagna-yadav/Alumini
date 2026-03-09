@@ -46,6 +46,7 @@ const PostJob = () => {
     }, [user]);
 
     const [jobImage, setJobImage] = useState<File | null>(null);
+    const [submitting, setSubmitting] = useState(false);
 
     const [formData, setFormData] = useState<JobFormData>({
         type: 'Full Time',
@@ -100,11 +101,13 @@ const PostJob = () => {
     };
 
     const handleSubmit = async () => {
+        if (submitting) return;
         if (!formData.company.trim() || !formData.companyDescription.trim()) {
             showToast('Please fill all required fields', 'error');
             return;
         }
 
+        setSubmitting(true);
         try {
             // Upload image first if selected
             let imageUrl: string | undefined = undefined;
@@ -145,6 +148,8 @@ const PostJob = () => {
             navigate('/jobs');
         } catch (error: any) {
             showToast(error.response?.data?.message || 'Failed to post job', 'error');
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -697,9 +702,10 @@ const PostJob = () => {
                         </button>
                         <button
                             onClick={currentStep === 3 ? handleSubmit : handleNext}
-                            className="px-6 py-2 bg-[var(--text-secondary)] hover:bg-[var(--text-secondary)] text-[var(--bg-primary)] font-medium"
+                            disabled={currentStep === 3 && submitting}
+                            className="px-6 py-2 bg-[var(--text-secondary)] hover:bg-[var(--text-secondary)] text-[var(--bg-primary)] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {currentStep === 3 ? 'Post' : 'Next'}
+                            {currentStep === 3 ? (submitting ? 'Posting...' : 'Post') : 'Next'}
                         </button>
                     </div>
                 </div>

@@ -799,6 +799,17 @@ const Gallery = () => {
 const CreateAlbumModal = ({ onClose, onCreate }: { onClose: () => void, onCreate: (title: string, description: string) => void }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
+    const [creating, setCreating] = useState(false);
+
+    const handleCreate = async () => {
+        if (creating || !title.trim()) return;
+        setCreating(true);
+        try {
+            await onCreate(title, description);
+        } finally {
+            setCreating(false);
+        }
+    };
 
     return (
         <motion.div
@@ -844,11 +855,11 @@ const CreateAlbumModal = ({ onClose, onCreate }: { onClose: () => void, onCreate
                     <motion.button 
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        onClick={() => onCreate(title, description)}
-                        disabled={!title.trim()}
-                        className="px-6 py-3 bg-[var(--accent)] text-[var(--bg-primary)] font-semibold disabled:opacity-50 shadow-sm"
+                        onClick={handleCreate}
+                        disabled={!title.trim() || creating}
+                        className="px-6 py-3 bg-[var(--accent)] text-[var(--bg-primary)] font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                     >
-                        Create Album
+                        {creating ? 'Creating...' : 'Create Album'}
                     </motion.button>
                 </div>
             </motion.div>
@@ -859,6 +870,7 @@ const CreateAlbumModal = ({ onClose, onCreate }: { onClose: () => void, onCreate
 const UploadMediaModal = ({ onClose, onUpload }: { onClose: () => void, onUpload: (files: File[]) => void }) => {
     const [files, setFiles] = useState<File[]>([]);
     const [previews, setPreviews] = useState<{ url: string; type: string }[]>([]);
+    const [uploading, setUploading] = useState(false);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selected = Array.from(e.target.files || []);
@@ -939,11 +951,11 @@ const UploadMediaModal = ({ onClose, onUpload }: { onClose: () => void, onUpload
                     <motion.button 
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        onClick={() => onUpload(files)}
-                        disabled={files.length === 0}
-                        className="px-6 py-3 bg-[var(--accent)] text-[var(--bg-primary)] font-semibold disabled:opacity-50 shadow-sm"
+                        onClick={async () => { if (uploading) return; setUploading(true); try { await onUpload(files); } finally { setUploading(false); } }}
+                        disabled={files.length === 0 || uploading}
+                        className="px-6 py-3 bg-[var(--accent)] text-[var(--bg-primary)] font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                     >
-                        Upload {files.length > 0 && `(${files.length})`}
+                        {uploading ? 'Uploading...' : `Upload ${files.length > 0 ? `(${files.length})` : ''}`}
                     </motion.button>
                 </div>
             </motion.div>

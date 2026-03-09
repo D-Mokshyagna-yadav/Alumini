@@ -15,6 +15,7 @@ const MyEvents = () => {
     const [editing, setEditing] = useState<any | null>(null);
     const [bannerFile, setBannerFile] = useState<File | null>(null);
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+    const [editSubmitting, setEditSubmitting] = useState(false);
 
     useEffect(() => {
         let mounted = true;
@@ -64,6 +65,8 @@ const MyEvents = () => {
 
     const submitEdit = async () => {
         if (!editing) return;
+        if (editSubmitting) return;
+        setEditSubmitting(true);
         try {
             let bannerUrl = editing.bannerImage;
             if (bannerFile) {
@@ -96,6 +99,8 @@ const MyEvents = () => {
         } catch (err) {
             console.error(err);
             setToast('Failed to update event');
+        } finally {
+            setEditSubmitting(false);
         }
     };
 
@@ -127,7 +132,7 @@ const MyEvents = () => {
                         {bannerPreview && <img src={bannerPreview} className="w-full h-40 object-contain bg-[var(--bg-tertiary)]" />}
                         <div className="flex gap-2 justify-end">
                             <button className="px-4 py-2" onClick={() => { setEditing(null); setBannerFile(null); setBannerPreview(null); }}>Cancel</button>
-                            <button className="px-4 py-2 bg-[var(--accent)] text-[var(--bg-primary)]" onClick={submitEdit}>Save & Resubmit</button>
+                            <button className="px-4 py-2 bg-[var(--accent)] text-[var(--bg-primary)] disabled:opacity-50 disabled:cursor-not-allowed" onClick={submitEdit} disabled={editSubmitting}>{editSubmitting ? 'Saving...' : 'Save & Resubmit'}</button>
                         </div>
                     </div>
                 </div>

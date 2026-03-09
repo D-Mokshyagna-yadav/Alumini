@@ -55,6 +55,7 @@ const Saved = () => {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [showNewCollectionModal, setShowNewCollectionModal] = useState(false);
     const [newCollectionName, setNewCollectionName] = useState('');
+    const [collectionCreating, setCollectionCreating] = useState(false);
 
     const [showCollectionMenu, setShowCollectionMenu] = useState<string | null>(null);
     const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
@@ -111,6 +112,8 @@ const Saved = () => {
 
     const handleCreateCollection = async () => {
         if (!newCollectionName.trim()) return;
+        if (collectionCreating) return;
+        setCollectionCreating(true);
         try {
             const res = await api.post('/saved/collections', { name: newCollectionName });
             setCollections([...collections, res.data]);
@@ -119,6 +122,8 @@ const Saved = () => {
             toast.show('Collection created!', 'success');
         } catch (error: any) {
             toast.show(error.response?.data?.message || 'Failed to create collection', 'error');
+        } finally {
+            setCollectionCreating(false);
         }
     };
 
@@ -554,8 +559,8 @@ const Saved = () => {
                                 <button onClick={() => setShowNewCollectionModal(false)} className="flex-1 py-3 border border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]">
                                     Cancel
                                 </button>
-                                <button onClick={handleCreateCollection} disabled={!newCollectionName.trim()} className="flex-1 py-3 bg-[var(--accent)] text-[var(--bg-primary)] font-semibold disabled:opacity-50">
-                                    Create
+                                <button onClick={handleCreateCollection} disabled={!newCollectionName.trim() || collectionCreating} className="flex-1 py-3 bg-[var(--accent)] text-[var(--bg-primary)] font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+                                    {collectionCreating ? 'Creating...' : 'Create'}
                                 </button>
                             </div>
                         </motion.div>

@@ -26,6 +26,8 @@ export default function Avatar({
                 src={resolved}
                 alt={alt}
                 className={imgClassName}
+                loading="lazy"
+                decoding="async"
                 onError={() => setError(true)}
             />
         );

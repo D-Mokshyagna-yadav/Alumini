@@ -11,6 +11,41 @@ interface ImageCarouselProps {
     normalizeMediaUrl: (url: string) => string;
 }
 
+/** Optimized image with fade-in on load */
+function OptimizedImage({ src, alt, className, draggable, priority }: { src: string; alt: string; className: string; draggable?: boolean; priority?: boolean }) {
+    const [loaded, setLoaded] = useState(false);
+    const imgRef = useRef<HTMLImageElement>(null);
+
+    useEffect(() => {
+        // If image is already cached, mark loaded immediately
+        if (imgRef.current?.complete && imgRef.current?.naturalWidth > 0) {
+            setLoaded(true);
+        }
+    }, [src]);
+
+    return (
+        <div className="relative w-full max-h-[480px] bg-[var(--bg-tertiary)]">
+            {!loaded && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-6 h-6 border-2 border-[var(--text-muted)]/30 border-t-[var(--text-muted)] rounded-full animate-spin" />
+                </div>
+            )}
+            <img
+                ref={imgRef}
+                src={src}
+                alt={alt}
+                className={`${className} transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+                loading={priority ? 'eager' : 'lazy'}
+                decoding="async"
+                fetchPriority={priority ? 'high' : 'low'}
+                draggable={draggable}
+                onLoad={() => setLoaded(true)}
+                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+        </div>
+    );
+}
+
 export default function ImageCarousel({ media, normalizeMediaUrl }: ImageCarouselProps) {
     const [current, setCurrent] = useState(0);
     const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -64,9 +99,9 @@ export default function ImageCarousel({ media, normalizeMediaUrl }: ImageCarouse
     if (total <= 1) {
         const m = media[0];
         return m.type === 'image' ? (
-            <img src={normalizeMediaUrl(m.url)} alt="" className="w-full max-h-[480px] object-cover bg-[var(--bg-tertiary)]" loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            <OptimizedImage src={normalizeMediaUrl(m.url)} alt="" className="w-full max-h-[480px] object-cover" priority />
         ) : (
-            <video src={normalizeMediaUrl(m.url)} controls className="w-full max-h-[480px]" onError={e => { (e.target as HTMLVideoElement).style.display = 'none'; }} />
+            <video src={normalizeMediaUrl(m.url)} controls preload="metadata" className="w-full max-h-[480px]" onError={e => { (e.target as HTMLVideoElement).style.display = 'none'; }} />
         );
     }
 
@@ -90,18 +125,18 @@ export default function ImageCarousel({ media, normalizeMediaUrl }: ImageCarouse
                 {media.map((m, idx) => (
                     <div key={idx} className="w-full flex-shrink-0">
                         {m.type === 'image' ? (
-                            <img
+                            <OptimizedImage
                                 src={normalizeMediaUrl(m.url)}
                                 alt=""
-                                className="w-full max-h-[480px] object-cover bg-[var(--bg-tertiary)]"
-                                loading="lazy"
+                                className="w-full max-h-[480px] object-cover"
                                 draggable={false}
-                                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                priority={idx === 0}
                             />
                         ) : (
                             <video
                                 src={normalizeMediaUrl(m.url)}
                                 controls
+                                preload="metadata"
                                 className="w-full max-h-[480px]"
                                 onError={e => { (e.target as HTMLVideoElement).style.display = 'none'; }}
                             />

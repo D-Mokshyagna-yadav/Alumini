@@ -47,6 +47,7 @@ const Directory = () => {
     const [batchFilter, setBatchFilter] = useState<string>('all');
     const [deptFilter, setDeptFilter] = useState<string>('all');
     const [connectionStatuses, setConnectionStatuses] = useState<Record<string, { status: string; requestId?: string }>>({});
+    const [actionInProgress, setActionInProgress] = useState<Set<string>>(new Set());
 
     // Network tabs
     const [mainTab, setMainTab] = useState<'explore' | 'network'>('explore');
@@ -82,15 +83,19 @@ const Directory = () => {
             const res = await api.get('/users/directory');
             setAlumni(res.data.users);
             const users = res.data.users as Alumni[];
-            users.forEach((user: Alumni) => {
-                checkConnectionStatus(user._id);
-            });
-            // Fetch mutual connections in batch
             if (users.length > 0) {
                 const userIds = users.map(u => u._id);
-                api.post('/connections/mutual-batch', { userIds })
-                    .then(r => setMutualData(r.data.mutuals || {}))
-                    .catch(() => {});
+                // Fetch connection statuses and mutual connections in batch
+                const [statusRes, mutualRes] = await Promise.allSettled([
+                    api.post('/connections/status-batch', { userIds }),
+                    api.post('/connections/mutual-batch', { userIds }),
+                ]);
+                if (statusRes.status === 'fulfilled') {
+                    setConnectionStatuses(statusRes.value.data.statuses || {});
+                }
+                if (mutualRes.status === 'fulfilled') {
+                    setMutualData(mutualRes.value.data.mutuals || {});
+                }
             }
         } catch (error) {
             console.error('Failed to fetch alumni:', error);
@@ -102,14 +107,14 @@ const Directory = () => {
     const fetchNetworkData = useCallback(async () => {
         setNetworkLoading(true);
         try {
-            const [recvRes, sentRes, connRes] = await Promise.all([
+            const [recvRes, sentRes, connRes] = await Promise.allSettled([
                 api.get('/connections/pending-received'),
                 api.get('/connections/pending-sent'),
                 api.get('/connections/my-connections'),
             ]);
-            setPendingReceived(recvRes.data);
-            setPendingSent(sentRes.data);
-            setMyConnections(connRes.data);
+            if (recvRes.status === 'fulfilled') setPendingReceived(recvRes.value.data);
+            if (sentRes.status === 'fulfilled') setPendingSent(sentRes.value.data);
+            if (connRes.status === 'fulfilled') setMyConnections(connRes.value.data);
         } catch (error) {
             console.error('Failed to fetch network data:', error);
         } finally {
@@ -139,6 +144,8 @@ const Directory = () => {
     const { user: currentUser, checkAuth } = useAuth();
 
     const handleConnect = async (id: string) => {
+        if (actionInProgress.has(id)) return;
+        setActionInProgress(prev => new Set(prev).add(id));
         try {
             await api.post(`/connections/request/${id}`);
             setConnectionStatuses(prev => ({ ...prev, [id]: { status: 'pending_sent' } }));
@@ -146,10 +153,14 @@ const Directory = () => {
         } catch (error: unknown) {
             const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to send request';
             toast.show(msg, 'error');
+        } finally {
+            setActionInProgress(prev => { const s = new Set(prev); s.delete(id); return s; });
         }
     };
 
     const handleRespond = async (userId: string, requestId: string) => {
+        if (actionInProgress.has(userId)) return;
+        setActionInProgress(prev => new Set(prev).add(userId));
         try {
             await api.put(`/connections/accept/${requestId}`);
             setConnectionStatuses(prev => ({ ...prev, [userId]: { status: 'accepted' } }));
@@ -160,10 +171,14 @@ const Directory = () => {
         } catch (error: unknown) {
             const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to accept request';
             toast.show(msg, 'error');
+        } finally {
+            setActionInProgress(prev => { const s = new Set(prev); s.delete(userId); return s; });
         }
     };
 
     const handleCancelRequest = async (userId: string) => {
+        if (actionInProgress.has(userId)) return;
+        setActionInProgress(prev => new Set(prev).add(userId));
         try {
             await api.delete(`/connections/remove/${userId}`);
             setPendingSent(prev => prev.filter(r => r.user._id !== userId));
@@ -172,10 +187,14 @@ const Directory = () => {
         } catch (error: unknown) {
             const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to cancel request';
             toast.show(msg, 'error');
+        } finally {
+            setActionInProgress(prev => { const s = new Set(prev); s.delete(userId); return s; });
         }
     };
 
     const handleRemoveConnection = async (userId: string) => {
+        if (actionInProgress.has(userId)) return;
+        setActionInProgress(prev => new Set(prev).add(userId));
         try {
             await api.delete(`/connections/remove/${userId}`);
             setMyConnections(prev => prev.filter(c => c._id !== userId));
@@ -184,10 +203,14 @@ const Directory = () => {
         } catch (error: unknown) {
             const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to remove connection';
             toast.show(msg, 'error');
+        } finally {
+            setActionInProgress(prev => { const s = new Set(prev); s.delete(userId); return s; });
         }
     };
 
     const handleDeclineRequest = async (userId: string) => {
+        if (actionInProgress.has(userId)) return;
+        setActionInProgress(prev => new Set(prev).add(userId));
         try {
             await api.delete(`/connections/remove/${userId}`);
             setPendingReceived(prev => prev.filter(r => r.user._id !== userId));
@@ -195,6 +218,8 @@ const Directory = () => {
         } catch (error: unknown) {
             const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to decline request';
             toast.show(msg, 'error');
+        } finally {
+            setActionInProgress(prev => { const s = new Set(prev); s.delete(userId); return s; });
         }
     };
 

@@ -81,10 +81,12 @@ router.get('/user/:userId', requireAuth, async (req, res) => {
             status: ConnectionStatus.ACCEPTED
         }).populate('requester recipient', 'name avatar headline');
 
-        const friends = connections.map(conn => {
-            const isRequester = conn.requester._id.toString() === userId;
-            return isRequester ? conn.recipient : conn.requester;
-        });
+        const friends = connections
+            .filter(conn => conn.requester && conn.recipient) // skip connections with deleted users
+            .map(conn => {
+                const isRequester = conn.requester._id.toString() === userId;
+                return isRequester ? conn.recipient : conn.requester;
+            });
 
         // Calculate mutual connections for each friend (if viewing someone else's profile)
         let friendsWithMutuals = friends;
@@ -243,11 +245,13 @@ router.get('/my-connections', requireAuth, async (req, res) => {
             status: ConnectionStatus.ACCEPTED
         }).populate('requester recipient', 'name avatar headline isMentor');
 
-        // Map to just the OTHER user
-        const friends = connections.map(conn => {
-            const isRequester = conn.requester._id.toString() === userId;
-            return isRequester ? conn.recipient : conn.requester;
-        });
+        // Map to just the OTHER user (skip connections where the other user was deleted)
+        const friends = connections
+            .filter(conn => conn.requester && conn.recipient)
+            .map(conn => {
+                const isRequester = conn.requester._id.toString() === userId;
+                return isRequester ? conn.recipient : conn.requester;
+            });
 
         res.json(friends);
     } catch (error) {
@@ -265,11 +269,13 @@ router.get('/pending-received', requireAuth, async (req, res) => {
             status: ConnectionStatus.PENDING
         }).populate('requester', 'name avatar headline currentCompany graduationYear department');
 
-        const requests = connections.map(conn => ({
-            requestId: conn._id,
-            user: conn.requester,
-            createdAt: conn.createdAt
-        }));
+        const requests = connections
+            .filter(conn => conn.requester) // skip if requester user was deleted
+            .map(conn => ({
+                requestId: conn._id,
+                user: conn.requester,
+                createdAt: conn.createdAt
+            }));
 
         res.json(requests);
     } catch (error) {
@@ -287,15 +293,65 @@ router.get('/pending-sent', requireAuth, async (req, res) => {
             status: ConnectionStatus.PENDING
         }).populate('recipient', 'name avatar headline currentCompany graduationYear department');
 
-        const requests = connections.map(conn => ({
-            requestId: conn._id,
-            user: conn.recipient,
-            createdAt: conn.createdAt
-        }));
+        const requests = connections
+            .filter(conn => conn.recipient) // skip if recipient user was deleted
+            .map(conn => ({
+                requestId: conn._id,
+                user: conn.recipient,
+                createdAt: conn.createdAt
+            }));
 
         res.json(requests);
     } catch (error) {
         console.error('Error fetching pending sent:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// POST /api/connections/status-batch - Get connection status for multiple users at once
+router.post('/status-batch', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session?.userId as string | undefined;
+        const { userIds } = req.body;
+
+        if (!Array.isArray(userIds) || userIds.length === 0) {
+            return res.json({ statuses: {} });
+        }
+
+        const limitedIds = userIds.slice(0, 100);
+
+        const connections = await Connection.find({
+            $or: [
+                { requester: userId, recipient: { $in: limitedIds } },
+                { requester: { $in: limitedIds }, recipient: userId }
+            ]
+        });
+
+        const statuses: Record<string, { status: string; requestId?: string }> = {};
+        for (const conn of connections) {
+            const reqId = conn.requester.toString();
+            const recId = conn.recipient.toString();
+            const otherId = reqId === userId ? recId : reqId;
+
+            if (conn.status === ConnectionStatus.ACCEPTED) {
+                statuses[otherId] = { status: 'accepted' };
+            } else if (conn.status === ConnectionStatus.PENDING) {
+                if (reqId === userId) {
+                    statuses[otherId] = { status: 'pending_sent' };
+                } else {
+                    statuses[otherId] = { status: 'pending_received', requestId: conn._id.toString() };
+                }
+            }
+        }
+
+        // Fill in 'none' for users without any connection
+        for (const uid of limitedIds) {
+            if (!statuses[uid]) statuses[uid] = { status: 'none' };
+        }
+
+        res.json({ statuses });
+    } catch (error) {
+        console.error('Error fetching batch connection statuses:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });

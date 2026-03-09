@@ -186,6 +186,7 @@ const Profile = () => {
     };
     const [connectionStatus, setConnectionStatus] = useState<'none'|'pending_sent'|'pending_received'|'accepted'>('none');
     const [connectionRequestId, setConnectionRequestId] = useState<string | null>(null);
+    const [connectionActionLoading, setConnectionActionLoading] = useState(false);
     const [showUnconnectModal, setShowUnconnectModal] = useState(false);
     const [showConnectionsModal, setShowConnectionsModal] = useState(false);
     const [connectionsModalTab, setConnectionsModalTab] = useState<'all' | 'mutual'>('all');
@@ -283,7 +284,8 @@ const Profile = () => {
 
     const handleConnect = async () => {
         const targetId = id || viewUser?._id;
-        if (!targetId) return;
+        if (!targetId || connectionActionLoading) return;
+        setConnectionActionLoading(true);
         try {
             await api.post(`/connections/request/${targetId}`);
             setConnectionStatus('pending_sent');
@@ -292,12 +294,15 @@ const Profile = () => {
         } catch (error: any) {
             console.error('Failed to send connection request', error);
             toast.show(error?.response?.data?.message || 'Failed to send request', 'error');
+        } finally {
+            setConnectionActionLoading(false);
         }
     };
 
     const handleRespond = async () => {
         const reqId = connectionRequestId;
-        if (!reqId) return;
+        if (!reqId || connectionActionLoading) return;
+        setConnectionActionLoading(true);
         try {
             await api.put(`/connections/accept/${reqId}`);
             setConnectionStatus('accepted');
@@ -310,6 +315,8 @@ const Profile = () => {
         } catch (error: any) {
             console.error('Failed to accept connection', error);
             toast.show(error?.response?.data?.message || 'Failed to accept request', 'error');
+        } finally {
+            setConnectionActionLoading(false);
         }
     };
 

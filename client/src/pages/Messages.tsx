@@ -176,6 +176,7 @@ const Messages = () => {
     const [attachmentPreviews, setAttachmentPreviews] = useState<{ url: string; name: string; type: string }[]>([]);
     const [uploadProgress, setUploadProgress] = useState<number>(0);
     const [uploading, setUploading] = useState<boolean>(false);
+    const [sending, setSending] = useState(false);
     const [fileErrors, setFileErrors] = useState<string[]>([]);
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [lightboxMedia, setLightboxMedia] = useState<{ url: string; type?: string }[]>([]);
@@ -466,6 +467,8 @@ const Messages = () => {
     const handleSendMessage = async () => {
         if (!newMessage.trim() && attachments.length === 0) return;
         if (!selectedConvo) return;
+        if (sending) return;
+        setSending(true);
 
         try {
             const recipientId = selectedConvo.user._id;
@@ -511,6 +514,8 @@ const Messages = () => {
             fetchConversations();
         } catch (error) {
             console.error('Failed to send message:', error);
+        } finally {
+            setSending(false);
         }
     };
 
@@ -1158,7 +1163,7 @@ const Messages = () => {
                                             whileHover={{ scale: 1.05 }}
                                             whileTap={{ scale: 0.95 }}
                                             onClick={handleSendMessage}
-                                            disabled={!newMessage.trim() && attachments.length === 0}
+                                            disabled={(!newMessage.trim() && attachments.length === 0) || sending}
                                             className="p-3.5 bg-[var(--accent)] text-[var(--bg-primary)] hover:shadow-sm hover:shadow-[var(--accent)]/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
                                         >
                                             <Send size={20} />

@@ -49,6 +49,8 @@ const Events = () => {
     });
     const [bannerFile, setBannerFile] = useState<File | null>(null);
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+    const [creatingEvent, setCreatingEvent] = useState(false);
+    const [registeringEvent, setRegisteringEvent] = useState<number | null>(null);
 
     const filteredEvents = events.filter(event => {
         const matchesFilter = filter === 'all' || event.type === filter;
@@ -70,6 +72,8 @@ const Events = () => {
     const [counts, setCounts] = useState<{ all: number; upcoming: number; completed: number }>({ all: 0, upcoming: 0, completed: 0 });
 
     const handleCreateEvent = () => {
+        if (creatingEvent) return;
+        setCreatingEvent(true);
         (async () => {
             try {
                 let bannerUrl = newEvent.image;
@@ -127,11 +131,15 @@ const Events = () => {
                     console.error(err);
                     toast.show('Failed to create event', 'error');
                 }
+            } finally {
+                setCreatingEvent(false);
             }
         })();
     };
 
     const handleRegister = async (eventId: number) => {
+        if (registeringEvent === eventId) return;
+        setRegisteringEvent(eventId);
         try {
             const res = await api.post(`/events/${eventId}/register`);
             if (res.status === 200) {
@@ -148,6 +156,8 @@ const Events = () => {
             if (err.response && err.response.status === 401) toast.show('Please login to register', 'error');
             else if (err.response && err.response.data && err.response.data.message) toast.show(err.response.data.message, 'error');
             else { console.error(err); toast.show('Failed to register', 'error'); }
+        } finally {
+            setRegisteringEvent(null);
         }
     };
 
@@ -489,10 +499,10 @@ const Events = () => {
                                         </button>
                                         <button
                                             onClick={handleCreateEvent}
-                                            disabled={!newEvent.title || !newEvent.date}
-                                            className="px-4 py-2 bg-[var(--accent)] text-[var(--bg-primary)] font-medium hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50"
+                                            disabled={!newEvent.title || !newEvent.date || creatingEvent}
+                                            className="px-4 py-2 bg-[var(--accent)] text-[var(--bg-primary)] font-medium hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            Create Event
+                                            {creatingEvent ? 'Creating...' : 'Create Event'}
                                         </button>
                                     </div>
                                 </motion.div>
@@ -610,13 +620,14 @@ const Events = () => {
                                                     {/* Actions */}
                                                         <div className="flex items-center gap-3 mt-4">
                                                         {event.isRegistered ? (
-                                                            <button onClick={(e) => { e.stopPropagation(); handleRegister(event.id); }} className="px-4 py-2 bg-[var(--accent-light)] text-[var(--text-primary)] font-semibold text-sm">Unregister</button>
+                                                            <button onClick={(e) => { e.stopPropagation(); handleRegister(event.id); }} disabled={registeringEvent === event.id} className="px-4 py-2 bg-[var(--accent-light)] text-[var(--text-primary)] font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed">{registeringEvent === event.id ? 'Processing...' : 'Unregister'}</button>
                                                         ) : (
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); handleRegister(event.id); }}
-                                                                className="px-4 py-2 bg-[var(--accent)] text-[var(--bg-primary)] font-semibold text-sm hover:bg-[var(--accent-hover)] transition-colors"
+                                                                disabled={registeringEvent === event.id}
+                                                                className="px-4 py-2 bg-[var(--accent)] text-[var(--bg-primary)] font-semibold text-sm hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                             >
-                                                                Register
+                                                                {registeringEvent === event.id ? 'Processing...' : 'Register'}
                                                             </button>
                                                         )}
                                                         <button onClick={(e) => { e.stopPropagation(); navigate(`/events/${event.id}`); }} className="px-4 py-2 border border-[var(--border-color)] text-[var(--text-secondary)] font-semibold text-sm hover:bg-[var(--bg-tertiary)] transition-colors">

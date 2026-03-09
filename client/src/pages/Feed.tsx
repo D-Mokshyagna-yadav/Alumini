@@ -94,6 +94,9 @@ const Feed = () => {
     const [editFeedPostContent, setEditFeedPostContent] = useState('');
     const [editingFeedCommentId, setEditingFeedCommentId] = useState<string | null>(null);
     const [editFeedCommentText, setEditFeedCommentText] = useState('');
+    const [postSubmitting, setPostSubmitting] = useState(false);
+    const [commentSubmitting, setCommentSubmitting] = useState(false);
+    const [editSubmitting, setEditSubmitting] = useState(false);
 
     useEffect(() => {
         fetchPosts();
@@ -198,6 +201,8 @@ const Feed = () => {
 
     const handleCreatePost = async () => {
         if (!newPostContent.trim() && postAttachments.length === 0) return;
+        if (postSubmitting) return;
+        setPostSubmitting(true);
         try {
             let mediaPayload: { type: string; url: string }[] = [];
             if (postAttachments.length > 0) {
@@ -236,6 +241,8 @@ const Feed = () => {
             setUploading(false);
             setUploadProgress(0);
             toast.show('Failed to create post', 'error');
+        } finally {
+            setPostSubmitting(false);
         }
     };
 
@@ -278,12 +285,16 @@ const Feed = () => {
     const handleAddComment = async (postId: string) => {
         if (!isAuthenticated) { navigate('/login'); return; }
         if (!commentText.trim()) return;
+        if (commentSubmitting) return;
+        setCommentSubmitting(true);
         try {
             const res = await api.post(`/posts/${postId}/comment`, { text: commentText });
             setPosts(prev => prev.map(post => post._id === postId ? { ...post, comments: res.data.comments } : post));
             setCommentText('');
             setActiveCommentPost(null);
-        } catch { /* silent */ }
+        } catch { /* silent */ } finally {
+            setCommentSubmitting(false);
+        }
     };
 
     const handleDeleteComment = async (postId: string, commentId: string) => {
@@ -303,16 +314,22 @@ const Feed = () => {
 
     const handleEditFeedPost = async (postId: string) => {
         if (!editFeedPostContent.trim()) return;
+        if (editSubmitting) return;
+        setEditSubmitting(true);
         try {
             const res = await api.put(`/posts/${postId}`, { content: editFeedPostContent });
             setPosts(prev => prev.map(p => p._id === postId ? { ...p, content: res.data.post.content } : p));
             setEditingFeedPostId(null);
             toast.show('Post updated', 'success');
-        } catch { toast.show('Failed to update post', 'error'); }
+        } catch { toast.show('Failed to update post', 'error'); } finally {
+            setEditSubmitting(false);
+        }
     };
 
     const handleEditFeedComment = async (postId: string, commentId: string) => {
         if (!editFeedCommentText.trim()) return;
+        if (editSubmitting) return;
+        setEditSubmitting(true);
         try {
             const res = await api.put(`/posts/${postId}/comments/${commentId}`, { text: editFeedCommentText });
             setPosts(prev => prev.map(p => p._id === postId ? { ...p, comments: res.data.comments } : p));
@@ -322,7 +339,9 @@ const Feed = () => {
             }
             setEditingFeedCommentId(null);
             toast.show('Comment updated', 'success');
-        } catch { toast.show('Failed to update comment', 'error'); }
+        } catch { toast.show('Failed to update comment', 'error'); } finally {
+            setEditSubmitting(false);
+        }
     };
 
     const isPostLiked = (post: Post) => user?.id ? post.likes.includes(user.id) : false;
@@ -444,7 +463,7 @@ const Feed = () => {
                         <div className={`${glass} overflow-hidden sticky top-[72px]`}>
                             <div className="h-16 bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)] rounded-t-2xl overflow-hidden">
                                 {user?.coverImage && (
-                                    <img src={normalizeMediaUrl(user.coverImage)} alt="" className="w-full h-full object-cover" />
+                                    <img src={normalizeMediaUrl(user.coverImage)} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                                 )}
                             </div>
                             <div className="px-4 -mt-8 flex justify-center">
@@ -1151,9 +1170,9 @@ const Feed = () => {
                                     ))}
                                 </div>
                                 <button onClick={handleCreatePost}
-                                    disabled={!newPostContent.trim() && postAttachments.length === 0}
+                                    disabled={(!newPostContent.trim() && postAttachments.length === 0) || postSubmitting || uploading}
                                     className="px-5 py-2 bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-bold rounded-full disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:shadow-md hover:shadow-[var(--accent)]/25"
-                                >Post</button>
+                                >{postSubmitting ? 'Posting...' : 'Post'}</button>
                             </div>
                         </motion.div>
                     </motion.div>

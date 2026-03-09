@@ -1,4 +1,5 @@
 import express from 'express';
+import compression from 'compression';
 import cors from 'cors';
 import helmet from 'helmet';
 import http from 'http';
@@ -50,6 +51,7 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false,
 }));
 app.use(cors(corsOptions));
+app.use(compression()); // Enable gzip/brotli compression for faster responses
 app.use(express.json());
 
 // Session Middleware
@@ -144,18 +146,42 @@ app.use('/api/uploads', (req, res) => {
                 return res.status(304).end();
             }
 
-            res.set('Content-Type', file.contentType || 'application/octet-stream');
+            const contentType = file.contentType || 'application/octet-stream';
+            const fileLength = file.length || 0;
+
+            res.set('Content-Type', contentType);
             // Filenames contain unique timestamps — safe to cache long-term + immutable
             res.set('Cache-Control', 'public, max-age=31536000, immutable');
             res.set('ETag', etag);
             if (lastModified) res.set('Last-Modified', lastModified);
-            if (file.length) res.set('Content-Length', String(file.length));
+            // Advertise range support for progressive loading
+            res.set('Accept-Ranges', 'bytes');
 
-            const downloadStream = bucket.openDownloadStreamByName(gridName);
-            downloadStream.pipe(res);
-            downloadStream.on('error', () => {
-                if (!res.headersSent) res.status(404).end();
-            });
+            // Handle range requests (for progressive image/video loading)
+            const rangeHeader = req.headers.range;
+            if (rangeHeader && fileLength > 0) {
+                const parts = rangeHeader.replace(/bytes=/, '').split('-');
+                const start = parseInt(parts[0], 10);
+                const end = parts[1] ? parseInt(parts[1], 10) : fileLength - 1;
+                const chunkSize = end - start + 1;
+
+                res.status(206);
+                res.set('Content-Range', `bytes ${start}-${end}/${fileLength}`);
+                res.set('Content-Length', String(chunkSize));
+
+                const downloadStream = bucket.openDownloadStreamByName(gridName, { start, end: end + 1 });
+                downloadStream.pipe(res);
+                downloadStream.on('error', () => {
+                    if (!res.headersSent) res.status(404).end();
+                });
+            } else {
+                if (fileLength) res.set('Content-Length', String(fileLength));
+                const downloadStream = bucket.openDownloadStreamByName(gridName);
+                downloadStream.pipe(res);
+                downloadStream.on('error', () => {
+                    if (!res.headersSent) res.status(404).end();
+                });
+            }
         })
         .catch(err => {
             console.error('GridFS serve error:', err);

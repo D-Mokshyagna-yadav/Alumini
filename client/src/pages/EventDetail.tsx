@@ -35,6 +35,8 @@ const EventDetail = () => {
     const [editBannerFile, setEditBannerFile] = useState<File | null>(null);
     const [editBannerPreview, setEditBannerPreview] = useState<string | null>(null);
     const [editLoading, setEditLoading] = useState(false);
+    const [postSubmitting, setPostSubmitting] = useState(false);
+    const [commentSubmitting, setCommentSubmitting] = useState<string | null>(null);
 
     const isAdmin = user?.role === 'admin';
 
@@ -190,6 +192,8 @@ const EventDetail = () => {
 
     const handleCreatePost = async () => {
         if (!newPost.trim()) return;
+        if (postSubmitting) return;
+        setPostSubmitting(true);
         try {
             const res = await api.post(`/event-posts/${id}`, { content: newPost });
             setPosts([res.data.post, ...posts]);
@@ -197,6 +201,8 @@ const EventDetail = () => {
             showToast('Post created', 'success');
         } catch (err: any) {
             showToast(err.response?.data?.message || 'Failed to create post', 'error');
+        } finally {
+            setPostSubmitting(false);
         }
     };
 
@@ -212,6 +218,8 @@ const EventDetail = () => {
     const handleComment = async (postId: string) => {
         const content = newComment[postId];
         if (!content || !content.trim()) return;
+        if (commentSubmitting === postId) return;
+        setCommentSubmitting(postId);
         try {
             const res = await api.post(`/event-posts/${postId}/comment`, { content });
             setPosts(posts.map(p => {
@@ -228,6 +236,8 @@ const EventDetail = () => {
             showToast('Comment added', 'success');
         } catch (err: any) {
             showToast(err.response?.data?.message || 'Failed to add comment', 'error');
+        } finally {
+            setCommentSubmitting(null);
         }
     };
 
@@ -535,7 +545,7 @@ const EventDetail = () => {
                             />
                             <button
                                 onClick={handleCreatePost}
-                                disabled={!newPost.trim()}
+                                disabled={!newPost.trim() || postSubmitting}
                                 className="px-3 py-2 bg-[var(--accent)] text-[var(--bg-primary)] hover:bg-[var(--accent-hover)] disabled:opacity-40 transition-colors"
                             >
                                 <Send size={16} />
