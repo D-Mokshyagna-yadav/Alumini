@@ -44,12 +44,14 @@ router.get('/list', cacheMiddleware(TTL.MEDIUM), async (req, res) => {
 
         const filter: any = {};
         if (q) {
+            // Escape regex special chars to prevent ReDoS
+            const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             filter.$or = [
-                { action: new RegExp(q, 'i') },
-                { channel: new RegExp(q, 'i') },
-                { resourceType: new RegExp(q, 'i') },
-                { resourceId: new RegExp(q, 'i') },
-                { url: new RegExp(q, 'i') }
+                { action: new RegExp(escaped, 'i') },
+                { channel: new RegExp(escaped, 'i') },
+                { resourceType: new RegExp(escaped, 'i') },
+                { resourceId: new RegExp(escaped, 'i') },
+                { url: new RegExp(escaped, 'i') }
             ];
         }
 

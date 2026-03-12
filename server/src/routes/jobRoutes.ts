@@ -5,16 +5,9 @@ import Job from '../models/Job';
 import Notification from '../models/Notification';
 import { getSettings } from '../models/SiteSettings';
 import { cacheMiddleware, TTL } from '../config/cache';
+import { requireAuth } from '../middleware/auth';
 
 const router = express.Router();
-
-const requireAuth = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (!req.session || !req.session.userId) return res.status(401).json({ message: 'Unauthorized' });
-    const user = await User.findById(req.session.userId);
-    if (!user) return res.status(401).json({ message: 'Unauthorized' });
-    if (user.status !== UserStatus.ACTIVE && user.role !== 'admin') return res.status(403).json({ message: 'Account not approved.' });
-    next();
-};
 
 // GET /api/jobs/:id/applicants - list applicants (job poster or admin only)
 router.get('/:id/applicants', requireAuth, async (req, res) => {

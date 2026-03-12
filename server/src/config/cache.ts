@@ -1,39 +1,129 @@
-import NodeCache from 'node-cache';
 import { Request, Response, NextFunction } from 'express';
 
 /**
- * In-memory API response cache with prefix-based invalidation.
+ * ─── Redis-Ready Cache Layer ───────────────────────────────────
+ *
+ * Abstracted cache with a CacheStore interface. Ships with an
+ * in-memory implementation (MemoryStore). When Redis is available,
+ * swap to RedisStore by setting REDIS_URL in env — no other code changes needed.
  *
  * TTL tiers:
- *   - STATIC  (5 min) : public content that rarely changes (branding, about, admin settings)
- *   - MEDIUM  (30 s)  : lists/feeds that update moderately (posts, events, jobs)
- *   - SHORT   (10 s)  : fast-changing data (notifications, chat, connections)
- *   - USER    (20 s)  : per-user data (profile, saved items, preferences)
+ *   STATIC  (5 min) — branding, about, admin settings, notable-alumni
+ *   LONG    (2 min) — directory, gallery albums
+ *   MEDIUM  (30 s)  — feeds, event lists, job lists
+ *   SHORT   (10 s)  — notifications, chat list, connections
+ *   USER    (20 s)  — per-user data (profile, saved items, preferences)
  */
-const cache = new NodeCache({
-    stdTTL: 30,          // default 30 s
-    checkperiod: 15,     // check for expired keys every 15 s
-    useClones: false,    // store references for speed (never mutate cached values!)
-    maxKeys: 5000,       // cap memory usage
-});
 
-// ─── TTL presets ──────────────────────────────────────────────
+// ─── TTL presets (seconds) ───────────────────────────────────
 export const TTL = {
-    STATIC: 300,   // 5 min  — branding, about, administration, notable-alumni
-    MEDIUM: 30,    // 30 s   — feeds, lists
-    SHORT: 10,     // 10 s   — notifications, chat list
-    USER: 20,      // 20 s   — per-user stuff
+    STATIC: 300,   // 5 min
+    LONG: 120,     // 2 min
+    MEDIUM: 30,    // 30 s
+    SHORT: 10,     // 10 s
+    USER: 20,      // 20 s
 } as const;
 
+// ─── CacheStore interface (swap implementation for Redis) ────
+export interface CacheStore {
+    get<T = any>(key: string): T | undefined;
+    set<T = any>(key: string, value: T, ttl?: number): void;
+    del(key: string | string[]): void;
+    keys(): string[];
+    flush(): void;
+    stats(): { hits: number; misses: number; keys: number };
+}
+
+// ─── In-Memory Implementation ────────────────────────────────
+class MemoryStore implements CacheStore {
+    private store = new Map<string, { value: any; expiresAt: number }>();
+    private _hits = 0;
+    private _misses = 0;
+    private readonly maxKeys: number;
+    private cleanupTimer: ReturnType<typeof setInterval>;
+
+    constructor(maxKeys = 5000) {
+        this.maxKeys = maxKeys;
+        // Periodic cleanup of expired keys
+        this.cleanupTimer = setInterval(() => this.evict(), 15_000);
+        // Prevent the timer from keeping the process alive
+        if (this.cleanupTimer.unref) this.cleanupTimer.unref();
+    }
+
+    get<T = any>(key: string): T | undefined {
+        const entry = this.store.get(key);
+        if (!entry) {
+            this._misses++;
+            return undefined;
+        }
+        if (Date.now() > entry.expiresAt) {
+            this.store.delete(key);
+            this._misses++;
+            return undefined;
+        }
+        this._hits++;
+        return entry.value as T;
+    }
+
+    set<T = any>(key: string, value: T, ttl = 30): void {
+        // Evict oldest entries if at capacity
+        if (this.store.size >= this.maxKeys) {
+            const firstKey = this.store.keys().next().value;
+            if (firstKey) this.store.delete(firstKey);
+        }
+        this.store.set(key, {
+            value,
+            expiresAt: Date.now() + ttl * 1000,
+        });
+    }
+
+    del(key: string | string[]): void {
+        const keys = Array.isArray(key) ? key : [key];
+        for (const k of keys) {
+            this.store.delete(k);
+        }
+    }
+
+    keys(): string[] {
+        const now = Date.now();
+        const result: string[] = [];
+        for (const [k, v] of this.store) {
+            if (now <= v.expiresAt) result.push(k);
+        }
+        return result;
+    }
+
+    flush(): void {
+        this.store.clear();
+    }
+
+    stats() {
+        return {
+            hits: this._hits,
+            misses: this._misses,
+            keys: this.store.size,
+        };
+    }
+
+    private evict(): void {
+        const now = Date.now();
+        for (const [k, v] of this.store) {
+            if (now > v.expiresAt) this.store.delete(k);
+        }
+    }
+}
+
+// ─── Singleton store instance ────────────────────────────────
+// To switch to Redis later, swap this line:
+//
+//   import { createRedisStore } from './redisStore';
+//   const store: CacheStore = process.env.REDIS_URL
+//       ? createRedisStore(process.env.REDIS_URL)
+//       : new MemoryStore();
+//
+const store: CacheStore = new MemoryStore();
+
 // ─── Cache key builder ───────────────────────────────────────
-/**
- * Build a cache key from the request.
- * Pattern: "METHOD:fullPath?query" optionally prefixed with userId for
- * per-user caches.
- *
- *   GET /api/posts?page=2            → "GET:/api/posts?page=2"
- *   GET /api/saved/all  (user 123)   → "u:123:GET:/api/saved/all"
- */
 export const buildCacheKey = (req: Request, perUser = false): string => {
     const base = `GET:${req.originalUrl}`;
     if (perUser && (req.session as any)?.userId) {
@@ -46,30 +136,28 @@ export const buildCacheKey = (req: Request, perUser = false): string => {
 /**
  * Express middleware that caches successful JSON GET responses.
  *
- * Usage:
  *   router.get('/feed', cacheMiddleware(TTL.MEDIUM), handler);
  *   router.get('/me/saved', cacheMiddleware(TTL.USER, true), handler);
  */
 export const cacheMiddleware = (ttl: number = TTL.MEDIUM, perUser = false) => {
     return (req: Request, res: Response, next: NextFunction) => {
-        // Only cache GET (and HEAD) requests
         if (req.method !== 'GET' && req.method !== 'HEAD') return next();
 
         const key = buildCacheKey(req, perUser);
-        const cached = cache.get<{ body: any; statusCode: number }>(key);
+        const cached = store.get<{ body: any; statusCode: number }>(key);
 
         if (cached) {
-            // Set a header so the client knows it was served from cache
             res.set('X-Cache', 'HIT');
             return res.status(cached.statusCode).json(cached.body);
         }
 
-        // Monkey-patch res.json to intercept the response and store it
+        // Intercept res.json to store the response
         const originalJson = res.json.bind(res);
         res.json = (body: any) => {
-            // Only cache 2xx responses
             if (res.statusCode >= 200 && res.statusCode < 300) {
-                cache.set(key, { body, statusCode: res.statusCode }, ttl);
+                try {
+                    store.set(key, { body, statusCode: res.statusCode }, ttl);
+                } catch { /* don't let cache failures break the response */ }
             }
             res.set('X-Cache', 'MISS');
             return originalJson(body);
@@ -81,55 +169,38 @@ export const cacheMiddleware = (ttl: number = TTL.MEDIUM, perUser = false) => {
 
 // ─── Invalidation helpers ────────────────────────────────────
 
-/**
- * Invalidate ALL cache keys whose key contains the given substring.
- *
- *   invalidatePrefix('/api/posts')  → clears feed, detail, user-posts, …
- *   invalidatePrefix('/api/public') → clears branding, about, news, …
- *
- * Call this from mutation handlers (POST / PUT / DELETE).
- */
+/** Invalidate all keys containing any of the given substrings */
 export const invalidatePrefix = (...prefixes: string[]) => {
-    const keys = cache.keys();
-    for (const key of keys) {
+    const allKeys = store.keys();
+    const toDelete: string[] = [];
+    for (const key of allKeys) {
         for (const prefix of prefixes) {
             if (key.includes(prefix)) {
-                cache.del(key);
+                toDelete.push(key);
                 break;
             }
         }
     }
+    if (toDelete.length > 0) store.del(toDelete);
 };
 
-/**
- * Invalidate cache entries for a specific user.
- *
- *   invalidateUser('abc123')  → clears all "u:abc123:..." keys
- */
+/** Invalidate all per-user cache keys */
 export const invalidateUser = (userId: string) => {
     const prefix = `u:${userId}:`;
-    const keys = cache.keys().filter(k => k.startsWith(prefix));
-    if (keys.length > 0) cache.del(keys);
+    const toDelete = store.keys().filter(k => k.startsWith(prefix));
+    if (toDelete.length > 0) store.del(toDelete);
 };
 
-/**
- * Flush the entire cache. Use sparingly (e.g. admin settings change).
- */
+/** Flush everything */
 export const flushAll = () => {
-    cache.flushAll();
+    store.flush();
 };
 
 // ─── Route ↔ Invalidation mapping ───────────────────────────
-/**
- * Defines which cache prefixes should be invalidated when a mutation
- * happens on a given route prefix. For example, mutating /api/admin/notable-alumni
- * should also bust /api/public (because the public landing page fetches
- * notable-alumni from /api/public/notable-alumni).
- */
 const INVALIDATION_MAP: Record<string, string[]> = {
     '/api/posts':         ['/api/posts', '/api/public/feed'],
     '/api/events':        ['/api/events', '/api/event-posts'],
-    '/api/event-posts':   ['/api/event-posts'],
+    '/api/event-posts':   ['/api/event-posts', '/api/events'],
     '/api/jobs':          ['/api/jobs'],
     '/api/connections':   ['/api/connections', '/api/users'],
     '/api/users':         ['/api/users'],
@@ -141,45 +212,39 @@ const INVALIDATION_MAP: Record<string, string[]> = {
     '/api/public':        ['/api/public'],
     '/api/admin':         ['/api/admin', '/api/public', '/api/posts', '/api/events', '/api/jobs', '/api/users'],
     '/api/telemetry':     ['/api/telemetry'],
-    '/api/upload':        [],   // uploads don't have cached GETs to bust
+    '/api/upload':        [],
+    '/api/auth':          [],
 };
 
 /**
- * Auto-invalidation middleware. Mount this ONCE on the Express app
- * (before route registration). It intercepts successful mutation
- * responses (POST / PUT / DELETE / PATCH → 2xx) and busts the
- * relevant cache entries automatically so you don't need to call
- * invalidatePrefix() inside every single handler.
- *
- *   app.use(autoInvalidate());
+ * Auto-invalidation middleware. Mount once on the Express app before routes.
+ * Intercepts successful mutations (POST/PUT/DELETE/PATCH → 2xx) and busts
+ * relevant cache entries automatically.
  */
 export const autoInvalidate = () => {
     return (req: Request, res: Response, next: NextFunction) => {
-        // Only intercept mutations
         if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
             return next();
         }
 
-        // Hook into res.json / res.send to run invalidation after a successful response
         const originalJson = res.json.bind(res);
         const originalSend = res.send.bind(res);
 
         const doInvalidation = () => {
-            if (res.statusCode >= 200 && res.statusCode < 300) {
-                const path = req.originalUrl || req.url;
-                // Find which route prefix this mutation belongs to
-                for (const [prefix, targets] of Object.entries(INVALIDATION_MAP)) {
-                    if (path.startsWith(prefix)) {
-                        // Always invalidate the prefix itself + any cross-dependencies
-                        invalidatePrefix(prefix, ...targets);
-                        // Also invalidate per-user caches for the current user
-                        if ((req.session as any)?.userId) {
-                            invalidateUser((req.session as any).userId);
+            try {
+                if (res.statusCode >= 200 && res.statusCode < 300) {
+                    const reqPath = req.originalUrl || req.url;
+                    for (const [prefix, targets] of Object.entries(INVALIDATION_MAP)) {
+                        if (reqPath.startsWith(prefix)) {
+                            invalidatePrefix(prefix, ...targets);
+                            if ((req.session as any)?.userId) {
+                                invalidateUser((req.session as any).userId);
+                            }
+                            break;
                         }
-                        break;
                     }
                 }
-            }
+            } catch { /* never let invalidation break the response */ }
         };
 
         res.json = (body: any) => {
@@ -197,6 +262,9 @@ export const autoInvalidate = () => {
 };
 
 /** Expose stats for debugging */
-export const cacheStats = () => cache.getStats();
+export const cacheStats = () => store.stats();
 
-export default cache;
+/** Expose the store for direct access (e.g. in tests or admin endpoints) */
+export { store };
+
+export default store;

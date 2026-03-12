@@ -68,7 +68,18 @@ api.interceptors.response.use(
 
         return response;
     },
-    (error) => Promise.reject(error),
+    (error) => {
+        // Auto-redirect to login on 401 (session expired)
+        if (error.response?.status === 401) {
+            flushClientCache();
+            const path = window.location.pathname;
+            // Don't redirect if already on public/auth pages
+            if (path !== '/login' && path !== '/register' && path !== '/' && !path.startsWith('/forgot')) {
+                window.location.href = '/login';
+            }
+        }
+        return Promise.reject(error);
+    },
 );
 
 // ─── Invalidation mapping (mirrors server-side INVALIDATION_MAP) ──

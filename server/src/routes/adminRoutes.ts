@@ -9,22 +9,9 @@ import NotableAlumni from '../models/NotableAlumni';
 import Administration from '../models/Administration';
 import { cacheMiddleware, TTL } from '../config/cache';
 import { sendApprovedEmail } from '../config/email';
+import { requireAdmin } from '../middleware/auth';
 
 const router = express.Router();
-
-// Middleware to check Admin role
-const requireAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (!req.session || !req.session.userId) {
-        return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    const user = await User.findById(req.session.userId);
-    if (!user || user.role !== 'admin') {
-        return res.status(403).json({ message: 'Admin access required' });
-    }
-
-    next();
-};
 
 // GET /api/admin/pending-users - Get all pending verification users
 router.get('/pending-users', requireAdmin, cacheMiddleware(TTL.SHORT), async (req, res) => {

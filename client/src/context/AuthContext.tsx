@@ -148,12 +148,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const register = async (data: RegisterData) => {
-        const res = await api.post('/auth/register', data);
-        return {
-            success: true,
-            message: res.data.message,
-            autoApproved: res.data.autoApproved,
-        };
+        try {
+            const res = await api.post('/auth/register', data);
+            return {
+                success: true,
+                message: res.data.message,
+                autoApproved: res.data.autoApproved,
+            };
+        } catch (error: any) {
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Registration failed',
+            };
+        }
     };
 
     const logout = async () => {

@@ -4,13 +4,9 @@ import Event from '../models/Event';
 import User from '../models/User';
 import Notification from '../models/Notification';
 import { cacheMiddleware, TTL } from '../config/cache';
+import { requireSession } from '../middleware/auth';
 
 const router = express.Router();
-
-const requireAuth = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (!req.session || !req.session.userId) return res.status(401).json({ message: 'Unauthorized' });
-    next();
-};
 
 // GET /api/event-posts/:eventId - Get all posts for an event
 router.get('/:eventId', cacheMiddleware(TTL.SHORT), async (req, res) => {
@@ -52,7 +48,7 @@ router.get('/:eventId', cacheMiddleware(TTL.SHORT), async (req, res) => {
 });
 
 // POST /api/event-posts/:eventId - Create a new post
-router.post('/:eventId', requireAuth, async (req, res) => {
+router.post('/:eventId', requireSession, async (req, res) => {
     try {
         const { content } = req.body;
         if (!content || !content.trim()) {
@@ -100,7 +96,7 @@ router.post('/:eventId', requireAuth, async (req, res) => {
 });
 
 // POST /api/event-posts/:postId/like - Toggle like on a post
-router.post('/:postId/like', requireAuth, async (req, res) => {
+router.post('/:postId/like', requireSession, async (req, res) => {
     try {
         const post = await EventPost.findById(req.params.postId).populate('author', 'name');
         if (!post) return res.status(404).json({ message: 'Post not found' });
@@ -165,7 +161,7 @@ router.post('/:postId/like', requireAuth, async (req, res) => {
 });
 
 // POST /api/event-posts/:postId/comment - Add a comment to a post
-router.post('/:postId/comment', requireAuth, async (req, res) => {
+router.post('/:postId/comment', requireSession, async (req, res) => {
     try {
         const { content } = req.body;
         if (!content || !content.trim()) {

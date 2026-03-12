@@ -3,21 +3,9 @@ import User, { UserStatus } from '../models/User';
 import { deleteGridFSFile } from '../config/gridfs';
 import { cacheMiddleware, TTL } from '../config/cache';
 import logger from '../config/logger';
+import { requireAuth } from '../middleware/auth';
 
 const router = express.Router();
-
-// Middleware to check authenticated user
-const requireAuth = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (!req.session || !req.session.userId) {
-        return res.status(401).json({ message: 'Unauthorized' });
-    }
-    const user = await User.findById(req.session.userId);
-    if (!user) return res.status(401).json({ message: 'Unauthorized' });
-    if (user.status !== UserStatus.ACTIVE && user.role !== 'admin') {
-        return res.status(403).json({ message: 'Account not approved.' });
-    }
-    next();
-};
 
 // GET /api/users/directory - Get all verified/active users for directory
 router.get('/directory', requireAuth, cacheMiddleware(TTL.MEDIUM), async (req, res) => {

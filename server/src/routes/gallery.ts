@@ -6,6 +6,7 @@ import GalleryAlbum from '../models/GalleryAlbum';
 import User from '../models/User';
 import { storeBufferInGridFS, deleteGridFSFile, getGridFSBucket } from '../config/gridfs';
 import { cacheMiddleware, TTL } from '../config/cache';
+import { requireAuth, requireAdmin } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -30,22 +31,6 @@ const fileFilter = (_req: express.Request, file: Express.Multer.File, cb: multer
 };
 
 const upload = multer({ storage: memStorage, limits: { fileSize: 100 * 1024 * 1024 }, fileFilter });
-
-// ── Auth middleware ────────────────────────────────────────
-
-const requireAuth = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (!req.session?.userId) return res.status(401).json({ message: 'Unauthorized' });
-    (req as any).user = { id: req.session.userId };
-    next();
-};
-
-const requireAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (!req.session?.userId) return res.status(401).json({ message: 'Unauthorized' });
-    const user = await User.findById(req.session.userId);
-    if (!user || user.role !== 'admin') return res.status(403).json({ message: 'Admin access required' });
-    (req as any).user = { id: req.session.userId };
-    next();
-};
 
 // ── Routes ─────────────────────────────────────────────────
 
@@ -123,73 +108,78 @@ router.post('/album/:albumId/images', requireAdmin, async (req, res) => {
         const albumUpload = multer({ storage: memStorage, limits: { fileSize: 100 * 1024 * 1024 }, fileFilter }).array('images', 20);
 
         albumUpload(req, res, async (err) => {
-            if (err) {
-                console.error('Upload error:', err);
-                return res.status(400).json({ message: err.message || 'Upload failed' });
-            }
-
-            const files = req.files as Express.Multer.File[];
-            if (!files || files.length === 0) return res.status(400).json({ message: 'No files provided' });
-
-            const newMedia: any[] = [];
-
-            for (const file of files) {
-                const ext = path.extname(file.originalname).toLowerCase();
-                const isVideo = ['.mp4', '.mov', '.avi', '.mkv', '.webm'].includes(ext);
-                let buffer = file.buffer;
-                let contentType = file.mimetype;
-                let filename = generateFilename(file.originalname);
-
-                // Convert to lossless WebP — zero quality loss
-                if (!isVideo && file.mimetype.startsWith('image/')) {
-                    try {
-                        const img = sharp(buffer);
-                        const meta = await img.metadata();
-                        if (!(contentType === 'image/gif' && meta.pages && meta.pages > 1)) {
-                            buffer = await img.webp({ lossless: true, effort: 4 }).toBuffer();
-                            filename = filename.replace(/\.[^.]+$/, '.webp');
-                            contentType = 'image/webp';
-                        }
-                    } catch (err) {
-                        console.error('Gallery image conversion failed, storing original:', err);
-                    }
+            try {
+                if (err) {
+                    console.error('Upload error:', err);
+                    return res.status(400).json({ message: err.message || 'Upload failed' });
                 }
 
-                const gridName = `gallery/${folderName}/${filename}`;
-                await storeBufferInGridFS(buffer, gridName, contentType);
+                const files = req.files as Express.Multer.File[];
+                if (!files || files.length === 0) return res.status(400).json({ message: 'No files provided' });
 
-                newMedia.push({
-                    url: `/api/uploads/gallery/${folderName}/${filename}`,
-                    type: isVideo ? 'video' : 'image',
-                    uploadedBy: (req as any).user.id,
-                    likes: [],
-                    createdAt: new Date(),
-                });
+                const newMedia: any[] = [];
+
+                for (const file of files) {
+                    const ext = path.extname(file.originalname).toLowerCase();
+                    const isVideo = ['.mp4', '.mov', '.avi', '.mkv', '.webm'].includes(ext);
+                    let buffer = file.buffer;
+                    let contentType = file.mimetype;
+                    let filename = generateFilename(file.originalname);
+
+                    // Convert to lossless WebP — zero quality loss
+                    if (!isVideo && file.mimetype.startsWith('image/')) {
+                        try {
+                            const img = sharp(buffer);
+                            const meta = await img.metadata();
+                            if (!(contentType === 'image/gif' && meta.pages && meta.pages > 1)) {
+                                buffer = await img.webp({ lossless: true, effort: 4 }).toBuffer();
+                                filename = filename.replace(/\.[^.]+$/, '.webp');
+                                contentType = 'image/webp';
+                            }
+                        } catch (err) {
+                            console.error('Gallery image conversion failed, storing original:', err);
+                        }
+                    }
+
+                    const gridName = `gallery/${folderName}/${filename}`;
+                    await storeBufferInGridFS(buffer, gridName, contentType);
+
+                    newMedia.push({
+                        url: `/api/uploads/gallery/${folderName}/${filename}`,
+                        type: isVideo ? 'video' : 'image',
+                        uploadedBy: (req as any).user.id,
+                        likes: [],
+                        createdAt: new Date(),
+                    });
+                }
+
+                album.images.push(...newMedia);
+
+                if (!album.coverImage && newMedia.length > 0) {
+                    const firstImage = newMedia.find(m => m.type === 'image');
+                    if (firstImage) album.coverImage = firstImage.url;
+                }
+                if (!(album as any).folderName) (album as any).folderName = folderName;
+
+                await album.save();
+
+                const formattedMedia = newMedia.map((media, index) => ({
+                    id: album.images[album.images.length - newMedia.length + index]._id,
+                    url: media.url,
+                    type: media.type,
+                    caption: '',
+                    likes: 0,
+                    createdAt: media.createdAt,
+                }));
+
+                res.json({ images: formattedMedia });
+
+                // Broadcast gallery update
+                try { const io = (req as any).io; if (io) io.emit('gallery_updated', { albumId: album._id }); } catch (e) { /* ignore */ }
+            } catch (innerErr) {
+                console.error('Error processing gallery upload:', innerErr);
+                if (!res.headersSent) res.status(500).json({ message: 'Failed to process upload' });
             }
-
-            album.images.push(...newMedia);
-
-            if (!album.coverImage && newMedia.length > 0) {
-                const firstImage = newMedia.find(m => m.type === 'image');
-                if (firstImage) album.coverImage = firstImage.url;
-            }
-            if (!(album as any).folderName) (album as any).folderName = folderName;
-
-            await album.save();
-
-            const formattedMedia = newMedia.map((media, index) => ({
-                id: album.images[album.images.length - newMedia.length + index]._id,
-                url: media.url,
-                type: media.type,
-                caption: '',
-                likes: 0,
-                createdAt: media.createdAt,
-            }));
-
-            res.json({ images: formattedMedia });
-
-            // Broadcast gallery update
-            try { const io = (req as any).io; if (io) io.emit('gallery_updated', { albumId: album._id }); } catch (e) { /* ignore */ }
         });
     } catch (error) {
         console.error('Error uploading media:', error);

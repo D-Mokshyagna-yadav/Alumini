@@ -5,18 +5,9 @@ import Post from '../models/Post';
 import Notification from '../models/Notification';
 import { cacheMiddleware, TTL } from '../config/cache';
 import logger from '../config/logger';
+import { requireAuth } from '../middleware/auth';
 
 const router = express.Router();
-
-const requireAuth = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (!req.session || !req.session.userId) {
-        return res.status(401).json({ message: 'Unauthorized' });
-    }
-    const user = await User.findById(req.session.userId);
-    if (!user) return res.status(401).json({ message: 'Unauthorized' });
-    if (user.status !== UserStatus.ACTIVE && user.role !== 'admin') return res.status(403).json({ message: 'Account not approved.' });
-    next();
-};
 
 // GET /api/connections/stats/:userId - Get stats for a user (connections count, posts count)
 router.get('/stats/:userId', requireAuth, cacheMiddleware(TTL.SHORT), async (req, res) => {

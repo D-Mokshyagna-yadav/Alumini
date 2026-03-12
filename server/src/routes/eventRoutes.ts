@@ -1,26 +1,11 @@
 import express from 'express';
 import Event, { EventStatus, EventState } from '../models/Event';
-import User, { UserStatus } from '../models/User';
+import User from '../models/User';
 import Notification from '../models/Notification';
 import { cacheMiddleware, TTL } from '../config/cache';
+import { requireAuth, requireAdmin } from '../middleware/auth';
 
 const router = express.Router();
-
-// Auth middleware (reuse pattern)
-const requireAuth = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (!req.session || !req.session.userId) return res.status(401).json({ message: 'Unauthorized' });
-    const user = await User.findById(req.session.userId);
-    if (!user) return res.status(401).json({ message: 'Unauthorized' });
-    if (user.status !== UserStatus.ACTIVE && user.role !== 'admin') return res.status(403).json({ message: 'Account not approved.' });
-    next();
-};
-
-const requireAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (!req.session || !req.session.userId) return res.status(401).json({ message: 'Unauthorized' });
-    const user = await User.findById(req.session.userId);
-    if (!user || user.role !== 'admin') return res.status(403).json({ message: 'Admin access required' });
-    next();
-};
 
 // POST /api/events - Create event (Admin only)
 router.post('/', requireAdmin, async (req, res) => {

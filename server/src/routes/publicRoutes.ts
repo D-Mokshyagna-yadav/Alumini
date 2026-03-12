@@ -4,16 +4,9 @@ import NewsItem from '../models/NewsItem';
 import Post from '../models/Post';
 import User from '../models/User';
 import { cacheMiddleware, invalidatePrefix, TTL } from '../config/cache';
+import { requireAdmin } from '../middleware/auth';
 
 const router = express.Router();
-
-// Lightweight admin check (session + role)
-const requireAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (!req.session || !req.session.userId) return res.status(401).json({ message: 'Unauthorized' });
-    const user = await User.findById(req.session.userId);
-    if (!user || user.role !== 'admin') return res.status(403).json({ message: 'Admin access required' });
-    next();
-};
 
 // GET /api/public/branding
 router.get('/branding', cacheMiddleware(TTL.STATIC), async (req, res) => {

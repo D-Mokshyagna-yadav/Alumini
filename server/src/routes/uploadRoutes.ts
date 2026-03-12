@@ -8,6 +8,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import User, { UserStatus } from '../models/User';
 import logger from '../config/logger';
 import { storeBufferInGridFS, storeFileInGridFS, deleteGridFSFile, cleanupTempFile } from '../config/gridfs';
+import { requireAuth } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -19,21 +20,6 @@ const sanitizeUsername = (name: string): string =>
 const generateFilename = (originalname: string): string => {
     const unique = Date.now() + '-' + Math.round(Math.random() * 1E9);
     return unique + path.extname(originalname);
-};
-
-/** Middleware: reject unauthenticated / unverified users */
-const requireAuth = async (
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-) => {
-    if (!req.session?.userId) return res.status(401).json({ message: 'Unauthorized' });
-    const user = await User.findById(req.session.userId);
-    if (!user) return res.status(401).json({ message: 'Unauthorized' });
-    if (user.status !== UserStatus.ACTIVE && user.role !== 'admin') {
-        return res.status(403).json({ message: 'Account not approved. Uploads are blocked until verification.' });
-    }
-    next();
 };
 
 // ── Multer – memory storage (no temp files) ────────────────
