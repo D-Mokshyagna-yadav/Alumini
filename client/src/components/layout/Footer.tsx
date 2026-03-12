@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import api from '../../lib/api';
-import { Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram, Youtube } from 'lucide-react';
+import { Mail, Phone, MapPin, Facebook, Linkedin, Instagram, Youtube } from 'lucide-react';
 
 const Footer = () => {
     const footerLinks = {
@@ -25,11 +25,10 @@ const Footer = () => {
     };
 
     const socialLinks = [
-        { icon: Facebook, href: '#', label: 'Facebook' },
-        { icon: Twitter, href: '#', label: 'Twitter' },
-        { icon: Linkedin, href: '#', label: 'LinkedIn' },
-        { icon: Instagram, href: '#', label: 'Instagram' },
-        { icon: Youtube, href: '#', label: 'YouTube' },
+        { icon: Facebook, href: 'https://www.facebook.com/share/1FW4X3wiyG/', label: 'Facebook' },
+        { icon: Linkedin, href: 'https://in.linkedin.com/school/dvr-dr-hs-mic-college-of-technology/', label: 'LinkedIn' },
+        { icon: Instagram, href: 'https://www.instagram.com/miccollegeoftechnology?igsh=MWxobjd4czN1bXY2bg==', label: 'Instagram' },
+        { icon: Youtube, href: 'https://www.youtube.com/@dvrdr.hsmiccollegeoftechno8260', label: 'YouTube' },
     ];
 
     const [branding, setBranding] = useState<any>({});
@@ -81,6 +80,8 @@ const Footer = () => {
                                 <a
                                     key={social.label}
                                     href={branding.social?.[social.label.toLowerCase()] || social.href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     aria-label={social.label}
                                     className="w-10 h-10 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--bg-primary)] hover:-translate-y-0.5 border border-[var(--border-color)] hover:border-[var(--accent)] transition-all duration-200"
                                 >

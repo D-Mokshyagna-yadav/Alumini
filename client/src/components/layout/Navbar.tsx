@@ -126,7 +126,7 @@ const Navbar = () => {
 
                     {/* Logo */}
                     <Link to={isAuthenticated ? '/feed' : '/'} className="flex items-center gap-2.5 shrink-0">
-                        <img src="/logo-small.png" alt="Logo" className="w-10 h-10 rounded-xl object-contain" />
+                        <img src="/logo-small.png" alt="Logo" className="w-14 h-14 rounded-xl object-contain" />
                         <span className={`hidden sm:block font-bold text-base tracking-tight ${isTransparent ? 'text-white' : 'text-[var(--text-primary)]'}`}>
                             MIC Alumni
                         </span>
