@@ -185,13 +185,19 @@ app.use((req, res, next) => {
     const originalJson = res.json.bind(res);
     res.json = (body: any) => {
         if (body) {
-            const sanitized = JSON.parse(
-                JSON.stringify(body)
-                    .replace(/http:\/\/localhost:\d+(?=\/api\/uploads\/)/g, '')
-                    // Migrate legacy /uploads/ paths → /api/uploads/
-                    .replace(/(?<!\/api)\/uploads\//g, '/api/uploads/')
-            );
-            return originalJson(sanitized);
+            try {
+                const raw = JSON.stringify(body);
+                const sanitized = JSON.parse(
+                    raw
+                        .replace(/http:\/\/localhost:\d+(?=\/api\/uploads\/)/g, '')
+                        // Migrate legacy /uploads/ paths → /api/uploads/
+                        .replace(/(?<!\/api)\/uploads\//g, '/api/uploads/')
+                );
+                return originalJson(sanitized);
+            } catch {
+                // If stringify/parse fails (circular refs etc.), send body as-is
+                return originalJson(body);
+            }
         }
         return originalJson(body);
     };
@@ -326,6 +332,15 @@ io.on('connection', (socket) => {
     });
 });
 
+// ─── Global Express error handler ───
+// Catches any error thrown/next(err)'d by route handlers or middleware
+app.use((err: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    logger.error(`[ERROR] ${req.method} ${req.originalUrl}`, err?.message || err);
+    if (!res.headersSent) {
+        res.status(err.status || 500).json({ message: err.message || 'Internal server error' });
+    }
+});
+
 // ─── Serve Client Build (single-instance deployment) ───
 const clientDistPath = path.join(__dirname, '../../client/dist');
 app.use(express.static(clientDistPath, {
@@ -362,6 +377,15 @@ const getLocalIPs = () => {
     }
     return addresses;
 };
+
+// ─── Process-level error handlers (prevent silent crashes → 502) ───
+process.on('unhandledRejection', (reason) => {
+    logger.error('[unhandledRejection]', reason);
+});
+process.on('uncaughtException', (err) => {
+    logger.error('[uncaughtException]', err);
+    // Don't exit — keep serving; Coolify will restart if truly broken
+});
 
 // Connect to Database FIRST so MongoStore is ready, then start server
 connectDB().then(() => {
