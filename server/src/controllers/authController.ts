@@ -349,25 +349,30 @@ export const login = async (req: Request, res: Response) => {
         }
 
         // Set Session
-        if (req.session) {
-            req.session.userId = String(user._id);
-            req.session.role = user.role;
-        }
-
         const userObj = user.toJSON();
         delete (userObj as any).passwordHash;
 
-        // Ensure session is saved before responding (critical behind reverse proxies)
-        req.session.save((err) => {
-            if (err) {
-                console.error('Session save error:', err);
-                return res.status(500).json({ message: 'Session error during login.' });
-            }
+        if (req.session) {
+            req.session.userId = String(user._id);
+            req.session.role = user.role;
+
+            // Ensure session is saved before responding (critical behind reverse proxies)
+            req.session.save((err: any) => {
+                if (err) {
+                    console.error('Session save error:', err);
+                    return res.status(500).json({ message: 'Session error during login.' });
+                }
+                res.json({
+                    message: 'Login successful',
+                    user: { ...userObj, id: user._id }
+                });
+            });
+        } else {
             res.json({
                 message: 'Login successful',
                 user: { ...userObj, id: user._id }
             });
-        });
+        }
 
     } catch (error) {
         console.error(error);
@@ -401,24 +406,29 @@ export const verify2fa = async (req: Request, res: Response) => {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        if (req.session) {
-            req.session.userId = String(user._id);
-            req.session.role = user.role;
-        }
-
         const userObj = user.toJSON();
         delete (userObj as any).passwordHash;
 
-        req.session.save((err) => {
-            if (err) {
-                console.error('Session save error:', err);
-                return res.status(500).json({ message: 'Session error during login.' });
-            }
+        if (req.session) {
+            req.session.userId = String(user._id);
+            req.session.role = user.role;
+
+            req.session.save((err: any) => {
+                if (err) {
+                    console.error('Session save error:', err);
+                    return res.status(500).json({ message: 'Session error during login.' });
+                }
+                res.json({
+                    message: 'Login successful',
+                    user: { ...userObj, id: user._id }
+                });
+            });
+        } else {
             res.json({
                 message: 'Login successful',
                 user: { ...userObj, id: user._id }
             });
-        });
+        }
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error during 2FA verification.' });
@@ -489,7 +499,7 @@ export const logout = (req: Request, res: Response) => {
 };
 
 export const checkAuth = async (req: Request, res: Response) => {
-    logger.log('[auth/check] sessionID:', req.sessionID, 'userId:', req.session?.userId, 'cookie:', req.headers.cookie?.substring(0, 60));
+    logger.log('[auth/check] sessionID:', req.session?.id, 'userId:', req.session?.userId, 'cookie:', req.headers.cookie?.substring(0, 60));
     if (req.session && req.session.userId) {
         try {
             const user = await User.findById(req.session.userId).select('-passwordHash');
