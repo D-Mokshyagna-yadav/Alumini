@@ -1,8 +1,10 @@
 import axios from 'axios';
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 
+// When VITE_API_URL is set (e.g. "https://api.example.com/api"), axios calls
+// that URL directly. When empty, requests go to the same origin at /api.
 const api = axios.create({
-    baseURL: '/api',
+    baseURL: import.meta.env.VITE_API_URL || '/api',
     withCredentials: true,
 });
 
