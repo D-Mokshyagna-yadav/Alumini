@@ -93,19 +93,21 @@ app.use(compression()); // Enable gzip/brotli compression for faster responses
 app.use(express.json());
 
 // Session Middleware
+const isProduction = process.env.NODE_ENV === 'production';
 app.use(session({
+    name: 'alumni.sid',
     secret: process.env.SESSION_SECRET || 'alumni_association_secret_key',
     resave: false,
     saveUninitialized: false, // Don't save empty sessions
     store: MongoStore.create({
         mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/alumni_association',
-        ttl: 24 * 60 * 60 // 1 day
+        ttl: 7 * 24 * 60 * 60 // 7 days
     }),
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: isProduction, // true behind Traefik TLS termination (trust proxy is set)
         httpOnly: true,
-        sameSite: 'lax', // Allow cookies over LAN (same-site navigation)
-        maxAge: 24 * 60 * 60 * 1000 // 1 day
+        sameSite: 'lax', // same-origin deployment — 'lax' is correct
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     }
 }));
 

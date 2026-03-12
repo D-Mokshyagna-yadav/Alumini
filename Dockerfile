@@ -43,6 +43,7 @@ COPY --from=builder /app/client/dist client/dist
 COPY --from=builder /app/client/public client/public
 
 # Expose the port the server runs on
+ENV NODE_ENV=production
 EXPOSE 5000
 
 # Start the server

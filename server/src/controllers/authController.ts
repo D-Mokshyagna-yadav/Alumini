@@ -5,6 +5,7 @@ import User, { UserStatus, UserRole, IUser } from '../models/User';
 import OTP from '../models/OTP';
 import { getSettings } from '../models/SiteSettings';
 import { sendOtpEmail, sendWaitlistEmail } from '../config/email';
+import logger from '../config/logger';
 
 // Extend Session Data
 declare module 'express-session' {
@@ -355,9 +356,17 @@ export const login = async (req: Request, res: Response) => {
 
         const userObj = user.toJSON();
         delete (userObj as any).passwordHash;
-        res.json({
-            message: 'Login successful',
-            user: { ...userObj, id: user._id }
+
+        // Ensure session is saved before responding (critical behind reverse proxies)
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+                return res.status(500).json({ message: 'Session error during login.' });
+            }
+            res.json({
+                message: 'Login successful',
+                user: { ...userObj, id: user._id }
+            });
         });
 
     } catch (error) {
@@ -399,9 +408,16 @@ export const verify2fa = async (req: Request, res: Response) => {
 
         const userObj = user.toJSON();
         delete (userObj as any).passwordHash;
-        res.json({
-            message: 'Login successful',
-            user: { ...userObj, id: user._id }
+
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+                return res.status(500).json({ message: 'Session error during login.' });
+            }
+            res.json({
+                message: 'Login successful',
+                user: { ...userObj, id: user._id }
+            });
         });
     } catch (error) {
         console.error(error);
@@ -463,16 +479,17 @@ export const logout = (req: Request, res: Response) => {
             if (err) {
                 return res.status(500).json({ message: 'Could not log out.' });
             }
-            res.clearCookie('connect.sid'); // Default session cookie name
+            res.clearCookie('alumni.sid');
             res.json({ message: 'Logout successful' });
         });
     } else {
-        res.clearCookie('connect.sid');
+        res.clearCookie('alumni.sid');
         res.json({ message: 'Logout successful' });
     }
 };
 
 export const checkAuth = async (req: Request, res: Response) => {
+    logger.log('[auth/check] sessionID:', req.sessionID, 'userId:', req.session?.userId, 'cookie:', req.headers.cookie?.substring(0, 60));
     if (req.session && req.session.userId) {
         try {
             const user = await User.findById(req.session.userId).select('-passwordHash');
