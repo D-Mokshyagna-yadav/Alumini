@@ -54,6 +54,19 @@ app.set('trust proxy', 1);
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
     crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://static.cloudflareinsights.com"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            imgSrc: ["'self'", "data:", "blob:", "https:"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            connectSrc: ["'self'", "wss:", "ws:", "https://cloudflareinsights.com"],
+            mediaSrc: ["'self'", "blob:"],
+            frameSrc: ["'none'"],
+            objectSrc: ["'none'"],
+        },
+    },
 }));
 app.use(cors(corsOptions));
 app.use(compression()); // Enable gzip/brotli compression for faster responses
@@ -209,6 +222,11 @@ app.use('/api/uploads', (req, res) => {
             console.error('GridFS serve error:', err);
             if (!res.headersSent) res.status(500).json({ message: 'Error retrieving file' });
         });
+});
+
+// ─── Health Check (Coolify / load-balancer) ───
+app.get('/api/health', (_req, res) => {
+    res.status(200).json({ status: 'ok', uptime: process.uptime() });
 });
 
 app.use('/api/auth', authRouter);
