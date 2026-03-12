@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, ArrowRight, AlertCircle, Check, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, AlertCircle, Check, ArrowLeft, Mail, RefreshCw } from 'lucide-react';
 import { CountryStateSelector, formatLocation } from '../components/ui/CountryStateSelector';
+import api from '../lib/api';
 
 const industries = [
     'Technology', 'Finance', 'Healthcare', 'Education', 'Manufacturing',
@@ -13,12 +14,18 @@ const industries = [
 
 const Register = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { register, isLoading } = useAuth();
 
+    // If redirected from login with unverified email, pre-fill & jump to OTP
+    const incomingOtpEmail = (location.state as any)?.otpEmail;
+
     const [step, setStep] = useState(1);
+    // Sub-step within step 1: 'form' = filling details, 'otp' = verifying code, 'verified' = done
+    const [accountSubStep, setAccountSubStep] = useState<'form' | 'otp' | 'verified'>(incomingOtpEmail ? 'otp' : 'form');
     const [formData, setFormData] = useState({
         name: '',
-        email: '',
+        email: incomingOtpEmail || '',
         password: '',
         confirmPassword: '',
         role: 'alumni',
@@ -37,28 +44,119 @@ const Register = () => {
     });
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
+    const [verifiedEmail, setVerifiedEmail] = useState('');
+    const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
+    const [isVerifying, setIsVerifying] = useState(false);
+    const [isSendingOtp, setIsSendingOtp] = useState(false);
+    const [resendCooldown, setResendCooldown] = useState(0);
+    const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+    // Resend cooldown timer
+    useEffect(() => {
+        if (resendCooldown <= 0) return;
+        const t = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+        return () => clearTimeout(t);
+    }, [resendCooldown]);
+
+    // If redirected with otpEmail from login, auto-send OTP
+    useEffect(() => {
+        if (incomingOtpEmail) {
+            api.post('/auth/send-register-otp', { email: incomingOtpEmail }).catch(() => {});
+            setResendCooldown(60);
+        }
+    }, [incomingOtpEmail]);
+
+    // Auto-focus first OTP box when OTP sub-step appears
+    useEffect(() => {
+        if (accountSubStep === 'otp') {
+            setTimeout(() => otpRefs.current[0]?.focus(), 100);
+        }
+    }, [accountSubStep]);
+
+    const handleOtpChange = useCallback((index: number, value: string) => {
+        if (!/^\d*$/.test(value)) return;
+        const newDigits = [...otpDigits];
+        newDigits[index] = value.slice(-1);
+        setOtpDigits(newDigits);
+        setError('');
+        if (value && index < 5) otpRefs.current[index + 1]?.focus();
+    }, [otpDigits]);
+
+    const handleOtpKeyDown = useCallback((index: number, e: React.KeyboardEvent) => {
+        if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
+            otpRefs.current[index - 1]?.focus();
+        }
+    }, [otpDigits]);
+
+    const handleOtpPaste = useCallback((e: React.ClipboardEvent) => {
+        e.preventDefault();
+        const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+        if (!pasted) return;
+        const newDigits = [...otpDigits];
+        for (let i = 0; i < 6; i++) newDigits[i] = pasted[i] || '';
+        setOtpDigits(newDigits);
+        const nextEmpty = pasted.length >= 6 ? 5 : pasted.length;
+        otpRefs.current[nextEmpty]?.focus();
+    }, [otpDigits]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
         setError('');
     };
 
+    /* ─── Step 1: Validate account fields then send OTP ─── */
+    const handleAccountContinue = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+
+        if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+            setError('Please fill in all fields');
+            return;
+        }
+        if (formData.password !== formData.confirmPassword) {
+            setError('Passwords do not match');
+            return;
+        }
+        if (formData.password.length < 6) {
+            setError('Password must be at least 6 characters');
+            return;
+        }
+
+        // Send OTP (server checks if email is already taken)
+        setIsSendingOtp(true);
+        try {
+            await api.post('/auth/send-register-otp', { email: formData.email.trim() });
+            setResendCooldown(60);
+            setOtpDigits(['', '', '', '', '', '']);
+            setAccountSubStep('otp');
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Failed to send verification code.');
+        } finally {
+            setIsSendingOtp(false);
+        }
+    };
+
+    /* ─── Verify OTP within Step 1 ─── */
+    const handleVerifyEmailOtp = async () => {
+        const otp = otpDigits.join('');
+        if (otp.length !== 6) { setError('Please enter the full 6-digit code.'); return; }
+        setIsVerifying(true);
+        setError('');
+        try {
+            await api.post('/auth/verify-register-otp', { email: formData.email, otp });
+            setVerifiedEmail(formData.email);
+            setAccountSubStep('verified');
+            // Auto-advance to step 2 after a brief delay
+            setTimeout(() => setStep(2), 600);
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Verification failed.');
+        } finally {
+            setIsVerifying(false);
+        }
+    };
+
     const handleNext = () => {
-        if (step === 1) {
-            if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
-                setError('Please fill in all fields');
-                return;
-            }
-            if (formData.password !== formData.confirmPassword) {
-                setError('Passwords do not match');
-                return;
-            }
-            if (formData.password.length < 6) {
-                setError('Password must be at least 6 characters');
-                return;
-            }
-            setStep(2);
-        } else if (step === 2) {
+        if (step === 2) {
             if (formData.role === 'teacher') {
                 if (!formData.department || !formData.employeeId || !formData.designation) {
                     setError('Please fill in all required fields');
@@ -76,6 +174,7 @@ const Register = () => {
 
     const handleBack = () => {
         setStep(step - 1);
+        setError('');
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -90,12 +189,12 @@ const Register = () => {
         try {
             const registrationData: any = {
                 name: formData.name,
-                email: formData.email,
+                email: verifiedEmail,
                 password: formData.password,
                 role: formData.role as 'alumni' | 'student' | 'teacher',
                 department: formData.department,
                 phone: formData.phone || undefined,
-                currentLocation: formData.country 
+                currentLocation: formData.country
                     ? formatLocation(formData.country, formData.state || undefined)
                     : undefined,
             };
@@ -150,6 +249,7 @@ const Register = () => {
                         <p className="text-[var(--text-muted)]">Connect with alumni, students, and faculty of MIC College of Technology</p>
                     </motion.div>
 
+                    {/* 3-step progress bar */}
                     <div className="flex items-center justify-center gap-3 mb-8">
                         {[1, 2, 3].map((s) => (
                             <div key={s} className="flex items-center gap-2">
@@ -177,47 +277,149 @@ const Register = () => {
                             </div>
                         )}
 
+                        {/* ── Step 1: Account details + inline OTP verification ── */}
                         {step === 1 && (
-                            <form onSubmit={(e) => { e.preventDefault(); handleNext(); }} className="space-y-5">
-                                <div>
-                                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Full Name *</label>
-                                    <input type="text" name="name" value={formData.name} onChange={handleChange} required className={inputClass} placeholder="Enter your full name" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Email *</label>
-                                    <input type="email" name="email" value={formData.email} onChange={handleChange} required className={inputClass} placeholder="Enter your email" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Password *</label>
-                                    <div className="relative">
-                                        <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleChange} required className={`${inputClass} pr-12`} placeholder="Create a password (6+ characters)" />
-                                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
-                                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            <div className="space-y-5">
+                                {accountSubStep === 'form' && (
+                                    <form onSubmit={handleAccountContinue} className="space-y-5">
+                                        <div>
+                                            <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Full Name *</label>
+                                            <input type="text" name="name" value={formData.name} onChange={handleChange} required className={inputClass} placeholder="Enter your full name" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Email *</label>
+                                            <input type="email" name="email" value={formData.email} onChange={handleChange} required className={inputClass} placeholder="Enter your email" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Password *</label>
+                                            <div className="relative">
+                                                <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleChange} required className={`${inputClass} pr-12`} placeholder="Create a password (6+ characters)" />
+                                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+                                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Confirm Password *</label>
+                                            <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required className={inputClass} placeholder="Confirm your password" />
+                                        </div>
+                                        <button type="submit" disabled={isSendingOtp} className="w-full py-3 bg-[var(--accent)] text-[var(--bg-primary)] rounded-xl font-semibold hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                                            {isSendingOtp
+                                                ? <div className="w-5 h-5 border-2 border-[var(--bg-primary)]/30 border-t-[var(--bg-primary)] rounded-full animate-spin" />
+                                                : <>Continue <ArrowRight size={18} /></>}
                                         </button>
+                                    </form>
+                                )}
+
+                                {accountSubStep === 'otp' && (
+                                    <div className="space-y-5">
+                                        <div className="text-center">
+                                            <div className="w-14 h-14 mx-auto mb-4 bg-[var(--accent)]/10 rounded-full flex items-center justify-center">
+                                                <Mail size={28} className="text-[var(--accent)]" />
+                                            </div>
+                                            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-1">Verify Your Email</h2>
+                                            <p className="text-sm text-[var(--text-muted)]">
+                                                Enter the 6-digit code sent to<br />
+                                                <span className="text-[var(--text-primary)] font-medium">{formData.email}</span>
+                                            </p>
+                                        </div>
+
+                                        <div className="flex justify-center gap-2">
+                                            {otpDigits.map((digit, i) => (
+                                                <input
+                                                    key={i}
+                                                    ref={(el) => { otpRefs.current[i] = el; }}
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    maxLength={6}
+                                                    value={digit}
+                                                    onPaste={handleOtpPaste}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value.replace(/\D/g, '');
+                                                        if (val.length > 1) {
+                                                            // Handle multi-char input (autofill / paste fallback)
+                                                            const chars = val.slice(0, 6).split('');
+                                                            const nd = ['', '', '', '', '', ''];
+                                                            chars.forEach((c, ci) => { nd[ci] = c; });
+                                                            setOtpDigits(nd);
+                                                            otpRefs.current[Math.min(chars.length, 5)]?.focus();
+                                                            setError('');
+                                                        } else {
+                                                            handleOtpChange(i, val);
+                                                        }
+                                                    }}
+                                                    onKeyDown={(e) => {
+                                                        handleOtpKeyDown(i, e);
+                                                        if (e.key === 'Enter' && otpDigits.join('').length === 6) handleVerifyEmailOtp();
+                                                    }}
+                                                    className="w-12 h-14 text-center text-xl font-bold bg-[var(--bg-tertiary)] border-2 border-[var(--border-color)] rounded-xl text-[var(--text-primary)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:border-[var(--accent)] transition-all"
+                                                />
+                                            ))}
+                                        </div>
+
+                                        <button
+                                            onClick={handleVerifyEmailOtp}
+                                            disabled={isVerifying || otpDigits.join('').length !== 6}
+                                            className="w-full py-3 bg-[var(--accent)] text-[var(--bg-primary)] rounded-xl font-semibold hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                        >
+                                            {isVerifying
+                                                ? <div className="w-5 h-5 border-2 border-[var(--bg-primary)]/30 border-t-[var(--bg-primary)] rounded-full animate-spin" />
+                                                : <>Verify Email <ArrowRight size={18} /></>}
+                                        </button>
+
+                                        <div className="flex items-center justify-between">
+                                            <button
+                                                onClick={() => { setAccountSubStep('form'); setOtpDigits(['', '', '', '', '', '']); setError(''); }}
+                                                className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] inline-flex items-center gap-1"
+                                            >
+                                                <ArrowLeft size={14} /> Back
+                                            </button>
+                                            <button
+                                                disabled={resendCooldown > 0}
+                                                onClick={async () => {
+                                                    try {
+                                                        await api.post('/auth/send-register-otp', { email: formData.email });
+                                                        setResendCooldown(60);
+                                                        setOtpDigits(['', '', '', '', '', '']);
+                                                        setError('');
+                                                    } catch (err: any) {
+                                                        setError(err.response?.data?.message || 'Failed to resend OTP.');
+                                                    }
+                                                }}
+                                                className="text-sm text-[var(--accent)] font-medium hover:underline disabled:text-[var(--text-muted)] disabled:no-underline inline-flex items-center gap-1"
+                                            >
+                                                <RefreshCw size={14} />
+                                                {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Confirm Password *</label>
-                                    <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required className={inputClass} placeholder="Confirm your password" />
-                                </div>
-                                <button type="submit" className="w-full py-3 bg-[var(--accent)] text-[var(--bg-primary)] rounded-xl font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-2">
-                                    Continue <ArrowRight size={18} />
-                                </button>
-                            </form>
+                                )}
+
+                                {accountSubStep === 'verified' && (
+                                    <div className="text-center py-4">
+                                        <div className="w-14 h-14 mx-auto mb-4 bg-emerald-500/10 rounded-full flex items-center justify-center">
+                                            <Check size={28} className="text-emerald-500" />
+                                        </div>
+                                        <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-1">Email Verified!</h2>
+                                        <p className="text-sm text-[var(--text-muted)]">Proceeding to next step...</p>
+                                    </div>
+                                )}
+                            </div>
                         )}
 
+                        {/* ── Step 2: Academic details ── */}
                         {step === 2 && (
                             <form onSubmit={(e) => { e.preventDefault(); handleNext(); }} className="space-y-5">
-<div>
-                                      <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">I am a *</label>
-                                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                          {['alumni', 'student', 'teacher'].map((r) => (
-                                              <button key={r} type="button" onClick={() => setFormData({ ...formData, role: r })} className={`py-3 px-4 border-2 rounded-xl font-medium transition-all capitalize ${formData.role === r ? 'border-[var(--accent)] bg-[var(--accent)]/5 text-[var(--accent)]' : 'border-[var(--border-color)]/40 text-[var(--text-secondary)] hover:border-[var(--text-muted)]'}`}>
-                                                  {r === 'student' ? 'Current Student' : r === 'teacher' ? 'Teacher' : 'Alumni'}
-                                              </button>
-                                          ))}
-                                      </div>
-                                  </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">I am a *</label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        {['alumni', 'student', 'teacher'].map((r) => (
+                                            <button key={r} type="button" onClick={() => setFormData({ ...formData, role: r })} className={`py-3 px-4 border-2 rounded-xl font-medium transition-all capitalize ${formData.role === r ? 'border-[var(--accent)] bg-[var(--accent)]/5 text-[var(--accent)]' : 'border-[var(--border-color)]/40 text-[var(--text-secondary)] hover:border-[var(--text-muted)]'}`}>
+                                                {r === 'student' ? 'Current Student' : r === 'teacher' ? 'Teacher' : 'Alumni'}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
 
                                 {formData.role !== 'teacher' && (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -227,7 +429,7 @@ const Register = () => {
                                             </label>
                                             <select name="graduationYear" value={formData.graduationYear} onChange={handleChange} required className={inputClass}>
                                                 <option value="">Select year</option>
-                                                {formData.role === 'student' 
+                                                {formData.role === 'student'
                                                     ? Array.from({ length: 6 }, (_, i) => currentYear + i).map(year => <option key={year} value={year}>{year}</option>)
                                                     : years.map(year => <option key={year} value={year}>{year}</option>)
                                                 }
@@ -308,14 +510,15 @@ const Register = () => {
                             </form>
                         )}
 
+                        {/* ── Step 3: Profile & Location ── */}
                         {step === 3 && (
                             <form onSubmit={handleSubmit} className="space-y-5">
                                 <p className="text-sm text-[var(--text-muted)] text-center mb-2">
-                                    {formData.role === 'teacher' 
+                                    {formData.role === 'teacher'
                                         ? 'Almost there! Add your location details.'
                                         : 'Almost there! Help others find and connect with you.'}
                                 </p>
-                                
+
                                 {formData.role !== 'teacher' && (
                                     <>
                                         <div>
@@ -337,7 +540,7 @@ const Register = () => {
                                         )}
                                     </>
                                 )}
-                                
+
                                 <CountryStateSelector
                                     country={formData.country}
                                     state={formData.state}

@@ -8,6 +8,7 @@ import SiteSettings, { getSettings } from '../models/SiteSettings';
 import NotableAlumni from '../models/NotableAlumni';
 import Administration from '../models/Administration';
 import { cacheMiddleware, TTL } from '../config/cache';
+import { sendApprovedEmail } from '../config/email';
 
 const router = express.Router();
 
@@ -51,6 +52,11 @@ router.post('/verify-user/:id', requireAdmin, async (req, res) => {
         user.status = UserStatus.ACTIVE;
         user.isVerified = true;
         await user.save();
+
+        // Send approval email to the user
+        try {
+            await sendApprovedEmail(user.email, user.name);
+        } catch (e) { console.error('Approval email error:', e); }
 
         // Notify the user that their account has been verified
         try {

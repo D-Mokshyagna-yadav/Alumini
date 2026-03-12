@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import resolveMediaUrl from '../../lib/media';
+import CachedImage from '../CachedImage';
 import api from '../../lib/api';
 
 const NotableAlumni = () => {
@@ -99,10 +100,11 @@ const NotableAlumni = () => {
                                 className={`group flex-shrink-0 w-[280px] bg-[var(--card-bg)] backdrop-blur-xl rounded-2xl overflow-hidden shadow-sm border border-[var(--border-color)] hover:shadow-md hover:border-[var(--accent)]/30 transition-all duration-200 ${alum.profileId ? 'cursor-pointer' : ''}`}
                             >
                                 <div className="relative h-64 overflow-hidden">
-                                    <img
-                                        src={resolveMediaUrl(alum.image)}
+                                    <CachedImage
+                                        src={alum.image}
                                         alt={alum.name}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        wrapperClassName="w-full h-full"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
                                     <div className="absolute bottom-0 left-0 right-0 p-5">
@@ -131,10 +133,11 @@ const NotableAlumni = () => {
                                 className={`group bg-[var(--card-bg)] backdrop-blur-xl rounded-2xl overflow-hidden shadow-sm border border-[var(--border-color)] hover:shadow-md hover:border-[var(--accent)]/30 transition-all duration-200 ${alum.profileId ? 'cursor-pointer' : ''}`}
                             >
                                 <div className="relative h-64 overflow-hidden">
-                                    <img
-                                        src={resolveMediaUrl(alum.image)}
+                                    <CachedImage
+                                        src={alum.image}
                                         alt={alum.name}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        wrapperClassName="w-full h-full"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
                                     <div className="absolute bottom-0 left-0 right-0 p-5">

@@ -9,6 +9,7 @@ import api from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import Avatar from '../components/ui/Avatar';
 import resolveMediaUrl from '../lib/media';
+import CachedImage from '../components/CachedImage';
 import { useAuth } from '../context/AuthContext';
 
 interface Alumni {
@@ -416,7 +417,7 @@ const Directory = () => {
                             {/* Card Header */}
                             <div className="h-20 bg-gradient-to-r from-[var(--accent)]/10 via-[var(--accent)]/5 to-transparent overflow-hidden rounded-t-2xl">
                                 {person.coverImage && (
-                                    <img src={resolveMediaUrl(person.coverImage)} alt="" className="w-full h-full object-cover" />
+                                    <CachedImage src={person.coverImage} alt="" className="w-full h-full object-cover" wrapperClassName="w-full h-full" compact />
                                 )}
                             </div>
 

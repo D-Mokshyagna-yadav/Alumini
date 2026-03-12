@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../lib/api';
 import resolveMediaUrl from '../lib/media';
+import CachedImage from '../components/CachedImage';
 import ImageCarousel from '../components/ImageCarousel';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -468,10 +469,12 @@ const Profile = () => {
                         {/* Cover Photo */}
                         <div className="h-[180px] sm:h-[230px] md:h-[270px] relative bg-[var(--accent)]">
                             {coverPreview || profileUser?.coverImage ? (
-                                <img
+                                <CachedImage
                                     src={coverPreview || resolveMediaUrl(profileUser?.coverImage)}
                                     alt="cover"
                                     className="w-full h-full object-cover"
+                                    wrapperClassName="w-full h-full"
+                                    priority
                                 />
                             ) : null}
                             {/* Gradient overlay for text readability */}

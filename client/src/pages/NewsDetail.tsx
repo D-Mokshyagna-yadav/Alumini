@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../lib/api';
 import resolveMediaUrl from '../lib/media';
+import CachedImage from '../components/CachedImage';
 import DOMPurify from 'dompurify';
 // using central `api` instance
 
@@ -44,7 +45,7 @@ const NewsDetail = () => {
             <h1 className="text-2xl font-semibold mb-3">{item.title}</h1>
             <p className="text-xs text-[var(--text-muted)] mb-4">{item.publishedAt ? new Date(item.publishedAt).toLocaleString() : new Date(item.createdAt).toLocaleString()}</p>
             {item.image && (
-                <img src={resolveMediaUrl(item.image)} alt="" className="w-full max-h-96 object-cover mb-4" />
+                <CachedImage src={item.image} alt="" className="w-full max-h-96 object-cover" wrapperClassName="w-full rounded-lg mb-4" priority />
             )}
             <div className="prose prose-sm text-[var(--text-primary)]">
                 {item.body ? (

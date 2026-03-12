@@ -33,6 +33,7 @@ import Notifications from './pages/Notifications';
 import Gallery from './pages/Gallery';
 import Saved from './pages/Saved';
 import Developers from './pages/Developers';
+import ForgotPassword from './pages/ForgotPassword';
 
 // Basic logging hook
 function usePageTracking() {
@@ -97,6 +98,7 @@ function App() {
       {/* Auth Pages - No Layout */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
       {/* Protected Routes - LinkedIn-style layout */}
       <Route path="/feed" element={<ProfessionalRoute><Feed /></ProfessionalRoute>} />

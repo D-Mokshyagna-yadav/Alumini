@@ -39,6 +39,7 @@ interface User {
     jobProviderPreference?: 'provider' | 'referrer' | 'not_provider';
     jobSeekerPreference?: 'active' | 'casual' | 'not_interested';
     isVerified?: boolean;
+    twoFactorEnabled?: boolean;
     // Privacy settings
     privacySettings?: {
         emailVisibility?: 'everyone' | 'connections' | 'only_me';
@@ -51,7 +52,7 @@ interface AuthContextType {
     user: User | null;
     isLoading: boolean;
     isAuthenticated: boolean;
-    login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
+    login: (email: string, password: string) => Promise<{ success: boolean; message: string; requireOtp?: boolean; require2fa?: boolean; email?: string }>;
     register: (data: RegisterData) => Promise<{ success: boolean; message: string; autoApproved?: boolean }>;
     logout: () => Promise<void>;
     checkAuth: () => Promise<void>;
@@ -123,19 +124,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const login = async (email: string, password: string) => {
         try {
             const res = await api.post('/auth/login', { email, password });
+            // 2FA required — don't set user yet
+            if (res.data.require2fa) {
+                return {
+                    success: false,
+                    message: res.data.message,
+                    require2fa: true,
+                    email: res.data.email,
+                };
+            }
             setUser(res.data.user);
             return { success: true, message: 'Login successful' };
         } catch (error: any) {
+            const data = error.response?.data;
             return {
                 success: false,
-                message: error.response?.data?.message || 'Login failed'
+                message: data?.message || 'Login failed',
+                requireOtp: data?.requireOtp,
+                require2fa: data?.require2fa,
+                email: data?.email,
             };
         }
     };
 
     const register = async (data: RegisterData) => {
         const res = await api.post('/auth/register', data);
-        return { success: true, message: res.data.message, autoApproved: res.data.autoApproved };
+        return {
+            success: true,
+            message: res.data.message,
+            autoApproved: res.data.autoApproved,
+        };
     };
 
     const logout = async () => {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../lib/api';
-import resolveMediaUrl from '../lib/media';
+import CachedImage from '../components/CachedImage';
 import { Link } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
 
@@ -89,7 +89,7 @@ const NewsList = () => {
                 {items.map(it => (
                     <div key={it._id} className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm p-3 sm:p-4 border border-[var(--border-color)]/30 rounded-xl shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
                         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                            {it.image ? <img src={resolveMediaUrl(it.image)} alt="" className="w-full sm:w-28 h-40 sm:h-20 object-cover rounded-lg" /> : <div className="hidden sm:block w-28 h-20 bg-[var(--bg-tertiary)] rounded-lg" />}
+                            {it.image ? <CachedImage src={it.image} alt="" className="w-full h-full object-cover" wrapperClassName="w-full sm:w-28 h-40 sm:h-20 rounded-lg flex-shrink-0" compact /> : <div className="hidden sm:block w-28 h-20 bg-[var(--bg-tertiary)] rounded-lg" />}
                             <div className="min-w-0">
                                 <Link to={`/news/${it._id}`} className="text-base sm:text-lg font-medium text-[var(--text-primary)] hover:underline line-clamp-2">{it.title}</Link>
                                 <p className="text-xs text-[var(--text-muted)]">{it.publishedAt ? new Date(it.publishedAt).toLocaleString() : new Date(it.createdAt).toLocaleString()} • {it.readers || 0} readers</p>

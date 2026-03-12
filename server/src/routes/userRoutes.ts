@@ -148,7 +148,7 @@ router.put('/profile', requireAuth, async (req, res) => {
         const updates = req.body;
 
         // Fields that can be updated
-        const allowedUpdates = ['headline', 'currentLocation', 'currentCompany', 'bio', 'skills', 'isMentor', 'avatar', 'coverImage', 'phone', 'linkedinUrl', 'githubUrl', 'websiteUrl', 'twitterUrl', 'instagramUrl', 'youtubeUrl', 'experiences', 'education', 'jobProviderPreference', 'jobSeekerPreference', 'privacySettings'];
+        const allowedUpdates = ['headline', 'currentLocation', 'currentCompany', 'bio', 'skills', 'isMentor', 'avatar', 'coverImage', 'phone', 'linkedinUrl', 'githubUrl', 'websiteUrl', 'twitterUrl', 'instagramUrl', 'youtubeUrl', 'experiences', 'education', 'jobProviderPreference', 'jobSeekerPreference', 'privacySettings', 'twoFactorEnabled'];
         const updateData: any = {};
 
         for (const key of allowedUpdates) {

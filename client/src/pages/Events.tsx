@@ -11,6 +11,7 @@ import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import resolveMediaUrl from '../lib/media';
+import CachedImage from '../components/CachedImage';
 import Avatar from '../components/ui/Avatar';
 
 interface Event {
@@ -572,11 +573,11 @@ const Events = () => {
                                         {/* Image */}
                                         <div className="sm:w-[200px] h-[150px] sm:h-auto flex-shrink-0 bg-[var(--bg-tertiary)] overflow-hidden">
                                             {event.image ? (
-                                                <img
-                                                    src={resolveMediaUrl(event.image)}
+                                                <CachedImage
+                                                    src={event.image}
                                                     alt={event.title}
                                                     className="w-full h-full object-cover"
-                                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                    wrapperClassName="w-full h-full"
                                                 />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center">

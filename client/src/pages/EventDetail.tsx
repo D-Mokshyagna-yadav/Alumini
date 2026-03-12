@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import resolveMediaUrl from '../lib/media';
+import CachedImage from '../components/CachedImage';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { useToast } from '../context/ToastContext';
@@ -349,7 +350,7 @@ const EventDetail = () => {
             {/* Hero Banner */}
             <div className="relative w-full bg-black overflow-hidden flex justify-center">
                 {event.bannerImage ? (
-                    <img src={resolveMediaUrl(event.bannerImage)} alt={event.title} className="w-full lg:w-[70%] h-[250px] sm:h-[350px] md:h-[450px] lg:h-[500px] object-cover" />
+                    <CachedImage src={event.bannerImage} alt={event.title} className="w-full h-full object-cover" wrapperClassName="w-full lg:w-[70%] h-[250px] sm:h-[350px] md:h-[450px] lg:h-[500px]" priority />
                 ) : (
                     <div className="w-full h-64 md:h-80 lg:h-96 bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-secondary)] flex items-center justify-center">
                         <Calendar className="text-[var(--text-muted)]" size={64} />

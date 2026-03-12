@@ -11,24 +11,42 @@ interface ImageCarouselProps {
     normalizeMediaUrl: (url: string) => string;
 }
 
-/** Optimized image with fade-in on load */
+/** In-memory set shared with CachedImage for instant re-renders */
+const loadedCache = new Set<string>();
+
+/** Optimized image with fade-in on load + shared cache */
 function OptimizedImage({ src, alt, className, draggable, priority }: { src: string; alt: string; className: string; draggable?: boolean; priority?: boolean }) {
-    const [loaded, setLoaded] = useState(false);
+    const alreadyCached = loadedCache.has(src);
+    const [loaded, setLoaded] = useState(alreadyCached);
+    const [errored, setErrored] = useState(false);
     const imgRef = useRef<HTMLImageElement>(null);
 
     useEffect(() => {
-        // If image is already cached, mark loaded immediately
         if (imgRef.current?.complete && imgRef.current?.naturalWidth > 0) {
+            loadedCache.add(src);
             setLoaded(true);
         }
     }, [src]);
+
+    useEffect(() => {
+        const cached = loadedCache.has(src);
+        setLoaded(cached);
+        setErrored(false);
+    }, [src]);
+
+    if (errored) {
+        return (
+            <div className="relative w-full max-h-[480px] bg-[var(--bg-tertiary)] flex items-center justify-center py-12">
+                <ImageIcon size={32} className="text-[var(--text-muted)]/30" />
+            </div>
+        );
+    }
 
     return (
         <div className="relative w-full max-h-[480px] bg-[var(--bg-tertiary)]">
             {!loaded && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-hidden">
-                    {/* Skeleton shimmer */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--bg-secondary)]/40 to-transparent animate-[shimmer_1.5s_infinite] -translate-x-full" style={{ animationName: 'shimmer' }} />
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--bg-secondary)]/40 to-transparent animate-[shimmer_1.5s_infinite]" />
                     <ImageIcon size={32} className="text-[var(--text-muted)]/30" />
                     <div className="flex items-center gap-2">
                         <div className="w-4 h-4 border-2 border-[var(--text-muted)]/20 border-t-[var(--text-muted)]/60 rounded-full animate-spin" />
@@ -45,8 +63,8 @@ function OptimizedImage({ src, alt, className, draggable, priority }: { src: str
                 decoding="async"
                 fetchPriority={priority ? 'high' : 'low'}
                 draggable={draggable}
-                onLoad={() => setLoaded(true)}
-                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                onLoad={() => { loadedCache.add(src); setLoaded(true); }}
+                onError={() => setErrored(true)}
             />
         </div>
     );

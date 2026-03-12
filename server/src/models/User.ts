@@ -68,6 +68,8 @@ export interface IUser extends Document {
     youtubeUrl?: string;
 
     isVerified: boolean;
+    emailVerified: boolean;
+    twoFactorEnabled: boolean;
     // Job portal preferences
     jobProviderPreference?: 'provider' | 'referrer' | 'not_provider';
     jobSeekerPreference?: 'active' | 'casual' | 'not_interested';
@@ -160,6 +162,8 @@ const userSchema = new Schema<IUser>({
     savedPosts: [{ type: Schema.Types.ObjectId, ref: 'Post' }],
 
     isVerified: { type: Boolean, default: false },
+    emailVerified: { type: Boolean, default: false },
+    twoFactorEnabled: { type: Boolean, default: false },
 
     profileViewers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 

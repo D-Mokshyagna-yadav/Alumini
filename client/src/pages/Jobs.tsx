@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
 import resolveMediaUrl from '../lib/media';
+import CachedImage from '../components/CachedImage';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -812,7 +813,7 @@ const Jobs = () => {
                             <div className="flex gap-3">
                                 <div className="w-14 h-14 sm:w-20 sm:h-20 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                                     {job.image ? (
-                                        <img src={resolveMediaUrl(job.image)} alt={job.company} className="w-full h-full object-cover" />
+                                        <CachedImage src={job.image} alt={job.company} className="w-full h-full object-cover" wrapperClassName="w-full h-full" compact />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center bg-[var(--accent)] text-[var(--bg-primary)] font-semibold text-lg">
                                             {job.company ? job.company.split(' ').map(s => s[0]).slice(0,2).join('') : <Building2 size={28} className="text-[var(--bg-primary)]" />}

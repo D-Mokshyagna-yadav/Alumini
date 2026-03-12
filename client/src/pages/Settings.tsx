@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Lock, Bell, ChevronRight, Moon, Sun, User, Briefcase, Search, ShieldCheck, Eye } from 'lucide-react';
+import { Lock, Bell, ChevronRight, Moon, Sun, User, Briefcase, Search, ShieldCheck, Eye, Shield } from 'lucide-react';
 import Avatar from '../components/ui/Avatar';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -23,6 +23,8 @@ const Settings = () => {
     const [phoneVisibility, setPhoneVisibility] = useState(user?.privacySettings?.phoneVisibility || 'connections');
     const [connectionsVisibility, setConnectionsVisibility] = useState(user?.privacySettings?.connectionsVisibility || 'everyone');
     const [savingPrivacy, setSavingPrivacy] = useState(false);
+    const [twoFactorEnabled, setTwoFactorEnabled] = useState(user?.twoFactorEnabled || false);
+    const [saving2fa, setSaving2fa] = useState(false);
 
     const tabs = [
         { id: 'account', label: 'Account preferences', icon: User },
@@ -425,6 +427,65 @@ const Settings = () => {
                                     >
                                         {savingPrivacy ? 'Saving...' : 'Save Privacy Settings'}
                                     </button>
+                                </div>
+                            </SettingsSection>
+
+                            <SettingsSection title="Two-Step Verification">
+                                <div className="p-5 space-y-4">
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-[var(--accent)]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <Shield size={20} className="text-[var(--accent)]" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-1">Protect your account with 2-step verification</h4>
+                                            <p className="text-xs text-[var(--text-muted)] mb-3">
+                                                When enabled, you'll need to enter a verification code sent to your email each time you sign in. This adds an extra layer of security to your account.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between p-4 rounded-xl border border-[var(--border-color)]/30 bg-[var(--bg-tertiary)]/40">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-2 h-2 rounded-full ${twoFactorEnabled ? 'bg-green-500' : 'bg-[var(--text-muted)]'}`} />
+                                            <span className="text-sm font-medium text-[var(--text-primary)]">
+                                                {twoFactorEnabled ? 'Enabled' : 'Disabled'}
+                                            </span>
+                                        </div>
+                                        <button
+                                            onClick={async () => {
+                                                setSaving2fa(true);
+                                                try {
+                                                    const newVal = !twoFactorEnabled;
+                                                    await api.put('/users/profile', { twoFactorEnabled: newVal });
+                                                    setTwoFactorEnabled(newVal);
+                                                    await checkAuth();
+                                                    toast.show(
+                                                        newVal ? 'Two-step verification enabled' : 'Two-step verification disabled',
+                                                        'success'
+                                                    );
+                                                } catch {
+                                                    toast.show('Failed to update two-step verification', 'error');
+                                                } finally {
+                                                    setSaving2fa(false);
+                                                }
+                                            }}
+                                            disabled={saving2fa}
+                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 disabled:opacity-50 ${
+                                                twoFactorEnabled ? 'bg-[var(--accent)]' : 'bg-[var(--border-color)]'
+                                            }`}
+                                        >
+                                            <span
+                                                className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
+                                                    twoFactorEnabled ? 'translate-x-6' : 'translate-x-1'
+                                                }`}
+                                            />
+                                        </button>
+                                    </div>
+                                    {twoFactorEnabled && (
+                                        <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1.5">
+                                            <ShieldCheck size={14} />
+                                            Your account is protected with two-step verification
+                                        </p>
+                                    )}
                                 </div>
                             </SettingsSection>
                         </div>

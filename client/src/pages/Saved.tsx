@@ -10,6 +10,7 @@ import {
 import { useToast } from '../context/ToastContext';
 import { useConfirm } from '../context/ConfirmContext';
 import resolveMediaUrl from '../lib/media';
+import CachedImage from '../components/CachedImage';
 import Avatar from '../components/ui/Avatar';
 import ImageCarousel from '../components/ImageCarousel';
 import api from '../lib/api';
@@ -321,7 +322,7 @@ const Saved = () => {
                                     >
                                         <div className="w-12 h-12 bg-[var(--bg-tertiary)] overflow-hidden">
                                             {collection.coverImage ? (
-                                                <img src={normalizeMediaUrl(collection.coverImage)} alt="" className="w-full h-full object-cover" />
+                                                <CachedImage src={normalizeMediaUrl(collection.coverImage)} alt="" className="w-full h-full object-cover" wrapperClassName="w-full h-full" compact />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center">
                                                     <FolderPlus size={20} className="text-[var(--text-muted)]" />
@@ -443,7 +444,7 @@ const Saved = () => {
                                     >
                                         {post.media && post.media.length > 0 ? (
                                             post.media[0].type === 'image' ? (
-                                                <img src={normalizeMediaUrl(post.media[0].url)} alt="" className="w-full h-full object-cover" />
+                                                <CachedImage src={normalizeMediaUrl(post.media[0].url)} alt="" className="w-full h-full object-cover" wrapperClassName="w-full h-full" compact />
                                             ) : (
                                                 <video src={normalizeMediaUrl(post.media[0].url)} className="w-full h-full object-cover" />
                                             )
@@ -689,7 +690,7 @@ const Saved = () => {
                                     >
                                         <div className="w-11 h-11 bg-[var(--bg-tertiary)] overflow-hidden">
                                             {collection.coverImage ? (
-                                                <img src={normalizeMediaUrl(collection.coverImage)} alt="" className="w-full h-full object-cover" />
+                                                <CachedImage src={normalizeMediaUrl(collection.coverImage)} alt="" className="w-full h-full object-cover" wrapperClassName="w-full h-full" compact />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center">
                                                     {collection.isDefault ? <Bookmark size={18} className="text-[var(--accent)]" /> : <FolderPlus size={18} className="text-[var(--text-muted)]" />}

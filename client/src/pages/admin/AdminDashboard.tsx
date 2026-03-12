@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, Clock, Users, UserCheck, UserX, Search, ChevronDown, ChevronUp, Eye, EyeOff, Plus, Edit2, Trash2, X, Lock, FileText, Briefcase, Calendar, Shield, ShieldOff, Image as ImageIcon, Upload, FolderPlus, ThumbsUp, MessageCircle, MapPin, Phone, Mail, GraduationCap, Building2, BadgeCheck, Heart, ToggleLeft, ToggleRight, Newspaper, Star, Landmark } from 'lucide-react';
 import { resolveMediaUrl } from '../../lib/media';
+import CachedImage from '../../components/CachedImage';
 import ImageCarousel from '../../components/ImageCarousel';
 import { useConfirm } from '../../context/ConfirmContext';
 import { Button } from '../../components/ui/Button';
@@ -1181,7 +1182,7 @@ const AdminDashboard = () => {
     };
 
     const handleDeleteCompany = async (idx: number) => {
-        const ok = await confirm({ title: 'Remove Company', message: `Remove "${companies[idx]}" from the list?`, confirmText: 'Remove', variant: 'danger' });
+        const ok = await confirm({ title: 'Remove Company', message: `Remove "${companies[idx]}" from the list?`, confirmText: 'Remove', danger: true });
         if (!ok) return;
         const updated = companies.filter((_, i) => i !== idx);
         handleSaveCompanies(updated);
@@ -1532,7 +1533,7 @@ const AdminDashboard = () => {
                                             <div className="flex items-center gap-4 flex-1 min-w-0">
                                                 <div className="w-16 h-16 bg-[var(--bg-tertiary)] flex items-center justify-center flex-shrink-0 overflow-hidden">
                                                     {album.coverImage || album.images?.[0]?.url ? (
-                                                        <img src={resolveMediaUrl(album.coverImage || album.images[0].url)} alt={album.title} className="w-full h-full object-cover" />
+                                                        <CachedImage src={album.coverImage || album.images[0].url} alt={album.title} className="w-full h-full object-cover" wrapperClassName="w-full h-full" compact />
                                                     ) : (
                                                         <ImageIcon size={24} className="text-[var(--text-muted)]" />
                                                     )}
@@ -1568,7 +1569,7 @@ const AdminDashboard = () => {
                                                                 <span className="text-xs text-[var(--text-muted)]">VID</span>
                                                             </div>
                                                         ) : (
-                                                            <img src={resolveMediaUrl(media.url)} alt="" className="w-full h-full object-cover" />
+                                                            <CachedImage src={media.url} alt="" className="w-full h-full object-cover" wrapperClassName="w-full h-full" compact />
                                                         )}
                                                         <button
                                                             onClick={() => handleDeleteMedia(album.id, media.id)}
@@ -1602,7 +1603,7 @@ const AdminDashboard = () => {
                                         <div className="flex items-start justify-between gap-4">
                                             <div className="flex items-start gap-3 flex-1 min-w-0">
                                                 {item.image && (
-                                                    <img src={resolveMediaUrl(item.image)} alt="" className="w-16 h-16 object-cover rounded-lg flex-shrink-0" />
+                                                    <CachedImage src={item.image} alt="" className="w-16 h-16 object-cover rounded-lg flex-shrink-0" wrapperClassName="w-16 h-16 flex-shrink-0" compact />
                                                 )}
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2 flex-wrap">
@@ -1656,7 +1657,7 @@ const AdminDashboard = () => {
                                         <div className="flex items-start justify-between gap-4">
                                             <div className="flex items-start gap-3 flex-1 min-w-0">
                                                 {item.image && (
-                                                    <img src={resolveMediaUrl(item.image)} alt={item.name} className="w-16 h-16 object-cover rounded-lg flex-shrink-0" />
+                                                    <CachedImage src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg flex-shrink-0" wrapperClassName="w-16 h-16 flex-shrink-0" compact />
                                                 )}
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-semibold text-[var(--text-primary)]">{item.name}</p>
@@ -2683,7 +2684,7 @@ const UserModal = ({ mode, form, viewData, onChange, onClose, onSubmit, onApprov
                             <div className="relative">
                                 {u.coverImage ? (
                                     <div className="h-32 w-full overflow-hidden bg-[var(--bg-tertiary)]">
-                                        <img src={resolveMediaUrl(u.coverImage)} alt="" className="w-full h-full object-cover" />
+                                        <CachedImage src={u.coverImage} alt="" className="w-full h-full object-cover" wrapperClassName="w-full h-full" />
                                     </div>
                                 ) : (
                                     <div className="h-24 w-full bg-gradient-to-r from-[var(--bg-tertiary)] to-[var(--bg-secondary)]" />
