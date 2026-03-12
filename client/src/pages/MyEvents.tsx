@@ -105,12 +105,24 @@ const MyEvents = () => {
     };
 
     if (loading) return (
-        <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-            <div className="relative">
-                <div className="w-12 h-12 rounded-full border-[3px] border-[var(--bg-tertiary)]" />
-                <div className="absolute inset-0 w-12 h-12 rounded-full border-[3px] border-t-[var(--accent)] animate-spin" />
+        <div className="max-w-4xl mx-auto px-4 py-6">
+            <div className="h-7 w-32 rounded bg-[var(--bg-tertiary)] animate-pulse mb-4" />
+            <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-2xl overflow-hidden">
+                        <div className="relative h-40 bg-[var(--bg-tertiary)] overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--bg-secondary)]/40 to-transparent animate-[shimmer_1.5s_infinite]" />
+                        </div>
+                        <div className="p-4 space-y-2">
+                            <div className="h-5 w-2/3 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            <div className="flex gap-3">
+                                <div className="h-3 w-20 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                <div className="h-3 w-24 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
-            <p className="text-[var(--text-muted)] text-sm">Loading your events...</p>
         </div>
     );
 

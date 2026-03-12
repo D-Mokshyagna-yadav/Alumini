@@ -219,12 +219,31 @@ const Gallery = () => {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-                <div className="relative">
-                    <div className="w-12 h-12 rounded-full border-[3px] border-[var(--bg-tertiary)]" />
-                    <div className="absolute inset-0 w-12 h-12 rounded-full border-[3px] border-t-[var(--accent)] animate-spin" />
+            <div className="max-w-[1400px] mx-auto px-4 py-8">
+                {/* Header skeleton */}
+                <div className="bg-[var(--bg-primary)]/80 backdrop-blur-2xl border border-[var(--border-color)]/30 p-6 mb-8 shadow-md shadow-black/5">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="space-y-2">
+                            <div className="h-6 w-40 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            <div className="h-3 w-24 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                        </div>
+                        <div className="h-10 w-32 rounded-xl bg-[var(--bg-tertiary)] animate-pulse" />
+                    </div>
                 </div>
-                <p className="text-[var(--text-muted)] text-sm">Loading gallery...</p>
+                {/* Album grid skeleton */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                        <div key={i} className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl overflow-hidden">
+                            <div className="relative aspect-[4/3] bg-[var(--bg-tertiary)] overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--bg-secondary)]/40 to-transparent animate-[shimmer_1.5s_infinite]" />
+                            </div>
+                            <div className="p-4 space-y-2">
+                                <div className="h-4 w-3/4 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                <div className="h-3 w-1/2 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         );
     }

@@ -136,6 +136,39 @@ const Notifications = () => {
         }
     };
 
+    if (loading) {
+        return (
+            <div className="max-w-[1128px] mx-auto px-4 py-6">
+                <div className="max-w-[600px] mx-auto">
+                    {/* Header skeleton */}
+                    <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-4 mb-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="h-6 w-32 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            <div className="h-8 w-8 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                        </div>
+                        <div className="flex gap-2">
+                            <div className="h-9 w-16 rounded-lg bg-[var(--bg-tertiary)] animate-pulse" />
+                            <div className="h-9 w-24 rounded-lg bg-[var(--bg-tertiary)] animate-pulse" />
+                        </div>
+                    </div>
+                    {/* Notification items skeleton */}
+                    <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl overflow-hidden">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <div key={i} className={`flex items-start gap-3 p-4 ${i > 0 ? 'border-t border-[var(--border-color)]/20' : ''}`}>
+                                <div className="w-10 h-10 rounded-full bg-[var(--bg-tertiary)] animate-pulse flex-shrink-0" />
+                                <div className="flex-1 space-y-2">
+                                    <div className="h-3.5 w-3/4 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                    <div className="h-2.5 w-1/2 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                </div>
+                                <div className="h-2.5 w-8 rounded bg-[var(--bg-tertiary)] animate-pulse flex-shrink-0" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="max-w-[1128px] mx-auto px-4 py-6">
             <div className="max-w-[600px] mx-auto">

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import { GraduationCap, Eye, EyeOff, ArrowRight, AlertCircle, Check, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, AlertCircle, Check, ArrowLeft } from 'lucide-react';
 import { CountryStateSelector, formatLocation } from '../components/ui/CountryStateSelector';
 
 const industries = [
@@ -134,9 +134,7 @@ const Register = () => {
         <div className="min-h-screen bg-transparent flex flex-col">
             <header className="py-4 px-6">
                 <Link to="/" className="flex items-center gap-2">
-                    <div className="w-10 h-10 bg-[var(--accent)] rounded-xl flex items-center justify-center">
-                        <GraduationCap size={22} className="text-[var(--bg-primary)]" />
-                    </div>
+                    <img src="/logo-small.png" alt="Logo" className="w-10 h-10 rounded-xl object-contain" />
                     <span className="text-xl font-bold text-[var(--text-primary)]">MIC College of Technology</span>
                 </Link>
             </header>

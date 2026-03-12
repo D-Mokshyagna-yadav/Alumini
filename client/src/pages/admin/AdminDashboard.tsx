@@ -66,7 +66,7 @@ const emptyUserForm = {
     bio: ''
 };
 
-type TabKey = 'pending' | 'registered' | 'posts' | 'jobs' | 'events' | 'gallery' | 'news' | 'notable-alumni' | 'administration';
+type TabKey = 'pending' | 'registered' | 'posts' | 'jobs' | 'events' | 'gallery' | 'news' | 'notable-alumni' | 'administration' | 'companies';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState<TabKey>('pending');
@@ -146,6 +146,15 @@ const AdminDashboard = () => {
     const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
     const [adminMemberForm, setAdminMemberForm] = useState({ name: '', designation: '', category: 'governing' as 'governing' | 'officials', order: 0 });
 
+    // Alumni Work At (Companies)
+    const DEFAULT_COMPANIES = ['Microsoft','Google','Amazon','TCS','Infosys','Wipro','Capgemini','Cognizant','Accenture','HCL Tech','Oracle','IBM'];
+    const [companies, setCompanies] = useState<string[]>(DEFAULT_COMPANIES);
+    const [homeData, setHomeData] = useState<any>(null);
+    const [newCompany, setNewCompany] = useState('');
+    const [editingCompanyIdx, setEditingCompanyIdx] = useState<number | null>(null);
+    const [editCompanyValue, setEditCompanyValue] = useState('');
+    const [companiesSaving, setCompaniesSaving] = useState(false);
+
     // Post preview
     const [previewPost, setPreviewPost] = useState<any | null>(null);
     const [previewPostLoading, setPreviewPostLoading] = useState(false);
@@ -187,7 +196,7 @@ const AdminDashboard = () => {
 
     const fetchData = async () => {
         try {
-            const [pendingRes, registeredRes, analyticsRes, postsRes, jobsRes, eventsRes, galleryRes, settingsRes, newsRes, notableRes, adminMembersRes] = await Promise.all([
+            const [pendingRes, registeredRes, analyticsRes, postsRes, jobsRes, eventsRes, galleryRes, settingsRes, newsRes, notableRes, adminMembersRes, homeContentRes] = await Promise.all([
                 api.get('/admin/pending-users'),
                 api.get('/admin/all-users?status=active'),
                 api.get('/admin/analytics-full').catch(() => api.get('/admin/analytics').then(r => ({ data: { ...r.data, totalPosts: 0, totalJobs: 0, totalEvents: 0, pendingEvents: 0 } }))),
@@ -199,6 +208,7 @@ const AdminDashboard = () => {
                 api.get('/public/news').catch(() => ({ data: { news: [] } })),
                 api.get('/admin/notable-alumni').catch(() => ({ data: { alumni: [] } })),
                 api.get('/admin/administration').catch(() => ({ data: { members: [] } })),
+                api.get('/public/home').catch(() => ({ data: { home: {} } })),
             ]);
             setPendingUsers(pendingRes.data.users);
             setRegisteredUsers(registeredRes.data.users);
@@ -221,6 +231,12 @@ const AdminDashboard = () => {
                 setAutoApproveUsers(settingsRes.data.settings.autoApproveUsers);
                 setAutoApprovePosts(settingsRes.data.settings.autoApprovePosts);
                 setAutoApproveJobs(settingsRes.data.settings.autoApproveJobs ?? false);
+            }
+            // Companies from home content
+            const hData = homeContentRes.data.home || {};
+            setHomeData(hData);
+            if (Array.isArray(hData.companies) && hData.companies.length > 0) {
+                setCompanies(hData.companies);
             }
         } catch (error) {
             console.error('Failed to fetch admin data:', error);
@@ -1103,15 +1119,90 @@ const AdminDashboard = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[var(--bg-primary)]">
-                <div className="relative">
-                    <div className="w-12 h-12 rounded-full border-[3px] border-[var(--bg-tertiary)]" />
-                    <div className="absolute inset-0 w-12 h-12 rounded-full border-[3px] border-t-[var(--accent)] animate-spin" />
+            <div className="min-h-screen bg-transparent py-8">
+                <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+                    {/* Header skeleton */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+                        <div className="h-8 w-48 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                        <div className="h-9 w-28 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                    </div>
+                    {/* Tabs skeleton */}
+                    <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+                        {Array.from({ length: 7 }).map((_, i) => (
+                            <div key={i} className="h-10 w-28 rounded-xl bg-[var(--bg-tertiary)] animate-pulse flex-shrink-0" />
+                        ))}
+                    </div>
+                    {/* Table skeleton */}
+                    <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-2xl overflow-hidden">
+                        <div className="p-4 border-b border-[var(--border-color)]/30 flex gap-4">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <div key={i} className="h-3.5 w-24 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            ))}
+                        </div>
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <div key={i} className={`p-4 flex items-center gap-4 ${i > 0 ? 'border-t border-[var(--border-color)]/20' : ''}`}>
+                                <div className="w-10 h-10 rounded-full bg-[var(--bg-tertiary)] animate-pulse flex-shrink-0" />
+                                <div className="flex-1 space-y-1.5">
+                                    <div className="h-3.5 w-36 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                    <div className="h-2.5 w-48 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                </div>
+                                <div className="h-8 w-20 rounded-lg bg-[var(--bg-tertiary)] animate-pulse" />
+                            </div>
+                        ))}
+                    </div>
                 </div>
-                <p className="text-[var(--text-muted)] text-sm">Loading dashboard...</p>
             </div>
         );
     }
+
+    // ==================== COMPANIES (Alumni Work At) ====================
+    const handleSaveCompanies = async (updatedCompanies: string[]) => {
+        setCompaniesSaving(true);
+        try {
+            const mergedData = { ...homeData, companies: updatedCompanies };
+            await api.put('/public/content/home', { data: mergedData });
+            setHomeData(mergedData);
+            setCompanies(updatedCompanies);
+            setToast('Companies updated successfully');
+        } catch {
+            setToast('Failed to save companies');
+        } finally {
+            setCompaniesSaving(false);
+        }
+    };
+
+    const handleAddCompany = () => {
+        const name = newCompany.trim();
+        if (!name) return;
+        if (companies.includes(name)) { setToast('Company already exists'); return; }
+        const updated = [...companies, name];
+        setNewCompany('');
+        handleSaveCompanies(updated);
+    };
+
+    const handleDeleteCompany = async (idx: number) => {
+        const ok = await confirm({ title: 'Remove Company', message: `Remove "${companies[idx]}" from the list?`, confirmText: 'Remove', variant: 'danger' });
+        if (!ok) return;
+        const updated = companies.filter((_, i) => i !== idx);
+        handleSaveCompanies(updated);
+    };
+
+    const handleEditCompanySave = (idx: number) => {
+        const name = editCompanyValue.trim();
+        if (!name) return;
+        if (companies.some((c, i) => c === name && i !== idx)) { setToast('Company already exists'); return; }
+        const updated = companies.map((c, i) => i === idx ? name : c);
+        setEditingCompanyIdx(null);
+        handleSaveCompanies(updated);
+    };
+
+    const handleMoveCompany = (idx: number, dir: 'up' | 'down') => {
+        const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
+        if (swapIdx < 0 || swapIdx >= companies.length) return;
+        const updated = [...companies];
+        [updated[idx], updated[swapIdx]] = [updated[swapIdx], updated[idx]];
+        handleSaveCompanies(updated);
+    };
 
     const tabs: { key: TabKey; label: string; count: number; icon: any }[] = [
         { key: 'pending', label: 'Pending Users', count: pendingUsers.length, icon: Clock },
@@ -1123,6 +1214,7 @@ const AdminDashboard = () => {
         { key: 'news', label: 'News', count: allNews.length, icon: Newspaper },
         { key: 'notable-alumni', label: 'Notable Alumni', count: allNotableAlumni.length, icon: Star },
         { key: 'administration', label: 'Administration', count: allAdminMembers.length, icon: Landmark },
+        { key: 'companies', label: 'Alumni Work At', count: companies.length, icon: Building2 },
     ];
 
     return (
@@ -1652,6 +1744,74 @@ const AdminDashboard = () => {
                                     )}
                                 </>
                             )}
+                        </div>
+                    )}
+
+                    {/* =============== COMPANIES (ALUMNI WORK AT) TAB =============== */}
+                    {activeTab === 'companies' && (
+                        <div className="p-4 space-y-4">
+                            {/* Add company */}
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={newCompany}
+                                    onChange={e => setNewCompany(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && handleAddCompany()}
+                                    placeholder="Add a company name..."
+                                    className="flex-1 px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40"
+                                />
+                                <Button onClick={handleAddCompany} disabled={!newCompany.trim() || companiesSaving}>
+                                    <Plus size={16} className="mr-1" /> Add
+                                </Button>
+                            </div>
+
+                            {companies.length === 0 ? (
+                                <EmptyState icon={Building2} text="No companies added yet" />
+                            ) : (
+                                <div className="space-y-1">
+                                    {companies.map((company, idx) => (
+                                        <div key={idx} className="flex items-center justify-between gap-3 p-3 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors group">
+                                            {editingCompanyIdx === idx ? (
+                                                <div className="flex-1 flex items-center gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={editCompanyValue}
+                                                        onChange={e => setEditCompanyValue(e.target.value)}
+                                                        onKeyDown={e => { if (e.key === 'Enter') handleEditCompanySave(idx); if (e.key === 'Escape') setEditingCompanyIdx(null); }}
+                                                        className="flex-1 px-3 py-1.5 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40"
+                                                        autoFocus
+                                                    />
+                                                    <Button size="sm" onClick={() => handleEditCompanySave(idx)}><CheckCircle size={14} /></Button>
+                                                    <Button size="sm" variant="outline" onClick={() => setEditingCompanyIdx(null)}><X size={14} /></Button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                        <span className="text-xs text-[var(--text-muted)] w-6 text-right">#{idx + 1}</span>
+                                                        <Building2 size={16} className="text-[var(--accent)] flex-shrink-0" />
+                                                        <span className="font-medium text-[var(--text-primary)] truncate">{company}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                                        <Button size="sm" variant="outline" onClick={() => handleMoveCompany(idx, 'up')} disabled={idx === 0 || companiesSaving}>
+                                                            <ChevronUp size={14} />
+                                                        </Button>
+                                                        <Button size="sm" variant="outline" onClick={() => handleMoveCompany(idx, 'down')} disabled={idx === companies.length - 1 || companiesSaving}>
+                                                            <ChevronDown size={14} />
+                                                        </Button>
+                                                        <Button size="sm" variant="outline" onClick={() => { setEditingCompanyIdx(idx); setEditCompanyValue(company); }}>
+                                                            <Edit2 size={14} />
+                                                        </Button>
+                                                        <Button size="sm" variant="destructive" onClick={() => handleDeleteCompany(idx)} disabled={companiesSaving}>
+                                                            <Trash2 size={14} />
+                                                        </Button>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {companiesSaving && <p className="text-sm text-[var(--text-muted)] text-center">Saving...</p>}
                         </div>
                     )}
 
@@ -2503,8 +2663,17 @@ const UserModal = ({ mode, form, viewData, onChange, onClose, onSubmit, onApprov
                 </div>
 
                 {loading ? (
-                    <div className="p-12 text-center">
-                        <div className="animate-spin h-8 w-8 rounded-full border-[3px] border-[var(--bg-tertiary)] border-t-[var(--accent)] mx-auto"></div>
+                    <div className="p-6 space-y-4">
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-full bg-[var(--bg-tertiary)] animate-pulse" />
+                            <div className="space-y-2">
+                                <div className="h-4 w-32 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                <div className="h-3 w-48 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            </div>
+                        </div>
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="h-10 w-full rounded-lg bg-[var(--bg-tertiary)] animate-pulse" />
+                        ))}
                     </div>
                 ) : isView && u ? (
                     /* ============ READ-ONLY DETAIL VIEW ============ */

@@ -220,12 +220,55 @@ const Saved = () => {
 
     if (loading && posts.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-                <div className="relative">
-                    <div className="w-12 h-12 rounded-full border-[3px] border-[var(--bg-tertiary)]" />
-                    <div className="absolute inset-0 w-12 h-12 rounded-full border-[3px] border-t-[var(--accent)] animate-spin" />
+            <div className="max-w-[1200px] mx-auto px-4 py-6">
+                <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+                    {/* Sidebar skeleton */}
+                    <aside className="lg:sticky lg:top-[76px] lg:h-fit">
+                        <div className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 rounded-2xl overflow-hidden shadow-md shadow-black/5">
+                            <div className="p-5 border-b border-[var(--border-color)]/50">
+                                <div className="h-5 w-28 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            </div>
+                            <div className="p-3 space-y-2">
+                                {Array.from({ length: 3 }).map((_, i) => (
+                                    <div key={i} className="flex items-center gap-3 p-3">
+                                        <div className="w-12 h-12 rounded bg-[var(--bg-tertiary)] animate-pulse flex-shrink-0" />
+                                        <div className="flex-1 space-y-1.5">
+                                            <div className="h-3 w-20 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                            <div className="h-2.5 w-12 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </aside>
+                    {/* Posts skeleton */}
+                    <div className="space-y-4">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                            <div key={i} className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 rounded-2xl overflow-hidden">
+                                <div className="p-4 flex items-start gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-[var(--bg-tertiary)] animate-pulse flex-shrink-0" />
+                                    <div className="flex-1 space-y-2">
+                                        <div className="h-3.5 w-28 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                        <div className="h-2.5 w-20 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                    </div>
+                                </div>
+                                <div className="px-4 pb-3 space-y-2">
+                                    <div className="h-3 w-full rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                    <div className="h-3 w-2/3 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                </div>
+                                {i % 2 === 0 && (
+                                    <div className="relative w-full h-52 bg-[var(--bg-tertiary)] overflow-hidden">
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--bg-secondary)]/40 to-transparent animate-[shimmer_1.5s_infinite]" />
+                                    </div>
+                                )}
+                                <div className="px-4 py-3 flex items-center gap-4">
+                                    <div className="h-3 w-12 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                    <div className="h-3 w-16 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
-                <p className="text-[var(--text-muted)] text-sm">Loading saved posts...</p>
             </div>
         );
     }

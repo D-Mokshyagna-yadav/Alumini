@@ -246,12 +246,57 @@ const Events = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-                <div className="relative">
-                    <div className="w-12 h-12 rounded-full border-[3px] border-[var(--bg-tertiary)]" />
-                    <div className="absolute inset-0 w-12 h-12 rounded-full border-[3px] border-t-[var(--accent)] animate-spin" />
+            <div className="max-w-[1400px] mx-auto px-3 sm:px-4 py-4 sm:py-6">
+                {/* Mobile filter skeleton */}
+                <div className="lg:hidden mb-4">
+                    <div className="flex gap-2 pb-2">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                            <div key={i} className="h-8 w-24 rounded bg-[var(--bg-tertiary)] animate-pulse flex-shrink-0" />
+                        ))}
+                    </div>
                 </div>
-                <p className="text-[var(--text-muted)] text-sm">Loading events...</p>
+                <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr_320px] gap-4 sm:gap-6">
+                    {/* Left sidebar skeleton */}
+                    <aside className="hidden lg:block">
+                        <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-2xl shadow-sm p-4 space-y-2">
+                            <div className="h-4 w-32 rounded bg-[var(--bg-tertiary)] animate-pulse mb-3" />
+                            {Array.from({ length: 3 }).map((_, i) => (
+                                <div key={i} className="h-11 w-full rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            ))}
+                        </div>
+                    </aside>
+                    {/* Center event cards skeleton */}
+                    <div className="space-y-4">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                            <div key={i} className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-2xl overflow-hidden">
+                                <div className="relative h-44 bg-[var(--bg-tertiary)] overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--bg-secondary)]/40 to-transparent animate-[shimmer_1.5s_infinite]" />
+                                </div>
+                                <div className="p-4 space-y-3">
+                                    <div className="h-5 w-3/4 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                    <div className="flex gap-3">
+                                        <div className="h-3 w-20 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                        <div className="h-3 w-24 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                    </div>
+                                    <div className="h-3 w-full rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                    <div className="h-3 w-2/3 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    {/* Right sidebar skeleton */}
+                    <aside className="hidden lg:block">
+                        <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-2xl shadow-sm p-4 space-y-3">
+                            <div className="h-4 w-28 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            {Array.from({ length: 2 }).map((_, i) => (
+                                <div key={i} className="p-3 border border-[var(--border-color)]/20 rounded-xl space-y-2">
+                                    <div className="h-3.5 w-40 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                    <div className="h-2.5 w-24 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                </div>
+                            ))}
+                        </div>
+                    </aside>
+                </div>
             </div>
         );
     }

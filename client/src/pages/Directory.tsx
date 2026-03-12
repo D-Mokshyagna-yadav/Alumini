@@ -237,8 +237,43 @@ const Directory = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
+            <div className="max-w-[1400px] mx-auto px-3 sm:px-4 py-4 sm:py-6">
+                {/* Tab switcher skeleton */}
+                <div className="flex gap-1 mb-5 bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-1.5">
+                    <div className="flex-1 h-10 rounded-xl bg-[var(--bg-tertiary)] animate-pulse" />
+                    <div className="flex-1 h-10 rounded-xl bg-[var(--bg-tertiary)] animate-pulse" />
+                </div>
+                {/* Search bar skeleton */}
+                <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-4 sm:p-5 mb-5">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="flex-1 h-10 rounded-xl bg-[var(--bg-tertiary)] animate-pulse" />
+                        <div className="flex gap-2">
+                            <div className="w-28 h-10 rounded-xl bg-[var(--bg-tertiary)] animate-pulse" />
+                            <div className="w-32 h-10 rounded-xl bg-[var(--bg-tertiary)] animate-pulse" />
+                        </div>
+                    </div>
+                    <div className="h-3 w-24 rounded bg-[var(--bg-tertiary)] animate-pulse mt-3" />
+                </div>
+                {/* Alumni cards grid skeleton */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl overflow-hidden">
+                            <div className="h-20 bg-[var(--bg-tertiary)] animate-pulse" />
+                            <div className="px-5 pb-5 -mt-8">
+                                <div className="w-16 h-16 rounded-full bg-[var(--bg-tertiary)] border-[3px] border-[var(--bg-secondary)] animate-pulse mb-3" />
+                                <div className="space-y-2 mb-4">
+                                    <div className="h-4 w-32 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                    <div className="h-3 w-48 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                    <div className="h-2.5 w-24 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                </div>
+                                <div className="flex gap-2">
+                                    <div className="flex-1 h-9 rounded-lg bg-[var(--bg-tertiary)] animate-pulse" />
+                                    <div className="flex-1 h-9 rounded-lg bg-[var(--bg-tertiary)] animate-pulse" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         );
     }
@@ -512,8 +547,17 @@ const Directory = () => {
                     </div>
 
                     {networkLoading ? (
-                        <div className="flex items-center justify-center py-20">
-                            <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
+                        <div className="space-y-3">
+                            {Array.from({ length: 4 }).map((_, i) => (
+                                <div key={i} className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-4 flex items-center gap-4">
+                                    <div className="w-14 h-14 rounded-full bg-[var(--bg-tertiary)] animate-pulse flex-shrink-0" />
+                                    <div className="flex-1 space-y-2">
+                                        <div className="h-3.5 w-32 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                        <div className="h-2.5 w-48 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                    </div>
+                                    <div className="w-20 h-8 rounded-lg bg-[var(--bg-tertiary)] animate-pulse" />
+                                </div>
+                            ))}
                         </div>
                     ) : (
                         <>

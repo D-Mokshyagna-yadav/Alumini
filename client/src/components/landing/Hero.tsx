@@ -1,14 +1,20 @@
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles } from 'lucide-react';
+
+import './Hero.css';
 
 const Hero = ({ data }: { data?: any }) => {
     const heading = data?.heading;
     const subtitle = data?.subtitle;
     const badge = data?.badge;
+    const companyList: string[] = Array.isArray(data?.companies) && data.companies.length > 0
+        ? data.companies
+        : ['Microsoft','Google','Amazon','TCS','Infosys','Wipro','Capgemini','Cognizant','Accenture','HCL Tech','Oracle','IBM'];
 
     return (
-        <div className="relative min-h-[90vh] flex flex-col items-center justify-center overflow-hidden bg-[var(--bg-primary)]">
+        <div className="relative min-h-[100dvh] flex flex-col items-center justify-center overflow-hidden bg-[var(--bg-primary)] hero-bg">
+            <div className="hero-overlay" />
             {/* Samsung-style beam drop + impact on load */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none z-20">
                 <div className="beam-drop">
@@ -36,47 +42,33 @@ const Hero = ({ data }: { data?: any }) => {
             </div>
 
             {/* Content */}
-            <div className="relative z-10 w-full pt-20 sm:pt-24 md:pt-28 pb-16 sm:pb-20">
+            <div className="hero-content relative z-10 w-full pt-20 sm:pt-24 md:pt-28 pb-16 sm:pb-20">
                 <div className="max-w-screen-xl mx-auto px-6 sm:px-8 lg:px-16 text-center">
                     {/* Badge */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--card-bg)] backdrop-blur-xl border border-[var(--border-color)] rounded-full mb-8 sm:mb-10 shadow-sm"
-                    >
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--card-bg)] backdrop-blur-xl border border-[var(--border-color)] rounded-full mb-8 sm:mb-10 shadow-sm">
                         <Sparkles size={14} className="text-[var(--accent)]" />
                         <span className="text-xs sm:text-sm font-medium text-[var(--text-secondary)]">
                             {badge || '🎓 Celebrating Excellence Since 2002'}
                         </span>
-                    </motion.div>
+                    </div>
 
                     {/* Main Heading */}
-                    <motion.h1
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.1 }}
-                        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.05] tracking-tight mb-6 sm:mb-8"
+                    <h1
+                        className="hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.05] tracking-tight mb-6 sm:mb-8"
                     >
-                        <span className="text-[var(--text-primary)] block">{heading?.line1 || 'Where Alumni'}</span>
-                        <span className="text-gradient inline-block mt-1 sm:mt-2">{heading?.line2 || 'Connect & Thrive'}</span>
-                    </motion.h1>
+                        <span className="block">{heading?.line1 || 'Where Alumni'}</span>
+                        <span className="hero-connect text-gradient inline-block mt-1 sm:mt-2">{heading?.line2 || 'Connect & Thrive'}</span>
+                    </h1>
 
                     {/* Subtitle */}
-                    <motion.p
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.2 }}
-                        className="text-base sm:text-lg md:text-xl text-[var(--text-secondary)] mb-10 sm:mb-12 max-w-sm sm:max-w-xl md:max-w-2xl mx-auto leading-relaxed"
+                    <p
+                        className="hero-subtitle text-base sm:text-lg md:text-xl mb-10 sm:mb-12 max-w-sm sm:max-w-xl md:max-w-2xl mx-auto leading-relaxed"
                     >
                         {subtitle || 'Join a thriving community. Build meaningful connections, discover career opportunities, and give back to your alma mater.'}
-                    </motion.p>
+                    </p>
 
                     {/* CTA Buttons */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.3 }}
+                    <div
                         className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center"
                     >
                         <Link to="/register" className="w-full sm:w-auto">
@@ -90,41 +82,28 @@ const Hero = ({ data }: { data?: any }) => {
                                 Explore Alumni
                             </button>
                         </Link>
-                    </motion.div>
+                    </div>
                 </div>
 
                 {/* Companies Marquee */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                    className="w-full mt-20 sm:mt-24 pt-10 border-t border-[var(--accent)]/10 overflow-hidden"
+                <div
+                    className="w-full mt-20 sm:mt-24 pt-10 border-t border-[var(--accent)]/10"
                 >
                     <p className="text-xs sm:text-sm font-semibold text-[var(--text-muted)] uppercase tracking-[0.2em] mb-8 sm:mb-10 text-center">
                         Our Alumni Work At
                     </p>
 
-                    <div className="relative flex overflow-hidden mask-gradient-x">
-                        <motion.div
-                            className="flex gap-10 sm:gap-14 md:gap-20 items-center whitespace-nowrap"
-                            animate={{ x: [0, -1000] }}
-                            transition={{ repeat: Infinity, ease: "linear", duration: 30 }}
+                    <div className="industry-scroll industry-marquee">
+                    {[...companyList, ...companyList].map((company, idx) => (
+                        <span
+                        key={company + idx}
+                        className="mx-8 whitespace-nowrap hover:text-[var(--accent)] transition-colors duration-200 cursor-default"
                         >
-                            {[...Array(2)].map((_, i) => (
-                                <div key={i} className="flex gap-10 sm:gap-14 md:gap-20 items-center">
-                                    {['Microsoft', 'Google', 'Amazon', 'TCS', 'Infosys', 'Wipro', 'Capgemini', 'Cognizant', 'Accenture', 'HCL Tech', 'Oracle', 'IBM'].map((company) => (
-                                        <span
-                                            key={`${i}-${company}`}
-                                            className="text-lg sm:text-xl md:text-2xl font-bold text-[var(--text-muted)]/50 hover:text-[var(--accent)] transition-colors duration-200 cursor-default"
-                                        >
-                                            {company}
-                                        </span>
-                                    ))}
-                                </div>
-                            ))}
-                        </motion.div>
+                        {company}
+                        </span>
+                    ))}
                     </div>
-                </motion.div>
+                </div>
             </div>
         </div>
     );

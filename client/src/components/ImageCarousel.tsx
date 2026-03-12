@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ImageIcon } from 'lucide-react';
 
 interface MediaItem {
     type: 'image' | 'video';
@@ -26,8 +26,14 @@ function OptimizedImage({ src, alt, className, draggable, priority }: { src: str
     return (
         <div className="relative w-full max-h-[480px] bg-[var(--bg-tertiary)]">
             {!loaded && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-6 h-6 border-2 border-[var(--text-muted)]/30 border-t-[var(--text-muted)] rounded-full animate-spin" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-hidden">
+                    {/* Skeleton shimmer */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--bg-secondary)]/40 to-transparent animate-[shimmer_1.5s_infinite] -translate-x-full" style={{ animationName: 'shimmer' }} />
+                    <ImageIcon size={32} className="text-[var(--text-muted)]/30" />
+                    <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-[var(--text-muted)]/20 border-t-[var(--text-muted)]/60 rounded-full animate-spin" />
+                        <span className="text-xs text-[var(--text-muted)]/50">Loading image...</span>
+                    </div>
                 </div>
             )}
             <img

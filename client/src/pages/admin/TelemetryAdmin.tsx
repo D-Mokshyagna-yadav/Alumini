@@ -52,7 +52,18 @@ const TelemetryAdmin = () => {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={7} className="p-4 text-center"><div className="flex justify-center"><div className="animate-spin h-6 w-6 rounded-full border-[3px] border-[var(--bg-tertiary)] border-t-[var(--accent)]"></div></div></td></tr>
+              <>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="border-t border-[var(--border-color)]">
+                    <td className="p-3"><div className="h-3 w-28 rounded bg-[var(--bg-tertiary)] animate-pulse" /></td>
+                    <td className="p-3"><div className="h-3 w-16 rounded bg-[var(--bg-tertiary)] animate-pulse" /></td>
+                    <td className="p-3"><div className="h-3 w-14 rounded bg-[var(--bg-tertiary)] animate-pulse" /></td>
+                    <td className="p-3"><div className="h-3 w-20 rounded bg-[var(--bg-tertiary)] animate-pulse" /></td>
+                    <td className="p-3"><div className="h-3 w-16 rounded bg-[var(--bg-tertiary)] animate-pulse" /></td>
+                    <td className="p-3"><div className="h-3 w-20 rounded bg-[var(--bg-tertiary)] animate-pulse" /></td>
+                  </tr>
+                ))}
+              </>
             ) : items.length === 0 ? (
               <tr><td colSpan={7} className="p-4 text-center">No telemetry yet</td></tr>
             ) : items.map((it) => (

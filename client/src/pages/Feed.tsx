@@ -424,12 +424,66 @@ const Feed = () => {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center py-24 gap-4">
-                <div className="relative">
-                    <div className="w-12 h-12 rounded-full border-[3px] border-[var(--bg-tertiary)]" />
-                    <div className="absolute inset-0 w-12 h-12 rounded-full border-[3px] border-t-[var(--accent)] animate-spin" />
+            <div className="max-w-[1400px] mx-auto px-4 py-6">
+                <div className={`grid grid-cols-1 ${isAuthenticated ? 'lg:grid-cols-[240px_1fr_300px]' : 'lg:grid-cols-[1fr_300px]'} gap-6`}>
+                    {/* Left sidebar skeleton */}
+                    {isAuthenticated && (
+                        <div className="hidden lg:block">
+                            <div className={glass + ' p-4 space-y-3'}>
+                                <div className="w-10 h-10 rounded-full bg-[var(--bg-tertiary)] animate-pulse" />
+                                <div className="h-3 w-24 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                <div className="h-2.5 w-16 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            </div>
+                        </div>
+                    )}
+                    {/* Center post skeletons */}
+                    <div className="space-y-4">
+                        {[true, false, true].map((hasImage, i) => (
+                            <div key={i} className={glass + ' overflow-hidden'}>
+                                {/* Header skeleton */}
+                                <div className="p-4 pb-3 flex items-start gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-[var(--bg-tertiary)] animate-pulse flex-shrink-0" />
+                                    <div className="flex-1 space-y-2">
+                                        <div className="h-3.5 w-28 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                        <div className="h-2.5 w-20 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                    </div>
+                                </div>
+                                {/* Content skeleton */}
+                                <div className="px-4 pb-3 space-y-2">
+                                    <div className="h-3 w-full rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                    <div className="h-3 w-3/4 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                </div>
+                                {/* Image skeleton */}
+                                {hasImage && (
+                                    <div className="relative w-full h-64 bg-[var(--bg-tertiary)] overflow-hidden">
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--bg-secondary)]/40 to-transparent animate-[shimmer_1.5s_infinite]" />
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                                            <ImageIcon size={28} className="text-[var(--text-muted)]/20" />
+                                            <span className="text-[11px] text-[var(--text-muted)]/30">Loading image...</span>
+                                        </div>
+                                    </div>
+                                )}
+                                {/* Actions skeleton */}
+                                <div className="px-4 py-3 flex items-center gap-4">
+                                    <div className="h-3 w-12 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                    <div className="h-3 w-16 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    {/* Right sidebar skeleton */}
+                    <div className="hidden lg:block">
+                        <div className={glass + ' p-4 space-y-3'}>
+                            <div className="h-3.5 w-20 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            {[1, 2, 3].map(n => (
+                                <div key={n} className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-[var(--bg-tertiary)] animate-pulse" />
+                                    <div className="h-2.5 flex-1 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-                <p className="text-[var(--text-muted)] text-sm">Loading feed...</p>
             </div>
         );
     }

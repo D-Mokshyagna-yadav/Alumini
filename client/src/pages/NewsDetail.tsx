@@ -24,12 +24,17 @@ const NewsDetail = () => {
     };
 
     if (loading) return (
-        <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-            <div className="relative">
-                <div className="w-12 h-12 rounded-full border-[3px] border-[var(--bg-tertiary)]" />
-                <div className="absolute inset-0 w-12 h-12 rounded-full border-[3px] border-t-[var(--accent)] animate-spin" />
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+            <div className="h-7 w-3/4 rounded bg-[var(--bg-tertiary)] animate-pulse mb-3" />
+            <div className="h-3 w-32 rounded bg-[var(--bg-tertiary)] animate-pulse mb-4" />
+            <div className="relative w-full h-64 sm:h-96 rounded-lg bg-[var(--bg-tertiary)] overflow-hidden mb-4">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--bg-secondary)]/40 to-transparent animate-[shimmer_1.5s_infinite]" />
             </div>
-            <p className="text-[var(--text-muted)] text-sm">Loading article...</p>
+            <div className="space-y-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className={`h-3 rounded bg-[var(--bg-tertiary)] animate-pulse ${i % 3 === 2 ? 'w-3/4' : 'w-full'}`} />
+                ))}
+            </div>
         </div>
     );
     if (!item) return <div className="p-6">News not found</div>;

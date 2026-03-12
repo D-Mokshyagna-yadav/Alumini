@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
     Home, Search, Bell, Bookmark, User, Settings,
-    PlusSquare, LogOut, Users, Briefcase, Calendar, GraduationCap
+    PlusSquare, LogOut, Users, Briefcase, Calendar
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -31,9 +31,7 @@ const SocialLayout = ({ children }: SocialLayoutProps) => {
                 {/* Logo */}
                 <Link to="/feed" className="mb-8 px-3">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[var(--primary)] flex items-center justify-center shadow-sm">
-                            <GraduationCap size={22} className="text-[var(--bg-primary)]" />
-                        </div>
+                        <img src="/logo-small.png" alt="Logo" className="w-10 h-10 object-contain" />
                         <span className="hidden xl:block font-bold text-xl text-[var(--text-primary)]">
                             MIC College of Technology
                         </span>

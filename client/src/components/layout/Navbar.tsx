@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-    Menu, X, GraduationCap, Sun, Moon, LogOut, Bell,
+    Menu, X, Sun, Moon, LogOut, Bell,
     Home, Rss, Users, Briefcase, Calendar, Image,
     Settings, Shield, ChevronDown, Bookmark, Code2, Mail
 } from 'lucide-react';
@@ -34,10 +34,22 @@ const Navbar = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [scrolled, setScrolled] = useState(false);
     const { theme, mode, toggleTheme } = useTheme();
     const { user, isAuthenticated, logout } = useAuth();
     const location = useLocation();
     const [branding, setBranding] = useState<{ name?: string }>({});
+
+    const isLandingPage = !isAuthenticated && location.pathname === '/';
+    const isTransparent = isLandingPage && !scrolled;
+
+    useEffect(() => {
+        if (!isLandingPage) { setScrolled(false); return; }
+        const onScroll = () => setScrolled(window.scrollY > 50);
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
+    }, [isLandingPage]);
 
     useEffect(() => {
         let mounted = true;
@@ -105,19 +117,17 @@ const Navbar = () => {
     return (
         <>
             {/* ─── Top Header Bar ─── */}
-            <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-[var(--bg-primary)]/80 border-b border-[var(--accent)]/10">
+            <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+                isTransparent
+                    ? 'bg-transparent border-b border-transparent'
+                    : 'backdrop-blur-xl bg-[var(--bg-primary)]/80 border-b border-[var(--accent)]/10'
+            }`}>
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
 
                     {/* Logo */}
                     <Link to={isAuthenticated ? '/feed' : '/'} className="flex items-center gap-2.5 shrink-0">
-                        <motion.div
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="w-10 h-10 bg-[var(--accent)] rounded-xl flex items-center justify-center shadow-sm shadow-[var(--accent)]/20"
-                        >
-                            <GraduationCap size={22} className="text-[var(--bg-primary)]" />
-                        </motion.div>
-                        <span className="hidden sm:block font-bold text-base text-[var(--text-primary)] tracking-tight">
+                        <img src="/logo-small.png" alt="Logo" className="w-10 h-10 rounded-xl object-contain" />
+                        <span className={`hidden sm:block font-bold text-base tracking-tight ${isTransparent ? 'text-white' : 'text-[var(--text-primary)]'}`}>
                             MIC Alumni
                         </span>
                     </Link>
@@ -151,11 +161,11 @@ const Navbar = () => {
                     <div className="hidden md:flex items-center gap-1.5">
                         {/* Theme Toggle */}
                         <button onClick={toggleTheme}
-                            className="w-9 h-9 flex items-center justify-center rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60 transition-all"
+                            className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${isTransparent ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'}`}
                             aria-label="Toggle theme"
                         >
                             {mode === 'auto' ? (
-                                <span className="w-5 h-5 bg-[var(--accent)] text-[var(--bg-primary)] text-[10px] font-bold rounded flex items-center justify-center">A</span>
+                                <span className={`w-5 h-5 text-[10px] font-bold rounded flex items-center justify-center ${isTransparent ? 'bg-white/20 text-white' : 'bg-[var(--accent)] text-[var(--bg-primary)]'}`}>A</span>
                             ) : theme === 'light' ? <Sun size={18} /> : <Moon size={18} />}
                         </button>
 
@@ -296,10 +306,10 @@ const Navbar = () => {
                             </>
                         ) : (
                             <>
-                                <Link to="/login" className="px-3 py-1.5 text-[13px] font-medium rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60 transition-all">
+                                <Link to="/login" className={`px-3 py-1.5 text-[13px] font-medium rounded-xl transition-all ${isTransparent ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'}`}>
                                     Sign In
                                 </Link>
-                                <Link to="/register" className="px-4 py-1.5 text-[13px] font-semibold rounded-full bg-[var(--accent)] text-[var(--bg-primary)] hover:shadow-md hover:shadow-[var(--accent)]/25 transition-all">
+                                <Link to="/register" className={`px-4 py-1.5 text-[13px] font-semibold rounded-full transition-all ${isTransparent ? 'bg-white text-gray-900 hover:bg-white/90 hover:shadow-md hover:shadow-white/20' : 'bg-[var(--accent)] text-[var(--bg-primary)] hover:shadow-md hover:shadow-[var(--accent)]/25'}`}>
                                     Join Network
                                 </Link>
                             </>
@@ -309,15 +319,15 @@ const Navbar = () => {
                     {/* ─── Mobile Controls ─── */}
                     <div className="flex md:hidden items-center gap-1.5">
                         <button onClick={toggleTheme}
-                            className="w-8 h-8 flex items-center justify-center rounded-xl text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)]/60 transition-all"
+                            className={`w-8 h-8 flex items-center justify-center rounded-xl transition-all ${isTransparent ? 'text-white/80 hover:bg-white/10' : 'text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)]/60'}`}
                             aria-label="Toggle theme"
                         >
                             {mode === 'auto' ? (
-                                <span className="w-4 h-4 bg-[var(--accent)] text-[var(--bg-primary)] text-[9px] font-bold rounded flex items-center justify-center">A</span>
+                                <span className={`w-4 h-4 text-[9px] font-bold rounded flex items-center justify-center ${isTransparent ? 'bg-white/20 text-white' : 'bg-[var(--accent)] text-[var(--bg-primary)]'}`}>A</span>
                             ) : theme === 'light' ? <Sun size={16} /> : <Moon size={16} />}
                         </button>
                         <button onClick={() => setMobileOpen(!mobileOpen)}
-                            className="w-8 h-8 flex items-center justify-center rounded-xl text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60 transition-all"
+                            className={`w-8 h-8 flex items-center justify-center rounded-xl transition-all ${isTransparent ? 'text-white hover:bg-white/10' : 'text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'}`}
                             aria-label="Toggle menu"
                         >
                             {mobileOpen ? <X size={18} /> : <Menu size={18} />}

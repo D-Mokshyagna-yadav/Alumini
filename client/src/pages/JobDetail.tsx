@@ -203,12 +203,34 @@ const JobDetail = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-                <div className="relative">
-                    <div className="w-12 h-12 rounded-full border-[3px] border-[var(--bg-tertiary)]" />
-                    <div className="absolute inset-0 w-12 h-12 rounded-full border-[3px] border-t-[var(--accent)] animate-spin" />
+            <div className="max-w-4xl mx-auto px-4 py-6">
+                {/* Back button skeleton */}
+                <div className="h-4 w-20 rounded bg-[var(--bg-tertiary)] animate-pulse mb-4" />
+                <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-2xl shadow-sm overflow-hidden">
+                    {/* Job image skeleton */}
+                    <div className="relative h-48 bg-[var(--bg-tertiary)] overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--bg-secondary)]/40 to-transparent animate-[shimmer_1.5s_infinite]" />
+                    </div>
+                    <div className="p-6 space-y-4">
+                        <div className="h-7 w-3/4 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                        <div className="flex gap-3">
+                            <div className="h-3.5 w-28 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            <div className="h-3.5 w-20 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            <div className="h-3.5 w-24 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                        </div>
+                        <div className="flex gap-2">
+                            <div className="h-6 w-20 rounded-full bg-[var(--bg-tertiary)] animate-pulse" />
+                            <div className="h-6 w-16 rounded-full bg-[var(--bg-tertiary)] animate-pulse" />
+                        </div>
+                        <div className="space-y-2 pt-2">
+                            <div className="h-3 w-full rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            <div className="h-3 w-full rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            <div className="h-3 w-4/5 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            <div className="h-3 w-3/4 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                        </div>
+                        <div className="h-11 w-36 rounded-xl bg-[var(--bg-tertiary)] animate-pulse mt-2" />
+                    </div>
                 </div>
-                <p className="text-[var(--text-muted)] text-sm">Loading job details...</p>
             </div>
         );
     }

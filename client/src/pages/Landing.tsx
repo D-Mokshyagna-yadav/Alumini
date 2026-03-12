@@ -52,7 +52,7 @@ const Landing = () => {
 
     return (
         <div className="min-h-screen">
-            <Hero data={home?.hero} />
+            <Hero data={{ ...home?.hero, companies: home?.companies }} />
             <StatsBar stats={home?.stats} />
 
             {/* Gradient divider */}

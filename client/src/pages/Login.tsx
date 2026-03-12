@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import { GraduationCap, Eye, EyeOff, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
 // Removed Google sign-in
 
 const Login = () => {
@@ -70,9 +70,8 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <Link to="/" className="flex items-center gap-3 group w-fit">
                     <motion.div
                         whileHover={{ rotate: 5, scale: 1.05 }}
-                        className="w-10 h-10 bg-[var(--accent)] rounded-xl flex items-center justify-center"
                     >
-                        <GraduationCap size={22} className="text-[var(--bg-primary)]" />
+                        <img src="/logo-small.png" alt="Logo" className="w-10 h-10 rounded-xl object-contain" />
                     </motion.div>
                     <span className="text-xl font-bold text-[var(--text-primary)]">Alumni Network</span>
                 </Link>

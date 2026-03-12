@@ -1309,12 +1309,22 @@ const Profile = () => {
                                 className="space-y-4"
                             >
                                 {loadingComments ? (
-                                    <div className="flex flex-col items-center justify-center py-16 gap-4">
-                                        <div className="relative">
-                                            <div className="w-10 h-10 rounded-full border-[3px] border-[var(--bg-tertiary)]" />
-                                            <div className="absolute inset-0 w-10 h-10 rounded-full border-[3px] border-t-[var(--accent)] animate-spin" />
-                                        </div>
-                                        <p className="text-[var(--text-muted)] text-sm">Loading comments...</p>
+                                    <div className="space-y-4">
+                                        {Array.from({ length: 3 }).map((_, i) => (
+                                            <div key={i} className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 overflow-hidden shadow-md shadow-black/5 rounded-2xl p-4">
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    <div className="w-8 h-8 rounded-full bg-[var(--bg-tertiary)] animate-pulse" />
+                                                    <div className="space-y-1.5">
+                                                        <div className="h-3 w-24 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                                        <div className="h-2.5 w-16 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <div className="h-3 w-full rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                                    <div className="h-3 w-2/3 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 ) : userComments.length > 0 ? userComments.map((item, i) => (
                                     <motion.div

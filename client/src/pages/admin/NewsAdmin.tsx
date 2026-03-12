@@ -292,7 +292,22 @@ const NewsAdmin = () => {
 
                 <div className="bg-[var(--bg-secondary)] p-4 border border-[var(--border-color)] rounded-2xl">
                     <h2 className="font-semibold text-[var(--text-primary)] mb-3">Existing News</h2>
-                    {loading ? <div className="flex justify-center py-6"><div className="animate-spin h-8 w-8 rounded-full border-[3px] border-[var(--bg-tertiary)] border-t-[var(--accent)]"></div></div> : (
+                    {loading ? (
+                        <div className="space-y-3 py-2">
+                            {Array.from({ length: 3 }).map((_, i) => (
+                                <div key={i} className="flex items-center gap-3 p-3 border border-[var(--border-color)] rounded-xl">
+                                    <div className="w-16 h-12 rounded bg-[var(--bg-tertiary)] overflow-hidden relative">
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--bg-secondary)]/40 to-transparent animate-[shimmer_1.5s_infinite]" />
+                                    </div>
+                                    <div className="flex-1 space-y-1.5">
+                                        <div className="h-3.5 w-40 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                        <div className="h-2.5 w-28 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                    </div>
+                                    <div className="h-8 w-16 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
                         items.length === 0 ? <div className="text-[var(--text-muted)]">No news yet.</div> : (
                             <div className="space-y-3">
                                 {items.map(item => (

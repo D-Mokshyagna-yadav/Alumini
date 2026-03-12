@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import api from '../../lib/api';
-import { GraduationCap, Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram, Youtube } from 'lucide-react';
+import { Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram, Youtube } from 'lucide-react';
 
 const Footer = () => {
     const footerLinks = {
@@ -64,9 +64,7 @@ const Footer = () => {
                     {/* Brand */}
                     <div className="col-span-2">
                         <Link to="/" className="flex items-center gap-3 mb-6 group">
-                            <div className="w-12 h-12 bg-[var(--accent)] rounded-xl flex items-center justify-center">
-                                <GraduationCap size={24} className="text-[var(--bg-primary)]" />
-                            </div>
+                            <img src="/logo-small.png" alt="Logo" className="w-12 h-12 rounded-xl object-contain" />
                             <div>
                                 <span className="font-bold text-lg text-[var(--text-primary)] block leading-tight group-hover:text-[var(--accent)] transition-colors">
                                     {branding.name || 'Alumni Network'}

@@ -245,6 +245,62 @@ const Jobs = () => {
         }
     };
 
+    if (loading) {
+        return (
+            <div className="max-w-[1400px] mx-auto px-3 sm:px-4 py-4 sm:py-6">
+                {/* Header skeleton */}
+                <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-2xl shadow-sm p-4 sm:p-6 mb-4 sm:mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                        <div className="space-y-2">
+                            <div className="h-6 w-24 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            <div className="h-3 w-56 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                        </div>
+                        <div className="flex gap-2">
+                            <div className="h-9 w-24 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            <div className="h-9 w-32 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                        </div>
+                    </div>
+                    <div className="border-t border-[var(--border-color)] pt-3 flex gap-2">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                            <div key={i} className="h-8 w-24 rounded-lg bg-[var(--bg-tertiary)] animate-pulse" />
+                        ))}
+                    </div>
+                </div>
+                {/* Job cards grid skeleton */}
+                <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+                    <aside className="hidden lg:block">
+                        <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-2xl p-4 space-y-3">
+                            <div className="h-4 w-20 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <div key={i} className="h-9 w-full rounded-lg bg-[var(--bg-tertiary)] animate-pulse" />
+                            ))}
+                        </div>
+                    </aside>
+                    <div className="space-y-4">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-2xl p-5 space-y-3">
+                                <div className="flex items-start gap-4">
+                                    <div className="w-12 h-12 rounded-xl bg-[var(--bg-tertiary)] animate-pulse flex-shrink-0" />
+                                    <div className="flex-1 space-y-2">
+                                        <div className="h-4 w-48 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                        <div className="h-3 w-32 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <div className="h-6 w-16 rounded-full bg-[var(--bg-tertiary)] animate-pulse" />
+                                    <div className="h-6 w-16 rounded-full bg-[var(--bg-tertiary)] animate-pulse" />
+                                    <div className="h-6 w-20 rounded-full bg-[var(--bg-tertiary)] animate-pulse" />
+                                </div>
+                                <div className="h-3 w-full rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                                <div className="h-3 w-3/4 rounded bg-[var(--bg-tertiary)] animate-pulse" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="max-w-[1400px] mx-auto px-3 sm:px-4 py-4 sm:py-6">
             {/* Header */}
