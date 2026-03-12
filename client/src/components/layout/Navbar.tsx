@@ -83,7 +83,7 @@ const Navbar = () => {
         // Listen for real-time notifications via socket
         const win = window as Window & { __ALUMNI_SOCKET?: Socket };
         if (!win.__ALUMNI_SOCKET) {
-            win.__ALUMNI_SOCKET = io({ withCredentials: true, transports: ['polling', 'websocket'], path: '/socket.io/' });
+            win.__ALUMNI_SOCKET = io(import.meta.env.VITE_SOCKET_URL || undefined, { withCredentials: true, transports: ['polling', 'websocket'], path: '/socket.io/' });
         }
         const socket: Socket = win.__ALUMNI_SOCKET;
 

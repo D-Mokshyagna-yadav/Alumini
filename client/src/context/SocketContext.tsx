@@ -23,7 +23,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         const win = window as any;
 
         if (!win.__ALUMNI_SOCKET) {
-            win.__ALUMNI_SOCKET = io({
+            win.__ALUMNI_SOCKET = io(import.meta.env.VITE_SOCKET_URL || undefined, {
                 withCredentials: true,
                 transports: ['polling', 'websocket'],
                 path: '/socket.io/',

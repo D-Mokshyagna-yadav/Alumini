@@ -18,23 +18,43 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// Allow multiple origins for network access - supports all common local network ranges
-const allowedOrigins = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/,  // 192.168.x.x local network
-    /^http:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$/,  // 10.x.x.x local network
-    /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}(:\d+)?$/,  // 172.16-31.x.x local network
-    /^http:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$/,  // Any IP address (for college network)
-];
+// ─── CORS Origins ──────────────────────────────────────────
+// In production set ALLOWED_ORIGINS to a comma-separated list of allowed
+// origins (e.g. "https://alumni.example.com,https://www.alumni.example.com").
+// WEBSITE_URL is the canonical frontend URL used for email links etc.
+const WEBSITE_URL = process.env.WEBSITE_URL || 'http://localhost:5173';
+
+const allowedOrigins: (string | RegExp)[] = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+    : [
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://127.0.0.1:5173',
+        /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/,
+        /^http:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$/,
+        /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}(:\d+)?$/,
+        /^http:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$/,
+    ];
+
+// Always include WEBSITE_URL in allowed origins
+if (WEBSITE_URL && !allowedOrigins.includes(WEBSITE_URL)) {
+    allowedOrigins.push(WEBSITE_URL);
+}
 
 const corsOptions = {
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
         // Allow requests with no origin (like mobile apps, curl requests, or same-origin)
         if (!origin) return callback(null, true);
-        
-        // In development/local network mode, allow all origins
-        // This enables access from any computer on the college network
+
+        // In production, only allow explicitly listed origins
+        if (process.env.ALLOWED_ORIGINS) {
+            const allowed = allowedOrigins.some(o =>
+                typeof o === 'string' ? o === origin : o.test(origin)
+            );
+            return callback(allowed ? null : new Error('CORS not allowed'), allowed);
+        }
+
+        // In development, allow all origins for LAN access
         callback(null, true);
     },
     credentials: true,

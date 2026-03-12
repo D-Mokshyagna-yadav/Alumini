@@ -198,7 +198,7 @@ const Messages = () => {
         if (!user) return;
 
         if (!socket) {
-            socket = io({ withCredentials: true, transports: ['polling', 'websocket'], path: '/socket.io/' });
+            socket = io(import.meta.env.VITE_SOCKET_URL || undefined, { withCredentials: true, transports: ['polling', 'websocket'], path: '/socket.io/' });
         } else if (!socket.connected) {
             try { socket.connect(); } catch { /* ignore */ }
         }
