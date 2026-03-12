@@ -4,7 +4,14 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 
 import './Hero.css';
 
-const Hero = ({ data }: { data?: any }) => {
+interface HeroData {
+    heading?: { line1?: string; line2?: string };
+    subtitle?: string;
+    badge?: string;
+    companies?: string[];
+}
+
+const Hero = ({ data }: { data?: HeroData }) => {
     const heading = data?.heading;
     const subtitle = data?.subtitle;
     const badge = data?.badge;
@@ -87,9 +94,9 @@ const Hero = ({ data }: { data?: any }) => {
 
                 {/* Companies Marquee */}
                 <div
-                    className="w-full mt-20 sm:mt-24 pt-10 border-t border-[var(--accent)]/10"
+                    className="w-full mt-20 sm:mt-24 pt-10 border-t border-white/20"
                 >
-                    <p className="text-xs sm:text-sm font-semibold text-[var(--text-muted)] uppercase tracking-[0.2em] mb-8 sm:mb-10 text-center">
+                    <p className="text-sm sm:text-base font-bold text-white uppercase tracking-[0.25em] mb-8 sm:mb-10 text-center" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
                         Our Alumni Work At
                     </p>
 
