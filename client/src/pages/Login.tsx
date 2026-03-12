@@ -261,7 +261,7 @@ const Login = () => {
                                         </p>
                                     </div>
 
-                                    <div className="flex justify-center gap-2">
+                                    <div className="flex justify-center gap-1.5 sm:gap-2">
                                         {otpDigits.map((digit, i) => (
                                             <input
                                                 key={i}
@@ -288,7 +288,7 @@ const Login = () => {
                                                     handleOtpKeyDown(i, e);
                                                     if (e.key === 'Enter' && otpDigits.join('').length === 6) handleVerifyOtp();
                                                 }}
-                                                className="w-12 h-14 text-center text-xl font-bold bg-[var(--bg-tertiary)] border-2 border-[var(--border-color)] rounded-xl text-[var(--text-primary)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:border-[var(--accent)] transition-all"
+                                                className="w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold bg-[var(--bg-tertiary)] border-2 border-[var(--border-color)] rounded-xl text-[var(--text-primary)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:border-[var(--accent)] transition-all"
                                             />
                                         ))}
                                     </div>

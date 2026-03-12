@@ -3,6 +3,7 @@ import compression from 'compression';
 import cors from 'cors';
 import helmet from 'helmet';
 import http from 'http';
+import path from 'path';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 import session from 'express-session';
@@ -46,6 +47,9 @@ const io = new Server(server, {
 });
 
 // Configure helmet to allow cross-origin images
+// Trust proxy for Coolify / reverse proxy deployments (needed for secure cookies)
+app.set('trust proxy', 1);
+
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
     crossOriginEmbedderPolicy: false,
@@ -242,8 +246,21 @@ io.on('connection', (socket) => {
     });
 });
 
-app.get('/', (req, res) => {
-    res.send('Alumni Association API is running');
+// ─── Serve Client Build (single-instance deployment) ───
+const clientDistPath = path.join(__dirname, '../../client/dist');
+app.use(express.static(clientDistPath, {
+    maxAge: '1y',
+    immutable: true,
+    index: false, // We handle index.html ourselves for SPA routing
+}));
+
+// SPA catch-all: any non-API route serves index.html for client-side routing
+app.get('*', (req, res) => {
+    // Skip API routes (they should 404 normally)
+    if (req.path.startsWith('/api/') || req.path.startsWith('/socket.io')) {
+        return res.status(404).json({ message: 'Not found' });
+    }
+    res.sendFile(path.join(clientDistPath, 'index.html'));
 });
 
 const PORT = process.env.PORT || 5000;

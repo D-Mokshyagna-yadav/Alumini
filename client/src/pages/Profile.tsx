@@ -1532,7 +1532,7 @@ const Profile = () => {
                         
                         <div 
                             ref={cropContainerRef}
-                            className="relative h-[400px] bg-black overflow-hidden select-none"
+                            className="relative h-[300px] sm:h-[400px] bg-black overflow-hidden select-none"
                             onMouseDown={(e) => {
                                 const startX = e.clientX;
                                 const startY = e.clientY;

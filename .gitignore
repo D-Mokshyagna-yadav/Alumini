@@ -1,9 +1,12 @@
 # Dependencies
 node_modules/
+package-lock.json
 
-# Build output
-dist/
+# Build output (generated at deploy time)
+server/dist/
+client/dist/
 dist-ssr/
+build/
 
 # Logs
 logs/
@@ -11,6 +14,15 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
+lerna-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*
 
 # Uploads
 server/uploads/
@@ -18,6 +30,8 @@ server/uploads/
 # OS files
 .DS_Store
 Thumbs.db
+Desktop.ini
+ehthumbs.db
 
 # Editor directories
 .vscode/*
@@ -28,6 +42,21 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+*.swp
+*.swo
+*~
 
 # Local files
 *.local
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Coverage & testing
+coverage/
+.nyc_output/
+
+# Misc
+*.pid
+*.seed
+*.pid.lock

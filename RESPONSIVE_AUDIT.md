@@ -11,7 +11,7 @@
 |---|------|--------|
 | 1 | [Jobs.tsx](#1-jobstsx) | 5 |
 | 2 | [JobDetail.tsx](#2-jobdetailtsx) | 3 |
-| 3 | [Profile.tsx](#3-profiletsx) | 5 |
+| 3 | [Profile.tsx](#3-profiletsx) | 6 (2 already fixed) |
 | 4 | [Gallery.tsx](#4-gallerytsx) | 5 |
 | 5 | [NewsList.tsx](#5-newslisttsx) | 4 |
 | 6 | [NewsDetail.tsx](#6-newsdetailtsx) | 2 |
@@ -19,21 +19,25 @@
 | 8 | [Messages.tsx](#8-messagestsx) | 2 |
 | 9 | [Events.tsx](#9-eventstsx) | 1 |
 | 10 | [Footer.tsx](#10-footertsx) | 2 |
-| 11 | [Saved.tsx](#11-savedtsx) | 1 |
+| 11 | [Saved.tsx](#11-savedtsx) | 2 |
 | 12 | [ShareModal.tsx](#12-sharemodaltsx) | 1 |
 | 13 | [index.css](#13-indexcss) | 1 |
-| 14 | [Feed.tsx](#14-feedtsx) | 0 (well done) |
-| 15 | [Settings.tsx](#15-settingstsx) | 0 (well done) |
-| 16 | [Notifications.tsx](#16-notificationstsx) | 0 |
-| 17 | [Directory.tsx](#17-directorytsx) | 0 |
-| 18 | [EventDetail.tsx](#18-eventdetailtsx) | 0 |
-| 19 | [Landing.tsx](#19-landingtsx) | 0 |
-| 20 | [Login.tsx](#20-logintsx) | 0 |
-| 21 | [Register.tsx](#21-registertsx) | 0 |
-| 22 | [Navbar.tsx](#22-navbartsx) | 0 |
-| 23 | [Layout.tsx](#23-layouttsx) | 0 |
+| 14 | [Login.tsx](#14-logintsx) | 1 |
+| 15 | [Landing.tsx](#15-landingtsx) | 1 |
+| 16 | [Feed.tsx](#16-feedtsx) | 0 (well done) |
+| 17 | [Settings.tsx](#17-settingstsx) | 0 (well done) |
+| 18 | [Notifications.tsx](#18-notificationstsx) | 0 |
+| 19 | [Directory.tsx](#19-directorytsx) | 0 |
+| 20 | [EventDetail.tsx](#20-eventdetailtsx) | 0 |
+| 21 | [Landing.tsx (general)](#21-landingtsx-general) | 0 |
+| 22 | [Login.tsx (general)](#22-logintsx-general) | 0 |
+| 23 | [Register.tsx](#23-registertsx) | 0 |
+| 24 | [Navbar.tsx](#24-navbartsx) | 0 |
+| 25 | [Layout.tsx](#25-layouttsx) | 0 |
 
-**Total issues found: 35**
+**Total issues found: 40** (35 original + 5 new findings in v2 update)
+
+> ⚠️ **v2 Update Notes:** Issues 3.1 and 3.2 in Profile.tsx are marked as **ALREADY FIXED** — the current code already includes responsive variants. 5 new issues added (Login OTP overflow, Profile crop SVG, Saved sidebar, JobDetail wrapping, Landing administration).
 
 ---
 
@@ -157,31 +161,13 @@ className="... p-4 sm:p-6"
 
 ## 3. Profile.tsx
 
-### Issue 3.1 — Cover photo height not responsive
+### Issue 3.1 — ~~Cover photo height not responsive~~ ✅ ALREADY FIXED
 **File:** `src/pages/Profile.tsx` **Line:** 331  
-**Current code:**
-```tsx
-<div className="h-[200px] relative bg-[var(--accent)]">
-```
-**Problem:** Fixed 200px cover photo height. On phones, this takes up ~30% of viewport height, leaving little space for actual content above the fold.  
-**Affected:** < 640px  
-**Fix:**
-```tsx
-<div className="h-[120px] sm:h-[160px] md:h-[200px] relative bg-[var(--accent)]">
-```
+**Status:** The current code already uses responsive heights: `h-[180px] sm:h-[230px] md:h-[270px]`. No action needed.
 
-### Issue 3.2 — Avatar dimensions not responsive
+### Issue 3.2 — ~~Avatar dimensions not responsive~~ ✅ ALREADY FIXED
 **File:** `src/pages/Profile.tsx` **Line:** 360  
-**Current code:**
-```tsx
-<div className="w-[140px] h-[140px] rounded-full overflow-hidden bg-[var(--accent)] border-4 border-[var(--bg-primary)] flex items-center justify-center shadow-md shadow-[var(--accent)]/20">
-```
-**Problem:** 140x140px avatar is very large on a 320px screen (43% screen width). Combined with the 200px cover, the profile header consumes most of the viewport.  
-**Affected:** < 640px  
-**Fix:**
-```tsx
-<div className="w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] md:w-[140px] md:h-[140px] rounded-full overflow-hidden bg-[var(--accent)] border-4 border-[var(--bg-primary)] flex items-center justify-center shadow-md shadow-[var(--accent)]/20">
-```
+**Status:** The current code already uses responsive sizes: `w-[100px] h-[100px] sm:w-[140px] sm:h-[140px]`. No action needed.
 
 ### Issue 3.3 — Profile name text not responsive
 **File:** `src/pages/Profile.tsx` **Line:** 381  
@@ -221,6 +207,28 @@ className="px-6 py-2.5 bg-[var(--accent)] text-[var(--bg-primary)] font-semibold
 ```tsx
 className="px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base bg-[var(--accent)] text-[var(--bg-primary)] font-semibold shadow-sm shadow-[var(--accent)]/25 hover:shadow-[var(--accent)]/40 transition-all"
 ```
+
+### Issue 3.6 — 🆕 Crop modal SVG mask uses hardcoded pixel dimensions
+**File:** `src/pages/Profile.tsx` **Lines:** ~1085–1095  
+**Current code:**
+```tsx
+{cropType === 'avatar' ? (
+    <circle cx="50%" cy="50%" r="150" fill="black" />
+) : (
+    <rect x="50%" y="50%" width="600" height="300" transform="translate(-300, -150)" fill="black" />
+)}
+```
+**Problem:** The crop overlay mask uses hardcoded pixel values: `r="150"` (300px diameter circle) and `width="600" height="300"` rectangle. On a 320px phone, the modal content area is ~280px wide, so the 300px circle extends beyond the container boundaries and the 600px rectangle is more than double the available width. While the SVG clips overflow, the visual crop region doesn't match what's actually visible, confusing users about what area will be cropped.  
+**Affected:** < 640px  
+**Fix:** Use percentage-based values or calculate from container width:
+```tsx
+{cropType === 'avatar' ? (
+    <circle cx="50%" cy="50%" r="40%" fill="black" />
+) : (
+    <rect x="10%" y="25%" width="80%" height="50%" fill="black" />
+)}
+```
+Or alternatively, track container width with a ref and compute pixel values dynamically.
 
 ---
 
@@ -516,6 +524,25 @@ Or use the CSS utility `.pb-mobile-nav` that already exists in index.css.
 <div className="grid grid-cols-1 min-[400px]:grid-cols-2 md:grid-cols-3 gap-3">
 ```
 
+### Issue 11.2 — 🆕 Collections sidebar always visible on mobile, pushes content down
+**File:** `src/pages/Saved.tsx` **Line:** ~263  
+**Current code:**
+```tsx
+<div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+    <aside className="lg:sticky lg:top-[76px] lg:h-fit">
+```
+**Problem:** Same pattern as Jobs.tsx Issue 1.5. The collections sidebar (containing "All Saved", custom collections list, and "New Collection" button) renders as a full-width block above the saved posts on mobile. Users must scroll past the entire collections panel before seeing any saved content. If there are many collections, this becomes a significant UX issue.  
+**Affected:** < 1024px (tablets and phones)  
+**Fix:** Add a mobile toggle or collapse pattern:
+```tsx
+// Add state: const [showSidebar, setShowSidebar] = useState(false);
+<aside className={`${showSidebar ? 'block' : 'hidden'} lg:block lg:sticky lg:top-[76px] lg:h-fit`}>
+// Add mobile toggle above main content:
+<button onClick={() => setShowSidebar(!showSidebar)} className="lg:hidden mb-3 flex items-center gap-2 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] text-sm">
+    <Bookmark size={16} /> {showSidebar ? 'Hide Collections' : 'Show Collections'}
+</button>
+```
+
 ---
 
 ## 12. ShareModal.tsx
@@ -557,34 +584,96 @@ Or use the CSS utility `.pb-mobile-nav` that already exists in index.css.
 
 ---
 
-## 14. Feed.tsx
+## 14. Login.tsx
+
+### Issue 14.1 — 🆕 OTP input boxes overflow horizontally on mobile
+**File:** `src/pages/Login.tsx` **Lines:** ~310–328  
+**Current code:**
+```tsx
+<div className="flex justify-center gap-2">
+    {otpDigits.map((digit, i) => (
+        <input
+            ...
+            className="w-12 h-14 text-center text-xl font-bold bg-[var(--bg-tertiary)] border-2 ..."
+        />
+    ))}
+</div>
+```
+**Problem:** 6 OTP input boxes at `w-12` (48px) each + 5 × `gap-2` (8px) = **328px** total width. On a 320px phone:
+- Container: `max-w-[400px]` → capped at screen width = 320px
+- Container padding: `px-4` = 32px → available = 288px
+- Card padding: `p-6` = 48px → available = **240px**
+
+The 328px of OTP inputs overflows the 240px available space, causing horizontal scroll on the login card. On a 375px phone (iPhone SE), available space is ~295px — still overflows.  
+**Affected:** < 480px (all phones)  
+**Severity:** 🔴 HIGH — breaks the login flow on mobile  
+**Fix:**
+```tsx
+<div className="flex justify-center gap-1.5 sm:gap-2">
+    {otpDigits.map((digit, i) => (
+        <input
+            ...
+            className="w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold bg-[var(--bg-tertiary)] border-2 ..."
+        />
+    ))}
+</div>
+```
+This gives: 6 × 40px + 5 × 6px = **270px** — fits within 288px on a 320px phone.
+
+---
+
+## 15. Landing.tsx
+
+### Issue 15.1 — 🆕 Administration list items may truncate on narrow screens
+**File:** `src/pages/Landing.tsx` **Lines:** ~210–218  
+**Current code:**
+```tsx
+<li key={i} className={`flex justify-between items-center${...}`}>
+    <span className="font-medium text-[var(--text-primary)]">{m.name}</span>
+    <span className="text-sm text-[var(--text-secondary)]">{m.designation}</span>
+</li>
+```
+**Problem:** The `flex justify-between items-center` layout places name and designation on opposite ends. On narrow screens (< 400px), if a person has a long name like "Dr. Venkata Ramana Reddy" and a long designation like "Associate Professor & HOD", the two spans compete for space with no gap or wrap. Text overlaps or gets squished since neither span has `min-w-0` or `truncate`.  
+**Affected:** < 480px  
+**Severity:** 🟡 MEDIUM  
+**Fix:**
+```tsx
+<li key={i} className={`flex flex-col sm:flex-row sm:justify-between sm:items-center gap-0.5 sm:gap-4${...}`}>
+    <span className="font-medium text-[var(--text-primary)]">{m.name}</span>
+    <span className="text-sm text-[var(--text-secondary)] sm:text-right sm:flex-shrink-0">{m.designation}</span>
+</li>
+```
+
+---
+
+## 16. Feed.tsx
 ✅ **Well done.** The 3-column `lg:grid-cols-[220px_1fr_280px]` layout collapses to single column on mobile. Left sidebar hidden via `hidden lg:block`, mobile filter bar shown via `lg:hidden`. Post modals use `w-full max-w-[600px]`. Media uses `max-h-[480px]` which is reasonable. No significant responsive issues found.
 
-## 15. Settings.tsx
+## 17. Settings.tsx
 ✅ **Well done.** Desktop sidebar (`hidden lg:block w-[300px]`) vs mobile horizontal tabs (`lg:hidden`). Theme buttons use `flex-1`. All spacing is reasonable.
 
-## 16. Notifications.tsx
+## 18. Notifications.tsx
 ✅ No issues. Simple `max-w-[600px] mx-auto` centered layout.
 
-## 17. Directory.tsx
+## 19. Directory.tsx
 ✅ Good responsive patterns: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`, search bar `flex-col sm:flex-row`.
 
-## 18. EventDetail.tsx
+## 20. EventDetail.tsx
 ✅ Banner heights are responsive: `h-[250px] sm:h-[350px] md:h-[450px] lg:h-[500px]`. Title uses `text-2xl md:text-3xl lg:text-4xl`. Edit/delete modals properly sized.
 
-## 19. Landing.tsx
-✅ Delegates entirely to landing sub-components (Hero, StatsBar, etc.). The page itself is a simple `min-h-screen` wrapper.
+## 21. Landing.tsx (general)
+✅ Delegates entirely to landing sub-components (Hero, StatsBar, etc.). The page itself is a simple `min-h-screen` wrapper. *(See Issue 15.1 for the administration section list item issue.)*
 
-## 20. Login.tsx
-✅ Excellent responsive design. Nearly every property has `sm:` variants: padding, text sizes, button sizes, input sizes. Uses `max-w-[400px] sm:max-w-[440px]`.
+## 22. Login.tsx (general)
+✅ Excellent responsive design for the password login flow. Nearly every property has `sm:` variants: padding, text sizes, button sizes, input sizes. Uses `max-w-[400px] sm:max-w-[440px]`. *(See Issue 14.1 for the OTP digit input overflow.)*
 
-## 21. Register.tsx
+## 23. Register.tsx
 ✅ Good responsive design. Step indicator labels hidden on mobile (`hidden sm:inline`). Role selector uses `grid-cols-1 sm:grid-cols-3`. Form container `p-6 sm:p-8`. Academic fields `grid-cols-1 sm:grid-cols-2`.
 
-## 22. Navbar.tsx
+## 24. Navbar.tsx
 ✅ Well-structured responsive navigation. Desktop nav hidden on mobile (`hidden md:flex`). Mobile controls visible (`flex md:hidden`). Mobile slide-out menu limited to `w-[280px] max-w-[85vw]`. Mobile bottom tab bar with `h-14` and `safe-area-inset-bottom`. Logo text hidden on mobile (`hidden sm:block`).
 
-## 23. Layout.tsx
+## 25. Layout.tsx
 ✅ Clean wrapper: `flex flex-col min-h-screen`, `pt-14` for fixed navbar offset.
 
 ---
@@ -593,21 +682,26 @@ Or use the CSS utility `.pb-mobile-nav` that already exists in index.css.
 
 | Severity | Count | Description |
 |----------|-------|-------------|
-| 🔴 High | 5 | Causes usability problems on phones (Jobs filter sidebar, grid-cols-2/3 in modals on small screens, Messages bottom nav overlap, breakpoint mismatch) |
-| 🟡 Medium | 16 | Non-responsive text sizes, padding, and dimensions that look bad but don't break functionality |
+| 🔴 High | 6 | Causes usability problems on phones (Jobs filter sidebar, Login OTP overflow, grid-cols-2/3 in modals, Messages bottom nav overlap, breakpoint mismatch) |
+| 🟡 Medium | 18 | Non-responsive text sizes, padding, dimensions, and sidebars that look bad but don't break functionality |
 | 🟢 Low | 14 | Minor improvements for 320px screens or aesthetic tweaks |
+| ✅ Fixed | 2 | Profile.tsx issues 3.1 and 3.2 (cover photo + avatar) already have responsive variants in current code |
 
 ### High Priority Fixes (do these first):
 1. **Jobs.tsx L476** — Hide filter sidebar on mobile, add toggle button
-2. **Jobs.tsx L324, L332** — Collapse modal grids on mobile
-3. **Messages.tsx L575** — Account for mobile bottom nav in height calculation
-4. **index.css L30-31** — Fix `--breakpoint-sm` mismatch with Tailwind default
-5. **PostJob.tsx L279, L465** — Collapse salary/requirement grids on mobile
+2. **Login.tsx L310** — 🆕 OTP digit inputs overflow on phones ≤ 480px
+3. **Jobs.tsx L324, L332** — Collapse modal grids on mobile
+4. **Messages.tsx L575** — Account for mobile bottom nav in height calculation
+5. **index.css L30-31** — Fix `--breakpoint-sm` mismatch with Tailwind default
+6. **PostJob.tsx L279, L465** — Collapse salary/requirement grids on mobile
 
 ### Medium Priority:
 - All `text-2xl` → `text-xl sm:text-2xl` fixes (Profile, JobDetail, Gallery, NewsList, NewsDetail)
 - All `p-6` → `p-4 sm:p-6` fixes (JobDetail, Gallery, PostJob, NewsList, NewsDetail, Footer)
-- Profile cover/avatar scaling (Profile L331, L360)
+- **Saved.tsx L263** — 🆕 Collections sidebar always visible on mobile (add toggle)
+- **Profile.tsx L1085** — 🆕 Crop modal SVG mask hardcoded pixels (use percentages)
+- **Landing.tsx L210** — 🆕 Administration list items overlapping on narrow screens
+- Profile button padding scaling (Profile L448)
 - Footer padding reduction for mobile
 
 ### Low Priority:

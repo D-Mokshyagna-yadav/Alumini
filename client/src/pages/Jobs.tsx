@@ -55,6 +55,7 @@ const Jobs = () => {
     const [skillsSearch, setSkillsSearch] = useState('');
     const [experienceFilter, setExperienceFilter] = useState<string>('all');
     const [experienceMin, setExperienceMin] = useState<string>('');
+    const [showMobileFilters, setShowMobileFilters] = useState(false);
     const [showJobModal, setShowJobModal] = useState(false);
     const [newJob, setNewJob] = useState<Partial<Job>>({
         title: '', company: '', location: '', type: 'Full-time', mode: 'Remote', description: '', requirements: [], salary: undefined,
@@ -537,8 +538,12 @@ const Jobs = () => {
                 {/* Left: Filters */}
                 <div className="space-y-4">
                     <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-2xl shadow-sm p-4">
-                        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Filters</h3>
-                        <div className="space-y-4">
+                        <button onClick={() => setShowMobileFilters(!showMobileFilters)} className="lg:hidden flex items-center justify-between w-full">
+                            <h3 className="text-lg font-semibold text-[var(--text-primary)]">Filters</h3>
+                            <Filter size={18} className={`text-[var(--text-muted)] transition-transform ${showMobileFilters ? 'rotate-180' : ''}`} />
+                        </button>
+                        <h3 className="hidden lg:block text-lg font-semibold text-[var(--text-primary)] mb-4">Filters</h3>
+                        <div className={`space-y-4 ${showMobileFilters ? 'block' : 'hidden'} lg:block mt-4 lg:mt-0`}>
                             {/* Search by company, title */}
                             <div>
                                 <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Search by company, title</label>

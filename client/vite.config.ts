@@ -10,7 +10,7 @@ export default defineConfig({
   ],
   server: {
     host: '0.0.0.0', // Listen on all network interfaces for LAN access
-    port: Number(process.env.PORT) || 5173,
+    port: Number(process.env.PORT) || 5174,
     // Allow Vite to fall back to a different port if 5173 is in use
     // (when strictPort is false Vite will try the next available port)
     strictPort: false,
