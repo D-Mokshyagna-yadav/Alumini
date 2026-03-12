@@ -71,6 +71,30 @@ const io = new Server(server, {
 // Trust proxy for Coolify / reverse proxy deployments (needed for secure cookies)
 app.set('trust proxy', 1);
 
+// Cloudflare + Traefik double-proxy fix: Traefik connects to Cloudflare over
+// HTTP internally, so it overwrites X-Forwarded-Proto to "http" even though
+// the end-user connection is HTTPS.  Force the correct proto so express-session
+// will issue Secure cookies.
+const isProduction = process.env.NODE_ENV === 'production';
+if (isProduction) {
+    app.use((req, _res, next) => {
+        // Cloudflare always sends cf-visitor with the real client scheme
+        const cfVisitor = req.headers['cf-visitor'];
+        if (cfVisitor) {
+            try {
+                const parsed = JSON.parse(cfVisitor as string);
+                if (parsed.scheme === 'https') {
+                    req.headers['x-forwarded-proto'] = 'https';
+                }
+            } catch { /* ignore parse errors */ }
+        } else if (process.env.ALLOWED_ORIGINS?.startsWith('https://')) {
+            // Fallback: if we know the site is HTTPS-only, trust that
+            req.headers['x-forwarded-proto'] = 'https';
+        }
+        next();
+    });
+}
+
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
     crossOriginEmbedderPolicy: false,
@@ -93,7 +117,6 @@ app.use(compression()); // Enable gzip/brotli compression for faster responses
 app.use(express.json());
 
 // Session Middleware
-const isProduction = process.env.NODE_ENV === 'production';
 
 const sessionStore = MongoStore.create({
     mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/alumni_association',
