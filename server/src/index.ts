@@ -323,21 +323,22 @@ const getLocalIPs = () => {
 };
 
 server.listen(Number(PORT), HOST, () => {
-    logger.log('\n===========================================');
-    logger.log('  Alumni Association Server Started');
-    logger.log('===========================================');
-    logger.log(`  Local:    http://localhost:${PORT}`);
+    logger.startup('\n===========================================');
+    logger.startup('  Alumni Association Server Started');
+    logger.startup(`  Mode:     ${process.env.NODE_ENV || 'development'}`);
+    logger.startup('===========================================');
+    logger.startup(`  Local:    http://localhost:${PORT}`);
     
     const localIPs = getLocalIPs();
     if (localIPs.length > 0) {
-        logger.log('\n  Network Access URLs:');
+        logger.startup('\n  Network Access URLs:');
         localIPs.forEach(ip => {
-            logger.log(`    ➜  http://${ip}:${PORT}`);
+            logger.startup(`    \u279c  http://${ip}:${PORT}`);
         });
         logger.log('\n  Share these URLs with other computers');
         logger.log('  on your college network!');
     }
-    logger.log('===========================================\n');});
+    logger.startup('===========================================\n');});
 
 // Connect to Database, then run GC (GridFS needs an active connection)
 connectDB().then(() => {    // Run GC on startup and schedule periodic runs every 6 hours

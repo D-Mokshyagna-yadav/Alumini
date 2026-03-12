@@ -1,6 +1,6 @@
 /**
  * Logger utility – only emits log / info / warn / debug in development.
- * console.error is ALWAYS printed regardless of environment.
+ * console.error and startup are ALWAYS printed regardless of environment.
  */
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -12,6 +12,8 @@ const logger = {
   warn:  (...args: unknown[]) => { if (isDev) console.warn(...args); },
   /** Errors are always printed */
   error: (...args: unknown[]) => { console.error(...args); },
+  /** Critical startup / lifecycle messages — always printed even in production */
+  startup: (...args: unknown[]) => { console.log(...args); },
 };
 /* eslint-enable no-console */
 

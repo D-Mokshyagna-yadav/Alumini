@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
 
 // Verify connection on startup
 transporter.verify().then(() => {
-  logger.log('✉️  Gmail SMTP ready');
+  logger.startup('✉️  Gmail SMTP ready');
 }).catch((err) => {
   console.error('✉️  Gmail SMTP error:', err.message);
 });
