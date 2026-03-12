@@ -9,6 +9,7 @@ import dotenv from 'dotenv';
 import session from 'express-session';
 import MongoStore from 'connect-mongo';
 import connectDB from './config/db';
+import logger from './config/logger';
 import { authRouter } from './routes/authRoutes';
 import { adminRouter } from './routes/adminRoutes';
 
@@ -230,11 +231,11 @@ app.use('/api/saved', savedRouter);
 
 // Socket.io Connection Handler
 io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
+    logger.log('User connected:', socket.id);
 
     socket.on('join_user_room', (userId) => {
         socket.join(userId);
-        console.log(`User ${userId} joined room`);
+        logger.log(`User ${userId} joined room`);
     });
 
     socket.on('typing', ({ recipientId, senderId }) => {
@@ -242,7 +243,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        console.log('User disconnected');
+        logger.log('User disconnected');
     });
 });
 
@@ -284,21 +285,21 @@ const getLocalIPs = () => {
 };
 
 server.listen(Number(PORT), HOST, () => {
-    console.log('\\n===========================================');
-    console.log('  Alumni Association Server Started');
-    console.log('===========================================');
-    console.log(`  Local:    http://localhost:${PORT}`);
+    logger.log('\n===========================================');
+    logger.log('  Alumni Association Server Started');
+    logger.log('===========================================');
+    logger.log(`  Local:    http://localhost:${PORT}`);
     
     const localIPs = getLocalIPs();
     if (localIPs.length > 0) {
-        console.log('\\n  Network Access URLs:');
+        logger.log('\n  Network Access URLs:');
         localIPs.forEach(ip => {
-            console.log(`    ➜  http://${ip}:${PORT}`);
+            logger.log(`    ➜  http://${ip}:${PORT}`);
         });
-        console.log('\\n  Share these URLs with other computers');
-        console.log('  on your college network!');
+        logger.log('\n  Share these URLs with other computers');
+        logger.log('  on your college network!');
     }
-    console.log('===========================================\\n');});
+    logger.log('===========================================\n');});
 
 // Connect to Database, then run GC (GridFS needs an active connection)
 connectDB().then(() => {    // Run GC on startup and schedule periodic runs every 6 hours

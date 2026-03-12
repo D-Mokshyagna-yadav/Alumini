@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
+import logger from './logger';
 
 dotenv.config();
 
@@ -15,7 +16,7 @@ const transporter = nodemailer.createTransport({
 
 // Verify connection on startup
 transporter.verify().then(() => {
-  console.log('✉️  Gmail SMTP ready');
+  logger.log('✉️  Gmail SMTP ready');
 }).catch((err) => {
   console.error('✉️  Gmail SMTP error:', err.message);
 });
@@ -45,7 +46,7 @@ let logoBuf: Buffer | null = null;
 try {
   logoBuf = fs.readFileSync(BRAND.logoPath);
 } catch {
-  console.warn('⚠️  College logo not found at', BRAND.logoPath, '– emails will omit it');
+  logger.warn('⚠️  College logo not found at', BRAND.logoPath, '– emails will omit it');
 }
 
 /**

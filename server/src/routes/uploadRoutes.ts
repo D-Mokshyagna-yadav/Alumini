@@ -6,6 +6,7 @@ import os from 'os';
 import sharp from 'sharp';
 import ffmpeg from 'fluent-ffmpeg';
 import User, { UserStatus } from '../models/User';
+import logger from '../config/logger';
 import { storeBufferInGridFS, storeFileInGridFS, deleteGridFSFile, cleanupTempFile } from '../config/gridfs';
 
 const router = express.Router();
@@ -124,7 +125,7 @@ router.post('/profile-pic', requireAuth, profileUpload.single('avatar'), async (
         user.avatar = avatarRel;
         await user.save();
 
-        console.log('Updated avatar for', user._id, avatarRel);
+        logger.log('Updated avatar for', user._id, avatarRel);
         res.json({ avatar: avatarRel });
     } catch (err) {
         console.error(err);
@@ -316,7 +317,7 @@ router.post('/post-media', requireAuth, postUpload.array('media', 10), async (re
             }
         }
 
-        console.log('Uploaded media:', mediaUrls.map(m => m.url));
+        logger.log('Uploaded media:', mediaUrls.map(m => m.url));
         res.json({ media: mediaUrls });
     } catch (error) {
         console.error(error);

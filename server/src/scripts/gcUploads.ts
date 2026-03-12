@@ -7,6 +7,7 @@ import NotableAlumni from '../models/NotableAlumni';
 import NewsItem from '../models/NewsItem';
 import Job from '../models/Job';
 import { getGridFSBucket } from '../config/gridfs';
+import logger from '../config/logger';
 
 /**
  * Garbage-collect orphaned files from GridFS.
@@ -105,7 +106,7 @@ export const runGC = async () => {
             }
         }
 
-        console.log(`GC: scanned ${allFiles.length} GridFS files, deleted ${deleted} orphaned`);
+        logger.log(`GC: scanned ${allFiles.length} GridFS files, deleted ${deleted} orphaned`);
     } catch (err) {
         console.error('GC failed', err);
     }

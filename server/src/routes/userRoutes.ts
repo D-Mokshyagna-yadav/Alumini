@@ -2,6 +2,7 @@ import express from 'express';
 import User, { UserStatus } from '../models/User';
 import { deleteGridFSFile } from '../config/gridfs';
 import { cacheMiddleware, TTL } from '../config/cache';
+import logger from '../config/logger';
 
 const router = express.Router();
 
@@ -173,12 +174,12 @@ router.put('/profile', requireAuth, async (req, res) => {
 
             if (updates.avatar === '' && existingUser.avatar) {
                 const gridName = extractGridName(existingUser.avatar as string);
-                if (gridName) deleteGridFSFile(gridName).catch(e => console.warn('Failed to remove avatar from GridFS:', e));
+                if (gridName) deleteGridFSFile(gridName).catch(e => logger.warn('Failed to remove avatar from GridFS:', e));
             }
 
             if (updates.coverImage === '' && (existingUser as any).coverImage) {
                 const gridName = extractGridName((existingUser as any).coverImage as string);
-                if (gridName) deleteGridFSFile(gridName).catch(e => console.warn('Failed to remove cover from GridFS:', e));
+                if (gridName) deleteGridFSFile(gridName).catch(e => logger.warn('Failed to remove cover from GridFS:', e));
             }
         }
 

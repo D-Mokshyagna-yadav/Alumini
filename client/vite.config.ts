@@ -3,11 +3,17 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     tailwindcss(),
   ],
+  esbuild: {
+    // Strip console.log / warn / info / debug in production builds (keep console.error)
+    pure: mode === 'production'
+      ? ['console.log', 'console.info', 'console.debug', 'console.warn']
+      : [],
+  },
   server: {
     host: '0.0.0.0', // Listen on all network interfaces for LAN access
     port: Number(process.env.PORT) || 5174,
@@ -31,4 +37,4 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 4173,
   }
-})
+}))

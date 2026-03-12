@@ -4,6 +4,7 @@ import User, { UserStatus } from '../models/User';
 import Post from '../models/Post';
 import Notification from '../models/Notification';
 import { cacheMiddleware, TTL } from '../config/cache';
+import logger from '../config/logger';
 
 const router = express.Router();
 
@@ -490,7 +491,7 @@ router.put('/accept/:requestId', requireAuth, async (req, res) => {
                 io.to(requesterId).emit('connection:accepted', { otherId: recipientId });
                 io.to(recipientId).emit('connection:accepted', { otherId: requesterId });
             }
-        } catch (e) { console.warn('Socket/notification emit failed', e); }
+        } catch (e) { logger.warn('Socket/notification emit failed', e); }
 
         res.json({ message: 'Connection accepted', status: 'accepted' });
     } catch (error) {
@@ -528,7 +529,7 @@ router.delete('/remove/:otherId', requireAuth, async (req, res) => {
                 io.to(requesterId).emit('connection:removed', { otherId: recipientId });
                 io.to(recipientId).emit('connection:removed', { otherId: requesterId });
             }
-        } catch (e) { console.warn('Socket emit failed', e); }
+        } catch (e) { logger.warn('Socket emit failed', e); }
 
         res.json({ message: 'Connection removed' });
     } catch (error) {
