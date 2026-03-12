@@ -94,22 +94,38 @@ app.use(express.json());
 
 // Session Middleware
 const isProduction = process.env.NODE_ENV === 'production';
+
+const sessionStore = MongoStore.create({
+    mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/alumni_association',
+    ttl: 7 * 24 * 60 * 60, // 7 days
+    autoRemove: 'native',
+});
+sessionStore.on('error', (err: Error) => {
+    logger.error('MongoStore session error:', err);
+});
+
 app.use(session({
     name: 'alumni.sid',
     secret: process.env.SESSION_SECRET || 'alumni_association_secret_key',
+    proxy: true, // Trust Traefik / Coolify reverse proxy for secure cookies
     resave: false,
     saveUninitialized: false, // Don't save empty sessions
-    store: MongoStore.create({
-        mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/alumni_association',
-        ttl: 7 * 24 * 60 * 60 // 7 days
-    }),
+    store: sessionStore,
     cookie: {
-        secure: isProduction, // true behind Traefik TLS termination (trust proxy is set)
+        secure: isProduction, // true behind Traefik TLS termination
         httpOnly: true,
         sameSite: 'lax', // same-origin deployment — 'lax' is correct
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     }
 }));
+
+// Debug session state on API requests (helps diagnose auth issues in Coolify logs)
+app.use('/api', (req, _res, next) => {
+    if (req.path === '/auth/check' || req.path === '/health') {
+        logger.debug(`[session] ${req.method} ${req.originalUrl} | sid:${req.session?.id?.substring(0, 8)}… | userId:${req.session?.userId || 'none'} | cookie:${req.headers.cookie ? 'yes' : 'NO'} | secure:${req.secure} | proto:${req.protocol}`);
+    }
+    next();
+});
 
 import { chatRouter } from './routes/chatRoutes';
 import { userRouter } from './routes/userRoutes';
@@ -324,28 +340,33 @@ const getLocalIPs = () => {
     return addresses;
 };
 
-server.listen(Number(PORT), HOST, () => {
-    logger.startup('\n===========================================');
-    logger.startup('  Alumni Association Server Started');
-    logger.startup(`  Mode:     ${process.env.NODE_ENV || 'development'}`);
-    logger.startup('===========================================');
-    logger.startup(`  Local:    http://localhost:${PORT}`);
-    
-    const localIPs = getLocalIPs();
-    if (localIPs.length > 0) {
-        logger.startup('\n  Network Access URLs:');
-        localIPs.forEach(ip => {
-            logger.startup(`    \u279c  http://${ip}:${PORT}`);
-        });
-        logger.log('\n  Share these URLs with other computers');
-        logger.log('  on your college network!');
-    }
-    logger.startup('===========================================\n');});
-
-// Connect to Database, then run GC (GridFS needs an active connection)
-connectDB().then(() => {    // Run GC on startup and schedule periodic runs every 6 hours
+// Connect to Database FIRST so MongoStore is ready, then start server
+connectDB().then(() => {
+    // Run GC on startup and schedule periodic runs every 6 hours
     runGC().catch((e) => console.error('Initial GC error', e));
     setInterval(() => {
         runGC().catch((e) => console.error('Scheduled GC error', e));
     }, 1000 * 60 * 60 * 6);
+
+    server.listen(Number(PORT), HOST, () => {
+        logger.startup('\n===========================================');
+        logger.startup('  Alumni Association Server Started');
+        logger.startup(`  Mode:     ${process.env.NODE_ENV || 'development'}`);
+        logger.startup('===========================================');
+        logger.startup(`  Local:    http://localhost:${PORT}`);
+
+        const localIPs = getLocalIPs();
+        if (localIPs.length > 0) {
+            logger.startup('\n  Network Access URLs:');
+            localIPs.forEach(ip => {
+                logger.startup(`    \u279c  http://${ip}:${PORT}`);
+            });
+            logger.log('\n  Share these URLs with other computers');
+            logger.log('  on your college network!');
+        }
+        logger.startup('===========================================\n');
+    });
+}).catch((err) => {
+    logger.error('Failed to connect to database:', err);
+    process.exit(1);
 });
