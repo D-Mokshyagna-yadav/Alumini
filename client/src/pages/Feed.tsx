@@ -172,6 +172,22 @@ const Feed = () => {
         return `/api/uploads/${url}`;
     };
 
+    const warmPostMedia = useCallback((items: Post[]) => {
+        const imageUrls = items
+            .slice(0, 8)
+            .flatMap(post => post.media || [])
+            .filter(m => m.type === 'image' && !!m.url)
+            .slice(0, 10)
+            .map(m => normalizeMediaUrl(m.url));
+
+        imageUrls.forEach((src, index) => {
+            const img = new Image();
+            img.decoding = 'async';
+            img.fetchPriority = index < 2 ? 'high' : 'auto';
+            img.src = src;
+        });
+    }, []);
+
     const fetchNews = async () => {
         try {
             const res = await api.get('/public/news');
@@ -186,6 +202,15 @@ const Feed = () => {
             const fetched: Post[] = res.data.posts || [];
             fetched.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             setPosts(fetched);
+
+            if (typeof window !== 'undefined') {
+                const runWarmup = () => warmPostMedia(fetched);
+                if ('requestIdleCallback' in window) {
+                    (window as Window & { requestIdleCallback: (cb: IdleRequestCallback) => number }).requestIdleCallback(() => runWarmup());
+                } else {
+                    window.setTimeout(runWarmup, 120);
+                }
+            }
         } catch { /* silent */ } finally { setLoading(false); }
     };
 
@@ -681,7 +706,7 @@ const Feed = () => {
                                     {/* Post Media */}
                                     {post.media?.length > 0 && (
                                         <div className="group">
-                                            <ImageCarousel media={post.media} normalizeMediaUrl={normalizeMediaUrl} />
+                                            <ImageCarousel media={post.media} normalizeMediaUrl={normalizeMediaUrl} priorityFirstImage={index < 2} />
                                         </div>
                                     )}
 
@@ -984,7 +1009,7 @@ const Feed = () => {
                                         {/* Media */}
                                         {detailedPost.media?.length > 0 && (
                                             <div className="group">
-                                                <ImageCarousel media={detailedPost.media} normalizeMediaUrl={normalizeMediaUrl} />
+                                                    <ImageCarousel media={detailedPost.media} normalizeMediaUrl={normalizeMediaUrl} priorityFirstImage />
                                             </div>
                                         )}
 

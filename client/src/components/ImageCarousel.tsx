@@ -9,6 +9,7 @@ interface MediaItem {
 interface ImageCarouselProps {
     media: MediaItem[];
     normalizeMediaUrl: (url: string) => string;
+    priorityFirstImage?: boolean;
 }
 
 /** In-memory set shared with CachedImage for instant re-renders */
@@ -70,7 +71,7 @@ function OptimizedImage({ src, alt, className, draggable, priority }: { src: str
     );
 }
 
-export default function ImageCarousel({ media, normalizeMediaUrl }: ImageCarouselProps) {
+export default function ImageCarousel({ media, normalizeMediaUrl, priorityFirstImage = false }: ImageCarouselProps) {
     const [current, setCurrent] = useState(0);
     const [touchStart, setTouchStart] = useState<number | null>(null);
     const [touchDelta, setTouchDelta] = useState(0);
@@ -123,7 +124,7 @@ export default function ImageCarousel({ media, normalizeMediaUrl }: ImageCarouse
     if (total <= 1) {
         const m = media[0];
         return m.type === 'image' ? (
-            <OptimizedImage src={normalizeMediaUrl(m.url)} alt="" className="w-full max-h-[480px] object-cover" priority />
+            <OptimizedImage src={normalizeMediaUrl(m.url)} alt="" className="w-full max-h-[480px] object-cover" priority={priorityFirstImage} />
         ) : (
             <video src={normalizeMediaUrl(m.url)} controls preload="metadata" className="w-full max-h-[480px]" onError={e => { (e.target as HTMLVideoElement).style.display = 'none'; }} />
         );
@@ -154,7 +155,7 @@ export default function ImageCarousel({ media, normalizeMediaUrl }: ImageCarouse
                                 alt=""
                                 className="w-full max-h-[480px] object-cover"
                                 draggable={false}
-                                priority={idx === 0}
+                                priority={priorityFirstImage && idx === 0}
                             />
                         ) : (
                             <video
