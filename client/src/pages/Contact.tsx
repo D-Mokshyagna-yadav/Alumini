@@ -29,7 +29,7 @@ const Contact = () => {
         {
             icon: MapPin,
             title: 'Visit Us',
-            content: 'DVR & DR. HS MIC College of Technology\nKanchikacherla, N.T.R District\nAndhra Pradesh,INDIA - 521180',
+            content: 'DVR & Dr. HS MIC College of Technology\nKanchikacherla, N.T.R District\nAndhra Pradesh,INDIA - 521180',
         },
         {
             icon: Phone,

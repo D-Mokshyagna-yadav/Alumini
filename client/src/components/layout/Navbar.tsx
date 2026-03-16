@@ -129,7 +129,7 @@ const Navbar = () => {
                         <img src="/logo-small.png" alt="Logo" className="w-14 h-14 rounded-xl object-contain" />
                         {isLandingPage ? (
                             <div className="hidden sm:block leading-tight" style={{ fontFamily: "'Times New Roman', Times, serif" }}>
-                                <div className={`text-[11px] font-bold tracking-wide ${isTransparent ? 'text-white' : 'text-red-600'}`}>DVR &amp; DR. HS</div>
+                                <div className={`text-[11px] font-bold tracking-wide ${isTransparent ? 'text-white' : 'text-red-600'}`}>DVR &amp; Dr. HS</div>
                                 <div className={`text-[12px] font-bold tracking-wide ${isTransparent ? 'text-white' : 'text-blue-600'}`}>MIC COLLEGE OF TECHNOLOGY</div>
                                 <div className={`text-[11px] font-bold tracking-wide ${isTransparent ? 'text-white' : 'text-red-600'}`}>AUTONOMOUS</div>
                             </div>
