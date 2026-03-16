@@ -222,5 +222,32 @@ router.get('/administration', cacheMiddleware(TTL.STATIC), async (req, res) => {
     }
 });
 
+// POST /api/public/contact - submit contact form message
+import { sendContactEmail } from '../config/email';
+router.post('/contact', async (req, res) => {
+    try {
+        const { name, email, subject, message } = req.body;
+
+        // Validate required fields
+        if (!name || !email || !subject || !message) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
+
+        // Basic email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ message: 'Invalid email address' });
+        }
+
+        // Send email to admin
+        await sendContactEmail({ name, email, subject, message });
+
+        return res.json({ message: 'Message sent successfully' });
+    } catch (error) {
+        console.error('Contact form error:', error);
+        return res.status(500).json({ message: 'Failed to send message. Please try again later.' });
+    }
+});
+
 export { router as publicRouter };
 

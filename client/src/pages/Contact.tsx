@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useToast } from '../context/ToastContext';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send, Clock, MessageSquare, Sparkles } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import api from '../lib/api';
 
 const Contact = () => {
     const [formData, setFormData] = useState({
@@ -12,17 +13,27 @@ const Contact = () => {
         message: '',
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const submitLockRef = useRef(false);
 
     const toast = useToast();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (submitLockRef.current || isSubmitting) return;
+        submitLockRef.current = true;
         setIsSubmitting(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        toast.show('Message sent! We will get back to you soon.', 'success');
-        setFormData({ name: '', email: '', subject: '', message: '' });
-        setIsSubmitting(false);
+
+        try {
+            await api.post('/public/contact', formData);
+            toast.show('Message sent! We will get back to you soon.', 'success');
+            setFormData({ name: '', email: '', subject: '', message: '' });
+        } catch (error: unknown) {
+            const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to send message. Please try again.';
+            toast.show(msg, 'error');
+        } finally {
+            setIsSubmitting(false);
+            submitLockRef.current = false;
+        }
     };
 
     const contactInfo = [

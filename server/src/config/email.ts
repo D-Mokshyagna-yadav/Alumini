@@ -356,4 +356,60 @@ export async function sendApprovedEmail(to: string, name: string) {
   });
 }
 
+/**
+ * Send a contact form message to the admin/support email.
+ */
+export async function sendContactEmail(data: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}) {
+  const { name, email, subject, message } = data;
+  const adminEmail = process.env.CONTACT_EMAIL || process.env.GMAIL_USER;
+
+  const body = `
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 16px;">
+      <tr>
+        <td style="width:64px;height:64px;border-radius:50%;background:#e0f2fe;text-align:center;vertical-align:middle;font-size:28px;line-height:64px;">
+          &#128172;
+        </td>
+      </tr>
+    </table>
+    <h2 style="margin:0 0 8px;text-align:center;font-size:22px;font-weight:700;color:${BRAND.textPrimary};">New Contact Form Message</h2>
+    <p style="margin:0 0 24px;text-align:center;font-size:14px;line-height:1.6;color:${BRAND.textSecondary};">
+      You have received a new message from the website contact form.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;background:${BRAND.accentLight}15;border:1px solid ${BRAND.accentLight}40;border-radius:12px;">
+      <tr>
+        <td style="padding:20px;">
+          <p style="margin:0 0 8px;font-size:13px;color:${BRAND.textMuted};">
+            <strong style="color:${BRAND.textPrimary};">From:</strong> ${name}
+          </p>
+          <p style="margin:0 0 8px;font-size:13px;color:${BRAND.textMuted};">
+            <strong style="color:${BRAND.textPrimary};">Email:</strong> <a href="mailto:${email}" style="color:${BRAND.accent};">${email}</a>
+          </p>
+          <p style="margin:0 0 16px;font-size:13px;color:${BRAND.textMuted};">
+            <strong style="color:${BRAND.textPrimary};">Subject:</strong> ${subject}
+          </p>
+          <hr style="border:none;border-top:1px solid ${BRAND.border};margin:0 0 16px;" />
+          <p style="margin:0;font-size:14px;line-height:1.6;color:${BRAND.textPrimary};white-space:pre-wrap;">${message}</p>
+        </td>
+      </tr>
+    </table>
+    <hr style="border:none;border-top:1px solid ${BRAND.border};margin:0 0 20px;" />
+    <p style="margin:0;text-align:center;font-size:13px;line-height:1.5;color:${BRAND.textMuted};">
+      Reply directly to this email or contact the sender at <a href="mailto:${email}" style="color:${BRAND.accent};">${email}</a>
+    </p>`;
+
+  await transporter.sendMail({
+    from: `"${BRAND.platformName}" <${process.env.GMAIL_USER}>`,
+    to: adminEmail,
+    replyTo: email,
+    subject: `[Contact Form] ${subject}`,
+    html: emailShell(body),
+    attachments: logoAttachments(),
+  });
+}
+
 export default transporter;
