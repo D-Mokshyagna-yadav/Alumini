@@ -26,6 +26,9 @@ FROM node:20-alpine AS production
 
 WORKDIR /app
 
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
 # Copy root package.json
 COPY package.json ./
 
