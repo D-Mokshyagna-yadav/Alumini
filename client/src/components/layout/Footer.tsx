@@ -1,9 +1,10 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import api from '../../lib/api';
 import { Mail, Phone, MapPin, Facebook, Linkedin, Instagram, Youtube } from 'lucide-react';
 
 const Footer = () => {
+    const location = useLocation();
     const footerLinks = {
         'About': [
             { name: 'Our Story', href: '/about' },
@@ -99,6 +100,22 @@ const Footer = () => {
                                     <li key={link.name}>
                                         <Link
                                             to={link.href}
+                                            onClick={() => {
+                                                const [targetPath, targetHash] = link.href.split('#');
+                                                if (location.pathname !== targetPath) return;
+
+                                                if (targetHash) {
+                                                    const el = document.getElementById(targetHash);
+                                                    if (el) {
+                                                        setTimeout(() => {
+                                                            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                        }, 0);
+                                                    }
+                                                    return;
+                                                }
+
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }}
                                             className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors inline-flex items-center gap-1 group"
                                         >
                                             <span className="w-0 group-hover:w-2 h-0.5 bg-[var(--accent)] transition-all duration-300" />

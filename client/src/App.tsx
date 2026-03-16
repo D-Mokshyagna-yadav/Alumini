@@ -35,10 +35,30 @@ import Saved from './pages/Saved';
 import Developers from './pages/Developers';
 import ForgotPassword from './pages/ForgotPassword';
 import UploadProgressToast from './components/UploadProgressToast';
+import About from './pages/About';
 
 // Basic logging hook
 function usePageTracking() {
   const location = useLocation();
+
+  useEffect(() => {
+    const scrollToTarget = () => {
+      if (location.hash) {
+        const id = location.hash.replace('#', '');
+        const target = document.getElementById(id);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          return;
+        }
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // Delay ensures the new route content is mounted before hash lookup.
+    const t = window.setTimeout(scrollToTarget, 40);
+    return () => window.clearTimeout(t);
+  }, [location.pathname, location.hash]);
+
   useEffect(() => {
     console.log(`[Navigation] Page changed to: ${location.pathname}`);
     console.log(`[Navigation] State:`, location.state);
@@ -101,6 +121,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/about" element={<PublicProfessionalRoute><About /></PublicProfessionalRoute>} />
 
         {/* Protected Routes - LinkedIn-style layout */}
         <Route path="/feed" element={<ProfessionalRoute><Feed /></ProfessionalRoute>} />

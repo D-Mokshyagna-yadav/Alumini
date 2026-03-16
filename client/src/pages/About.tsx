@@ -243,7 +243,7 @@ const About = () => {
                     </div>
 
                     {/* Administration / Governing Body */}
-                    <div className="max-w-4xl mx-auto">
+                    <div id="leadership" className="max-w-4xl mx-auto">
                         <h2 className="text-2xl sm:text-3xl font-heading font-bold text-[var(--text-primary)] text-center mb-12">Administration</h2>
                         <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl shadow-sm border border-[var(--border-color)]/30 rounded-2xl overflow-hidden">
                             <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[var(--border-color)]">
