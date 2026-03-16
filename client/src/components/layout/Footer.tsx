@@ -145,11 +145,11 @@ const Footer = () => {
                     className="bg-[var(--bg-tertiary)]/60 backdrop-blur-sm p-6 mb-12 border border-[var(--border-color)] rounded-2xl"
                 >
                     <div className="flex flex-wrap justify-center gap-4 sm:gap-8 text-sm">
-                        <a href={`mailto:${branding.contactEmail || 'office@mictech.ac.in'}`} className="flex items-center gap-3 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors group">
+                        <a href={`mailto:${branding.contactEmail || ' alumni@mictech.ac.in'}`} className="flex items-center gap-3 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors group">
                             <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center group-hover:bg-[var(--accent)] group-hover:text-[var(--bg-primary)] transition-all duration-200">
                                 <Mail size={18} />
                             </div>
-                            <span>{branding.contactEmail || 'office@mictech.ac.in'}</span>
+                            <span>{branding.contactEmail || 'alumni@mictech.ac.in'}</span>
                         </a>
                         <a href={`tel:${branding.contactPhone || '+91 73826 16824'}`} className="flex items-center gap-3 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors group">
                             <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center group-hover:bg-[var(--accent)] group-hover:text-[var(--bg-primary)] transition-all duration-200">

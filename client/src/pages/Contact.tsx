@@ -39,7 +39,7 @@ const Contact = () => {
         {
             icon: Mail,
             title: 'Email Us',
-            content: 'office@mictech.ac.in',
+            content: ' alumni@mictech.ac.in',
         },
         {
             icon: Clock,
@@ -136,7 +136,7 @@ const Contact = () => {
                                         </div>
                                         <div>
                                             <p className="text-sm text-[var(--bg-primary)]/60">Email us at</p>
-                                            <p className="font-semibold">office@mictech.ac.in</p>
+                                            <p className="font-semibold"> alumni@mictech.ac.in</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4 p-4 bg-[var(--bg-primary)]/10 backdrop-blur-sm">
