@@ -49,11 +49,11 @@ const About = () => {
                                 A Legacy of Excellence
                             </h2>
                             <div className="w-20 h-1.5 bg-[var(--accent)] rounded-full mb-8" />
-                            <p className="text-lg text-[var(--text-secondary)] mb-6 leading-relaxed">
+                            <p className="text-lg text-[var(--text-secondary)] mb-6 leading-relaxed text-justify">
                                 DVR & Dr. HS MIC College of Technology was established in 2002 by the Devineni Ramana & Praneetha Memorial Trust.
                                 Located in Kanchikacherla, Andhra Pradesh, the institution has metamorphosed into a premier autonomous hub for technical education.
                             </p>
-                            <p className="text-lg text-[var(--text-secondary)] leading-relaxed">
+                            <p className="text-lg text-[var(--text-secondary)] leading-relaxed text-justify">
                                 Our journey from a modest beginning with three branches to a multidisciplinary institution offering B.Tech, M.Tech, MBA, and MCA programs
                                 is a testament to our unwavering commitment to quality. With Autonomous Status granted by UGC in 2018 and a recently awarded NAAC "A+" Grade,
                                 we stand tall as a beacon of knowledge and innovation.
@@ -77,8 +77,8 @@ const About = () => {
                             </div>
                             <div className="p-6 bg-[var(--bg-tertiary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl">
                                 <CheckCircle className="w-10 h-10 text-[var(--accent)] mb-4" />
-                                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">NBA</h3>
-                                <p className="text-[var(--text-secondary)]">CSE, ECE & ME Accredited</p>
+                                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">JNTUK Recognized Institution</h3>
+                                <p className="text-[var(--text-secondary)]">Award-Winning Academic Excellence</p>
                             </div>
                             <div className="p-6 bg-[var(--bg-tertiary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl">
                                 <GraduationCap className="w-10 h-10 text-[var(--accent)] mb-4" />
