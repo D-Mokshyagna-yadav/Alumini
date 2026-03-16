@@ -128,10 +128,10 @@ const Navbar = () => {
                     <Link to={isAuthenticated ? '/feed' : '/'} className="flex items-center gap-2.5 shrink-0">
                         <img src="/logo-small.png" alt="Logo" className="w-14 h-14 rounded-xl object-contain" />
                         {isLandingPage ? (
-                            <div className="hidden sm:block leading-tight px-2 py-1 rounded-md bg-black/35 backdrop-blur-[2px] border border-white/20">
-                                <div className="text-[11px] font-extrabold tracking-wide text-red-500" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.7)' }}>DVR &amp; DR. HS</div>
-                                <div className="text-[13px] font-extrabold tracking-wide" style={{ color: '#2f66ff', textShadow: '0 1px 2px rgba(255,255,255,0.45), 0 1px 3px rgba(0,0,0,0.8)' }}>MIC COLLEGE OF TECHNOLOGY</div>
-                                <div className="text-[11px] font-extrabold tracking-wide text-red-500" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.7)' }}>AUTONOMOUS</div>
+                            <div className="hidden sm:block leading-tight">
+                                <div className="text-[11px] font-bold tracking-wide text-red-600">DVR &amp; DR. HS</div>
+                                <div className="text-[12px] font-bold tracking-wide" style={{ color: '#4169E1' }}>MIC COLLEGE OF TECHNOLOGY</div>
+                                <div className="text-[11px] font-bold tracking-wide text-red-600">AUTONOMOUS</div>
                             </div>
                         ) : (
                             <span className={`hidden sm:block font-bold text-base tracking-tight ${isTransparent ? 'text-white' : 'text-[var(--text-primary)]'}`}>
