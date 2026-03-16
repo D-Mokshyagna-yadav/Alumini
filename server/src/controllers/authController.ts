@@ -503,13 +503,16 @@ export const checkAuth = async (req: Request, res: Response) => {
     if (req.session && req.session.userId) {
         try {
             const user = await User.findById(req.session.userId).select('-passwordHash');
-            if (!user) return res.status(401).json({ message: 'Unauthorized' });
+            if (!user) {
+                req.session.userId = undefined;
+                return res.json({ user: null });
+            }
             const userObj = user.toJSON();
             return res.json({ user: { ...userObj, id: user._id } });
         } catch (error) {
             return res.status(500).json({ message: 'Server error' });
         }
     } else {
-        return res.status(401).json({ message: 'Unauthorized' });
+        return res.json({ user: null });
     }
 };

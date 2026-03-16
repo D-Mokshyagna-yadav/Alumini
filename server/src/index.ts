@@ -4,6 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import http from 'http';
 import path from 'path';
+import fs from 'fs';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 import session from 'express-session';
@@ -342,12 +343,39 @@ app.use((err: any, req: express.Request, res: express.Response, _next: express.N
 });
 
 // ─── Serve Client Build (single-instance deployment) ───
-const clientDistPath = path.join(__dirname, '../../client/dist');
+const clientDistCandidates = [
+    path.resolve(__dirname, '../../client/dist'), // common: /app/server/dist -> /app/client/dist
+    path.resolve(__dirname, '../../../client/dist'), // fallback if transpiled depth differs
+];
+
+const clientDistPath = clientDistCandidates.find((p) => fs.existsSync(p)) || clientDistCandidates[0];
+if (!fs.existsSync(clientDistPath)) {
+    logger.error(`[static] client dist not found at: ${clientDistCandidates.join(', ')}`);
+} else {
+    logger.log(`[static] serving client from: ${clientDistPath}`);
+}
+
 app.use(express.static(clientDistPath, {
     maxAge: '1y',
     immutable: true,
     index: false, // We handle index.html ourselves for SPA routing
+    setHeaders: (res, filePath) => {
+        // Never cache HTML shell aggressively; hashed assets remain immutable.
+        if (filePath.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        }
+    },
 }));
+
+// Ensure explicit /index.html requests also bypass long-term caching.
+app.get('/index.html', (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+});
 
 // SPA catch-all: any non-API route serves index.html for client-side routing
 app.get('*', (req, res) => {
