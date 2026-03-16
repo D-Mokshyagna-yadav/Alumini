@@ -127,9 +127,17 @@ const Navbar = () => {
                     {/* Logo */}
                     <Link to={isAuthenticated ? '/feed' : '/'} className="flex items-center gap-2.5 shrink-0">
                         <img src="/logo-small.png" alt="Logo" className="w-14 h-14 rounded-xl object-contain" />
-                        <span className={`hidden sm:block font-bold text-base tracking-tight ${isTransparent ? 'text-white' : 'text-[var(--text-primary)]'}`}>
-                            MIC Alumni
-                        </span>
+                        {isLandingPage ? (
+                            <div className="hidden sm:block leading-tight">
+                                <div className="text-[11px] font-bold tracking-wide text-red-600">DVR &amp; DR. HS</div>
+                                <div className="text-[12px] font-bold tracking-wide" style={{ color: '#4169E1' }}>MIC COLLEGE OF TECHNOLOGY</div>
+                                <div className="text-[11px] font-bold tracking-wide text-red-600">AUTONOMOUS</div>
+                            </div>
+                        ) : (
+                            <span className={`hidden sm:block font-bold text-base tracking-tight ${isTransparent ? 'text-white' : 'text-[var(--text-primary)]'}`}>
+                                MIC Alumni
+                            </span>
+                        )}
                     </Link>
 
                     {/* ─── Desktop Navigation (center) ─── */}
