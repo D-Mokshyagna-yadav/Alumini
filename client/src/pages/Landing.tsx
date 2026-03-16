@@ -11,6 +11,7 @@ import CTA from '../components/landing/CTA';
 
 interface HomePayload {
     hero?: any;
+    companies?: any[];
     stats?: any[];
     leaders?: any[];
     timeline?: any[];
