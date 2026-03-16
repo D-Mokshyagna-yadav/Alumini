@@ -63,6 +63,10 @@ const Saved = () => {
     const [editCollectionName, setEditCollectionName] = useState('');
     const [showSaveToCollectionModal, setShowSaveToCollectionModal] = useState(false);
     const [postToSave, setPostToSave] = useState<Post | null>(null);
+    const [deletingCollection, setDeletingCollection] = useState(false);
+    const [renamingCollection, setRenamingCollection] = useState(false);
+    const [unsavingPost, setUnsavingPost] = useState(false);
+    const [addingToCollection, setAddingToCollection] = useState(false);
 
     useEffect(() => {
         fetchCollections();
@@ -129,8 +133,10 @@ const Saved = () => {
     };
 
     const handleDeleteCollection = async (collectionId: string) => {
+        if (deletingCollection) return;
         const ok = await confirm({ title: 'Delete Collection', message: 'Delete this collection? Posts will remain saved in "All Saved".', confirmText: 'Delete', danger: true });
         if (!ok) return;
+        setDeletingCollection(true);
         try {
             await api.delete(`/saved/collections/${collectionId}`);
             setCollections(collections.filter(c => c._id !== collectionId));
@@ -141,11 +147,15 @@ const Saved = () => {
             toast.show('Collection deleted', 'success');
         } catch (error: any) {
             toast.show(error.response?.data?.message || 'Failed to delete collection', 'error');
+        } finally {
+            setDeletingCollection(false);
         }
     };
 
     const handleRenameCollection = async () => {
         if (!editingCollection || !editCollectionName.trim()) return;
+        if (renamingCollection) return;
+        setRenamingCollection(true);
         try {
             await api.put(`/saved/collections/${editingCollection._id}`, { name: editCollectionName });
             setCollections(collections.map(c => c._id === editingCollection._id ? { ...c, name: editCollectionName } : c));
@@ -154,10 +164,14 @@ const Saved = () => {
             toast.show('Collection renamed', 'success');
         } catch (error: any) {
             toast.show(error.response?.data?.message || 'Failed to rename collection', 'error');
+        } finally {
+            setRenamingCollection(false);
         }
     };
 
     const handleUnsavePost = async (postId: string) => {
+        if (unsavingPost) return;
+        setUnsavingPost(true);
         try {
             if (selectedCollection) {
                 await api.delete(`/saved/collections/${selectedCollection._id}/remove/${postId}`);
@@ -170,10 +184,14 @@ const Saved = () => {
             toast.show('Post unsaved', 'success');
         } catch (error) {
             toast.show('Failed to unsave post', 'error');
+        } finally {
+            setUnsavingPost(false);
         }
     };
 
     const handleAddToCollection = async (postId: string, collectionId: string) => {
+        if (addingToCollection) return;
+        setAddingToCollection(true);
         try {
             await api.post(`/saved/collections/${collectionId}/add/${postId}`);
             fetchCollections();
@@ -182,6 +200,8 @@ const Saved = () => {
             toast.show('Added to collection', 'success');
         } catch (error) {
             toast.show('Failed to add to collection', 'error');
+        } finally {
+            setAddingToCollection(false);
         }
     };
 

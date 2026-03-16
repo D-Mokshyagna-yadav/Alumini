@@ -14,6 +14,7 @@ const PhoneSettings = () => {
     const [phone, setPhone] = useState(user?.phone || '');
 
     const handleSave = async () => {
+        if (loading) return;
         if (!phone.trim()) {
             toast.show('Please enter a phone number', 'error');
             return;

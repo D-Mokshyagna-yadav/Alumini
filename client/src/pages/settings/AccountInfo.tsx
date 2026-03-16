@@ -30,6 +30,7 @@ const AccountInfo = () => {
     }, [user]);
 
     const handleSave = async () => {
+        if (loading) return;
         setLoading(true);
         try {
             const response = await api.put('/users/profile', formData);

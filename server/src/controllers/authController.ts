@@ -39,6 +39,12 @@ export const sendRegisterOtp = async (req: Request, res: Response) => {
             await User.deleteOne({ _id: existingUser._id });
         }
 
+        // Cooldown: if a register OTP was sent recently, don't send another
+        const recentOtp = await OTP.findOne({ email, type: 'register' });
+        if (recentOtp && recentOtp.createdAt && (Date.now() - new Date(recentOtp.createdAt).getTime()) < 30_000) {
+            return res.json({ message: 'Verification code sent to your email.', email });
+        }
+
         const otp = generateOtp();
         await OTP.deleteMany({ email, type: 'register' });
         await OTP.create({
@@ -221,6 +227,12 @@ export const resendOtp = async (req: Request, res: Response) => {
             if (!user) return res.status(404).json({ message: 'No account with this email.' });
         }
 
+        // Cooldown: if an OTP of this type was sent recently, don't send another
+        const recentOtp = await OTP.findOne({ email, type });
+        if (recentOtp && recentOtp.createdAt && (Date.now() - new Date(recentOtp.createdAt).getTime()) < 30_000) {
+            return res.json({ message: 'OTP has been resent to your email.' });
+        }
+
         const otp = generateOtp();
         await OTP.deleteMany({ email, type });
         await OTP.create({
@@ -247,6 +259,12 @@ export const forgotPassword = async (req: Request, res: Response) => {
         const user = await User.findOne({ email });
         if (!user) {
             // Don't reveal whether account exists
+            return res.json({ message: 'If this email is registered, you will receive an OTP.' });
+        }
+
+        // Cooldown: if a reset OTP was sent recently, don't send another
+        const recentOtp = await OTP.findOne({ email, type: 'reset' });
+        if (recentOtp && recentOtp.createdAt && (Date.now() - new Date(recentOtp.createdAt).getTime()) < 30_000) {
             return res.json({ message: 'If this email is registered, you will receive an OTP.' });
         }
 
@@ -304,6 +322,9 @@ export const resetPassword = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Email and password are required.' });
+        }
 
         const user = await User.findOne({ email });
         if (!user) {
@@ -332,6 +353,16 @@ export const login = async (req: Request, res: Response) => {
 
         // 2-Step Verification: if enabled, send OTP before granting session
         if (user.twoFactorEnabled) {
+            // Cooldown: if a login OTP was sent recently, don't send another
+            const recentOtp = await OTP.findOne({ email: user.email, type: 'login' });
+            if (recentOtp && recentOtp.createdAt && (Date.now() - new Date(recentOtp.createdAt).getTime()) < 30_000) {
+                return res.status(200).json({
+                    message: 'A verification code has been sent to your email.',
+                    require2fa: true,
+                    email: user.email,
+                });
+            }
+
             const otp = generateOtp();
             await OTP.deleteMany({ email: user.email, type: 'login' });
             await OTP.create({
@@ -460,6 +491,15 @@ export const requestOtpLogin = async (req: Request, res: Response) => {
         if (user.status !== UserStatus.ACTIVE && user.role !== UserRole.ADMIN) {
             return res.status(403).json({
                 message: 'Your account is pending verification. Please wait for admin approval.',
+            });
+        }
+
+        // Cooldown: if a login OTP was sent recently, don't send another
+        const recentOtp = await OTP.findOne({ email: user.email, type: 'login' });
+        if (recentOtp && recentOtp.createdAt && (Date.now() - new Date(recentOtp.createdAt).getTime()) < 30_000) {
+            return res.status(200).json({
+                message: 'A login OTP has been sent to your email.',
+                email: user.email,
             });
         }
 

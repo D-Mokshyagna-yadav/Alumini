@@ -97,6 +97,12 @@ const Feed = () => {
     const [postSubmitting, setPostSubmitting] = useState(false);
     const [commentSubmitting, setCommentSubmitting] = useState(false);
     const [editSubmitting, setEditSubmitting] = useState(false);
+    const [likeLoading, setLikeLoading] = useState(false);
+    const [saveLoading, setSaveLoading] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+    const [deleteCommentLoading, setDeleteCommentLoading] = useState(false);
+    const [detailLikeLoading, setDetailLikeLoading] = useState(false);
+    const [detailCommentLoading, setDetailCommentLoading] = useState(false);
 
     useEffect(() => {
         fetchPosts();
@@ -273,6 +279,8 @@ const Feed = () => {
 
     const handleLike = async (postId: string) => {
         if (!isAuthenticated) { navigate('/login'); return; }
+        if (likeLoading) return;
+        setLikeLoading(true);
         try {
             await api.post(`/posts/${postId}/like`);
             setPosts(prev => prev.map(post => {
@@ -281,11 +289,15 @@ const Feed = () => {
                 const newLikes = post.likes.includes(userId) ? post.likes.filter(id => id !== userId) : [...post.likes, userId];
                 return { ...post, likes: newLikes };
             }));
-        } catch { /* silent */ }
+        } catch { /* silent */ } finally {
+            setLikeLoading(false);
+        }
     };
 
     const handleSave = async (postId: string) => {
         if (!isAuthenticated) { navigate('/login'); return; }
+        if (saveLoading) return;
+        setSaveLoading(true);
         const wasSaved = savedPosts.has(postId);
         setSavedPosts(prev => { const s = new Set(prev); if (wasSaved) { s.delete(postId); } else { s.add(postId); } return s; });
         try {
@@ -294,17 +306,23 @@ const Feed = () => {
         } catch {
             setSavedPosts(prev => { const s = new Set(prev); if (wasSaved) { s.add(postId); } else { s.delete(postId); } return s; });
             toast.show('Failed to save', 'error');
+        } finally {
+            setSaveLoading(false);
         }
     };
 
     const handleDelete = async (postId: string) => {
+        if (deleteLoading) return;
         const ok = await confirm({ title: 'Delete Post', message: 'Are you sure you want to delete this post? This cannot be undone.', confirmText: 'Delete', danger: true });
         if (!ok) return;
+        setDeleteLoading(true);
         try {
             await api.delete(`/posts/${postId}`);
             setPosts(prev => prev.filter(p => p._id !== postId));
             toast.show('Post deleted', 'success');
-        } catch { toast.show('Failed to delete', 'error'); }
+        } catch { toast.show('Failed to delete', 'error'); } finally {
+            setDeleteLoading(false);
+        }
     };
 
     const handleAddComment = async (postId: string) => {
@@ -323,8 +341,10 @@ const Feed = () => {
     };
 
     const handleDeleteComment = async (postId: string, commentId: string) => {
+        if (deleteCommentLoading) return;
         const ok = await confirm({ title: 'Delete Comment', message: 'Are you sure you want to delete this comment?', confirmText: 'Delete', danger: true });
         if (!ok) return;
+        setDeleteCommentLoading(true);
         try {
             const res = await api.delete(`/posts/${postId}/comments/${commentId}`);
             setPosts(prev => prev.map(post => post._id === postId ? { ...post, comments: res.data.comments } : post));
@@ -334,7 +354,9 @@ const Feed = () => {
                 setDetailedPost(detailRes.data.post);
             }
             toast.show('Comment deleted', 'success');
-        } catch { toast.show('Failed to delete comment', 'error'); }
+        } catch { toast.show('Failed to delete comment', 'error'); } finally {
+            setDeleteCommentLoading(false);
+        }
     };
 
     const handleEditFeedPost = async (postId: string) => {
@@ -372,6 +394,7 @@ const Feed = () => {
     const isPostLiked = (post: Post) => user?.id ? post.likes.includes(user.id) : false;
 
     const handleViewDetail = async (postId: string) => {
+        if (detailLoading) return;
         setDetailLoading(true);
         setDetailedPost(null);
         try {
@@ -386,6 +409,8 @@ const Feed = () => {
 
     const handleDetailLike = async () => {
         if (!isAuthenticated || !detailedPost) { navigate('/login'); return; }
+        if (detailLikeLoading) return;
+        setDetailLikeLoading(true);
         try {
             await api.post(`/posts/${detailedPost._id}/like`);
             const userId = user?.id || '';
@@ -398,12 +423,16 @@ const Feed = () => {
             // Refresh detail
             const res = await api.get(`/posts/detail/${detailedPost._id}`);
             setDetailedPost(res.data.post);
-        } catch { /* silent */ }
+        } catch { /* silent */ } finally {
+            setDetailLikeLoading(false);
+        }
     };
 
     const handleDetailComment = async () => {
         if (!isAuthenticated || !detailedPost) { navigate('/login'); return; }
         if (!detailCommentText.trim()) return;
+        if (detailCommentLoading) return;
+        setDetailCommentLoading(true);
         try {
             const res = await api.post(`/posts/${detailedPost._id}/comment`, { text: detailCommentText });
             setPosts(prev => prev.map(post => post._id === detailedPost._id ? { ...post, comments: res.data.comments } : post));
@@ -411,7 +440,9 @@ const Feed = () => {
             // Refresh detail
             const detailRes = await api.get(`/posts/detail/${detailedPost._id}`);
             setDetailedPost(detailRes.data.post);
-        } catch { /* silent */ }
+        } catch { /* silent */ } finally {
+            setDetailCommentLoading(false);
+        }
     };
 
     const getTimeAgo = (dateStr: string) => {

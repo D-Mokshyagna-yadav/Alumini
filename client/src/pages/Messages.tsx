@@ -189,6 +189,7 @@ const Messages = () => {
     const [searchFocused, setSearchFocused] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
     const [showMobileChat, setShowMobileChat] = useState(false);
+    const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -676,7 +677,10 @@ const Messages = () => {
                                                             <motion.button
                                                                 whileHover={{ scale: 1.05 }}
                                                                 whileTap={{ scale: 0.95 }}
+                                                                disabled={processingRequestId !== null}
                                                                 onClick={async () => {
+                                                                    if (processingRequestId) return;
+                                                                    setProcessingRequestId(convo.id);
                                                                     try {
                                                                         await api.put(`/chat/accept-request/${convo.id}`);
                                                                         setMessageRequests(prev => prev.filter(r => r.id !== convo.id));
@@ -686,26 +690,33 @@ const Messages = () => {
                                                                         setShowMobileChat(true);
                                                                     } catch (e) {
                                                                         console.error('Failed to accept request:', e);
+                                                                    } finally {
+                                                                        setProcessingRequestId(null);
                                                                     }
                                                                 }}
-                                                                className="px-3 py-1.5 bg-[var(--accent)] text-[var(--bg-primary)] text-xs font-semibold"
+                                                                className={`px-3 py-1.5 bg-[var(--accent)] text-[var(--bg-primary)] text-xs font-semibold ${processingRequestId !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                             >
-                                                                Accept
+                                                                {processingRequestId === convo.id ? 'Accepting...' : 'Accept'}
                                                             </motion.button>
                                                             <motion.button
                                                                 whileHover={{ scale: 1.05 }}
                                                                 whileTap={{ scale: 0.95 }}
+                                                                disabled={processingRequestId !== null}
                                                                 onClick={async () => {
+                                                                    if (processingRequestId) return;
+                                                                    setProcessingRequestId(convo.id);
                                                                     try {
                                                                         await api.delete(`/chat/decline-request/${convo.id}`);
                                                                         setMessageRequests(prev => prev.filter(r => r.id !== convo.id));
                                                                     } catch (e) {
                                                                         console.error('Failed to decline request:', e);
+                                                                    } finally {
+                                                                        setProcessingRequestId(null);
                                                                     }
                                                                 }}
-                                                                className="px-3 py-1.5 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] text-xs font-semibold"
+                                                                className={`px-3 py-1.5 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] text-xs font-semibold ${processingRequestId !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                             >
-                                                                Delete
+                                                                {processingRequestId === convo.id ? 'Deleting...' : 'Delete'}
                                                             </motion.button>
                                                         </div>
                                                     </div>

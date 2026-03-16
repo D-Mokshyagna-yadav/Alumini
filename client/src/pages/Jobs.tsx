@@ -62,6 +62,9 @@ const Jobs = () => {
     });
     const [requirementsText, setRequirementsText] = useState<string>('');
     const [jobImage, setJobImage] = useState<File | null>(null);
+    const [savingJobId, setSavingJobId] = useState<string | number | null>(null);
+    const [creatingJob, setCreatingJob] = useState(false);
+    const [savingPreferences, setSavingPreferences] = useState(false);
 
     useEffect(() => {
         let mounted = true;
@@ -212,7 +215,9 @@ const Jobs = () => {
 
     const handleSave = async (jobId: string | number, e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
+        if (savingJobId === jobId) return;
         const job = jobs.find(j => j.id === jobId);
+        setSavingJobId(jobId);
         try {
             if (job?.isSaved) {
                 await api.delete(`/saved/unsave/${jobId}`);
@@ -226,6 +231,8 @@ const Jobs = () => {
             ));
         } catch (err) {
             console.error('Failed to save/unsave job', err);
+        } finally {
+            setSavingJobId(null);
         }
     };
 
@@ -424,7 +431,9 @@ const Jobs = () => {
                         </div>
                         <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
                             <button onClick={() => setShowJobModal(false)} className="px-4 py-2 text-[var(--text-secondary)] font-medium hover:bg-[var(--bg-tertiary)]">Cancel</button>
-                            <button onClick={async () => {
+                            <button disabled={creatingJob} onClick={async () => {
+                                if (creatingJob) return;
+                                setCreatingJob(true);
                                 try {
                                     let imageUrl: string | undefined = undefined;
 
@@ -457,8 +466,10 @@ const Jobs = () => {
                                         console.error(err);
                                         toast.show(err.response?.data?.message || 'Failed to post job', 'error');
                                     }
+                                } finally {
+                                    setCreatingJob(false);
                                 }
-                            }} className="px-4 py-2 bg-[var(--accent)] text-[var(--bg-primary)] font-medium">Post Job</button>
+                            }} className="px-4 py-2 bg-[var(--accent)] text-[var(--bg-primary)] font-medium disabled:opacity-50">{creatingJob ? 'Posting...' : 'Post Job'}</button>
                         </div>
                     </div>
                 </div>
@@ -519,7 +530,9 @@ const Jobs = () => {
 
                         <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
                             <button onClick={() => setShowPreferencesModal(false)} className="px-4 py-2 text-[var(--text-secondary)] font-medium hover:bg-[var(--bg-tertiary)]">Cancel</button>
-                            <button onClick={async () => {
+                            <button disabled={savingPreferences} onClick={async () => {
+                                if (savingPreferences) return;
+                                setSavingPreferences(true);
                                 try {
                                     await api.post('/jobs/preferences', { jobProviderPreference: providerPref, jobSeekerPreference: seekerPref });
                                     toast.show('Preferences saved', 'success');
@@ -527,8 +540,10 @@ const Jobs = () => {
                                 } catch (err: any) {
                                     console.error(err);
                                     toast.show(err.response?.data?.message || 'Failed to save preferences', 'error');
+                                } finally {
+                                    setSavingPreferences(false);
                                 }
-                            }} className="px-4 py-2 bg-[var(--accent)] text-[var(--bg-primary)] font-medium">Save</button>
+                            }} className="px-4 py-2 bg-[var(--accent)] text-[var(--bg-primary)] font-medium disabled:opacity-50">{savingPreferences ? 'Saving...' : 'Save'}</button>
                         </div>
                     </div>
                 </div>

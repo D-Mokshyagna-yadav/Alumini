@@ -48,7 +48,13 @@ const Gallery = () => {
     const [lightboxIndex, setLightboxIndex] = useState(0);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showUploadModal, setShowUploadModal] = useState(false);
-    
+    const [likingMedia, setLikingMedia] = useState(false);
+    const [creatingAlbum, setCreatingAlbum] = useState(false);
+    const [uploadingMedia, setUploadingMedia] = useState(false);
+    const [deletingAlbum, setDeletingAlbum] = useState(false);
+    const [deletingMedia, setDeletingMedia] = useState(false);
+    const [settingCover, setSettingCover] = useState(false);
+
     const isAdmin = user?.role === 'admin';
 
     useEffect(() => {
@@ -91,14 +97,16 @@ const Gallery = () => {
 
     const handleLike = async (mediaId: string) => {
         if (!selectedAlbum) return;
+        if (likingMedia) return;
+        setLikingMedia(true);
         try {
             await api.post(`/gallery/album/${selectedAlbum.id}/images/${mediaId}/like`);
-            setAlbums(prev => prev.map(album => 
+            setAlbums(prev => prev.map(album =>
                 album.id === selectedAlbum.id
                     ? {
                         ...album,
-                        images: album.images.map(img => 
-                            img.id === mediaId 
+                        images: album.images.map(img =>
+                            img.id === mediaId
                                 ? { ...img, likes: img.isLiked ? img.likes - 1 : img.likes + 1, isLiked: !img.isLiked }
                                 : img
                         )
@@ -107,14 +115,16 @@ const Gallery = () => {
             ));
             setSelectedAlbum(prev => prev ? {
                 ...prev,
-                images: prev.images.map(img => 
-                    img.id === mediaId 
+                images: prev.images.map(img =>
+                    img.id === mediaId
                         ? { ...img, likes: img.isLiked ? img.likes - 1 : img.likes + 1, isLiked: !img.isLiked }
                         : img
                 )
             } : null);
         } catch (err) {
             console.error('Failed to like', err);
+        } finally {
+            setLikingMedia(false);
         }
     };
 
@@ -132,6 +142,8 @@ const Gallery = () => {
     };
 
     const handleCreateAlbum = async (title: string, description: string) => {
+        if (creatingAlbum) return;
+        setCreatingAlbum(true);
         try {
             const res = await api.post('/gallery/album', { title, description });
             setAlbums(prev => [res.data.album, ...prev]);
@@ -139,11 +151,15 @@ const Gallery = () => {
             toast.show('Album created!', 'success');
         } catch (err: any) {
             toast.show(err?.response?.data?.message || 'Failed to create album', 'error');
+        } finally {
+            setCreatingAlbum(false);
         }
     };
 
     const handleUploadMedia = async (files: File[]) => {
         if (!selectedAlbum) return;
+        if (uploadingMedia) return;
+        setUploadingMedia(true);
         try {
             const formData = new FormData();
             files.forEach(f => formData.append('images', f));
@@ -151,7 +167,7 @@ const Gallery = () => {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             const newMedia = res.data.images || [];
-            setAlbums(prev => prev.map(a => 
+            setAlbums(prev => prev.map(a =>
                 a.id === selectedAlbum.id ? { ...a, images: [...a.images, ...newMedia] } : a
             ));
             setSelectedAlbum(prev => prev ? { ...prev, images: [...prev.images, ...newMedia] } : null);
@@ -159,12 +175,16 @@ const Gallery = () => {
             toast.show('Media uploaded!', 'success');
         } catch (err: any) {
             toast.show(err?.response?.data?.message || 'Failed to upload', 'error');
+        } finally {
+            setUploadingMedia(false);
         }
     };
 
     const handleDeleteAlbum = async (albumId: string) => {
+        if (deletingAlbum) return;
         const ok = await confirm({ title: 'Delete Album', message: 'Delete this album and all its contents?', confirmText: 'Delete', danger: true });
         if (!ok) return;
+        setDeletingAlbum(true);
         try {
             await api.delete(`/gallery/album/${albumId}`);
             setAlbums(prev => prev.filter(a => a.id !== albumId));
@@ -172,22 +192,28 @@ const Gallery = () => {
             toast.show('Album deleted', 'success');
         } catch (err: any) {
             toast.show(err?.response?.data?.message || 'Failed to delete album', 'error');
+        } finally {
+            setDeletingAlbum(false);
         }
     };
 
     const handleDeleteMedia = async (mediaId: string) => {
         if (!selectedAlbum) return;
+        if (deletingMedia) return;
         const ok = await confirm({ title: 'Delete Item', message: 'Delete this item?', confirmText: 'Delete', danger: true });
         if (!ok) return;
+        setDeletingMedia(true);
         try {
             await api.delete(`/gallery/album/${selectedAlbum.id}/images/${mediaId}`);
-            setAlbums(prev => prev.map(a => 
+            setAlbums(prev => prev.map(a =>
                 a.id === selectedAlbum.id ? { ...a, images: a.images.filter(i => i.id !== mediaId) } : a
             ));
             setSelectedAlbum(prev => prev ? { ...prev, images: prev.images.filter(i => i.id !== mediaId) } : null);
             toast.show('Item deleted', 'success');
         } catch (err: any) {
             toast.show(err?.response?.data?.message || 'Failed to delete', 'error');
+        } finally {
+            setDeletingMedia(false);
         }
     };
 
@@ -207,6 +233,8 @@ const Gallery = () => {
 
     const handleSetCover = async (mediaUrl: string) => {
         if (!selectedAlbum) return;
+        if (settingCover) return;
+        setSettingCover(true);
         try {
             await api.put(`/gallery/album/${selectedAlbum.id}`, { coverImage: mediaUrl });
             setAlbums(prev => prev.map(a => a.id === selectedAlbum.id ? { ...a, coverImage: mediaUrl } : a));
@@ -214,6 +242,8 @@ const Gallery = () => {
             toast.show('Album cover updated!', 'success');
         } catch (err: any) {
             toast.show(err?.response?.data?.message || 'Failed to update cover', 'error');
+        } finally {
+            setSettingCover(false);
         }
     };
 

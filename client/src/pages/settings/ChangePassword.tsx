@@ -16,6 +16,7 @@ const ChangePassword = () => {
     });
 
     const handleChangePassword = async () => {
+        if (loading) return;
         if (!formData.currentPassword || !formData.newPassword || !formData.confirmPassword) {
             toast.show('Please fill in all fields', 'error');
             return;

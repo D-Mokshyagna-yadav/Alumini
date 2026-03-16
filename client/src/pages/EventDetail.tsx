@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import resolveMediaUrl from '../lib/media';
@@ -38,6 +38,7 @@ const EventDetail = () => {
     const [editLoading, setEditLoading] = useState(false);
     const [postSubmitting, setPostSubmitting] = useState(false);
     const [commentSubmitting, setCommentSubmitting] = useState<string | null>(null);
+    const likingRef = useRef<Set<string>>(new Set());
 
     const isAdmin = user?.role === 'admin';
 
@@ -108,6 +109,7 @@ const EventDetail = () => {
     };
 
     const handleRegister = async () => {
+        if (registrationLoading) return;
         setRegistrationLoading(true);
         try {
             await api.post(`/events/${id}/register`);
@@ -122,6 +124,7 @@ const EventDetail = () => {
     };
 
     const handleDelete = async () => {
+        if (deleteLoading) return;
         setDeleteLoading(true);
         try {
             await api.delete(`/events/${id}`);
@@ -136,6 +139,7 @@ const EventDetail = () => {
     };
 
     const handleStateChange = async (newState: string) => {
+        if (stateLoading) return;
         setStateLoading(true);
         try {
             await api.patch(`/events/${id}/state`, { eventState: newState });
@@ -163,6 +167,7 @@ const EventDetail = () => {
     };
 
     const handleEditSave = async () => {
+        if (editLoading) return;
         setEditLoading(true);
         try {
             let bannerUrl: string | undefined;
@@ -208,11 +213,15 @@ const EventDetail = () => {
     };
 
     const handleLike = async (postId: string) => {
+        if (likingRef.current.has(postId)) return;
+        likingRef.current.add(postId);
         try {
             const res = await api.post(`/event-posts/${postId}/like`);
             setPosts(posts.map(p => p.id === postId ? { ...p, isLiked: res.data.isLiked, likes: res.data.likes } : p));
         } catch (err) {
             console.error('Like failed', err);
+        } finally {
+            likingRef.current.delete(postId);
         }
     };
 

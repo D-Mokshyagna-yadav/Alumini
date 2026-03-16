@@ -258,10 +258,10 @@ const Directory = () => {
                 {/* Alumni cards grid skeleton */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                     {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl overflow-hidden">
-                            <div className="h-20 bg-[var(--bg-tertiary)] animate-pulse" />
-                            <div className="px-5 pb-5 -mt-8">
-                                <div className="w-16 h-16 rounded-full bg-[var(--bg-tertiary)] border-[3px] border-[var(--bg-secondary)] animate-pulse mb-3" />
+                        <div key={i} className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl">
+                            <div className="h-20 bg-[var(--bg-tertiary)] animate-pulse rounded-t-2xl" />
+                            <div className="px-5 pb-5 -mt-8 relative z-10">
+                                <div className="w-16 h-16 rounded-full bg-[var(--bg-tertiary)] border-[3px] border-[var(--bg-secondary)] animate-pulse mb-3 shadow-md" />
                                 <div className="space-y-2 mb-4">
                                     <div className="h-4 w-32 rounded bg-[var(--bg-tertiary)] animate-pulse" />
                                     <div className="h-3 w-48 rounded bg-[var(--bg-tertiary)] animate-pulse" />
@@ -422,10 +422,10 @@ const Directory = () => {
                             </div>
 
                             {/* Card Body */}
-                            <div className="px-5 pb-5 -mt-8">
+                            <div className="px-5 pb-5 -mt-8 relative z-10">
                                 {/* Avatar */}
                                 <Link to={`/profile/${person._id}`} className="inline-block mb-3">
-                                    <div className="w-16 h-16 rounded-full bg-[var(--accent)] border-[3px] border-[var(--bg-secondary)] flex items-center justify-center overflow-hidden">
+                                    <div className="w-16 h-16 rounded-full bg-[var(--accent)] border-[3px] border-[var(--bg-secondary)] flex items-center justify-center overflow-hidden shadow-md">
                                         <Avatar src={person.avatar} iconSize={28} />
                                     </div>
                                 </Link>
