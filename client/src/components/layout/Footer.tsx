@@ -5,22 +5,22 @@ import { Mail, Phone, MapPin, Facebook, Linkedin, Instagram, Youtube } from 'luc
 
 const Footer = () => {
     const location = useLocation();
-    const footerLinks = {
-        'About': [
-            { name: 'Our Story', href: '/about' },
-            { name: 'Leadership', href: '/about#leadership' },
-            { name: 'Careers', href: '/jobs' },
-            { name: 'Press', href: '/contact' },
-        ],
-        'Community': [
-            { name: 'Alumni Directory', href: '/directory' },
-            { name: 'Events', href: '/events' },
-        ],
-        'Resources': [
-            { name: 'Give Back', href: '/contact' },
-            { name: 'Contact Us', href: '/contact' },
-        ],
-    };
+        type FooterLink = { name: string; href: string; external?: boolean };
+        const footerLinks: { [section: string]: FooterLink[] } = {
+            'About': [
+                { name: 'Our Story', href: 'https://www.mictech.edu.in/about-college', external: true },
+                { name: 'Leadership', href: 'https://www.mictech.edu.in/leadership', external: true },
+                { name: 'Careers', href: '/jobs' },
+            ],
+            'Community': [
+                { name: 'Alumni Directory', href: '/directory' },
+                { name: 'Events', href: '/events' },
+            ],
+            'Resources': [
+                { name: 'Give Back', href: '/contact' },
+                { name: 'Contact Us', href: '/contact' },
+            ],
+        };
 
     const socialLinks = [
         { icon: Facebook, href: 'https://www.facebook.com/share/1FW4X3wiyG/', label: 'Facebook' },
@@ -98,29 +98,41 @@ const Footer = () => {
                             <ul className="space-y-3">
                                 {links.map((link) => (
                                     <li key={link.name}>
-                                        <Link
-                                            to={link.href}
-                                            onClick={() => {
-                                                const [targetPath, targetHash] = link.href.split('#');
-                                                if (location.pathname !== targetPath) return;
+                                        {link.external ? (
+                                            <a
+                                                href={link.href}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors inline-flex items-center gap-1 group"
+                                            >
+                                                <span className="w-0 group-hover:w-2 h-0.5 bg-[var(--accent)] transition-all duration-300" />
+                                                {link.name}
+                                            </a>
+                                        ) : (
+                                            <Link
+                                                to={link.href}
+                                                onClick={() => {
+                                                    const [targetPath, targetHash] = link.href.split('#');
+                                                    if (location.pathname !== targetPath) return;
 
-                                                if (targetHash) {
-                                                    const el = document.getElementById(targetHash);
-                                                    if (el) {
-                                                        setTimeout(() => {
-                                                            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                                        }, 0);
+                                                    if (targetHash) {
+                                                        const el = document.getElementById(targetHash);
+                                                        if (el) {
+                                                            setTimeout(() => {
+                                                                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                            }, 0);
+                                                        }
+                                                        return;
                                                     }
-                                                    return;
-                                                }
 
-                                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                                            }}
-                                            className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors inline-flex items-center gap-1 group"
-                                        >
-                                            <span className="w-0 group-hover:w-2 h-0.5 bg-[var(--accent)] transition-all duration-300" />
-                                            {link.name}
-                                        </Link>
+                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                }}
+                                                className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors inline-flex items-center gap-1 group"
+                                            >
+                                                <span className="w-0 group-hover:w-2 h-0.5 bg-[var(--accent)] transition-all duration-300" />
+                                                {link.name}
+                                            </Link>
+                                        )}
                                     </li>
                                 ))}
                             </ul>
@@ -133,17 +145,17 @@ const Footer = () => {
                     className="bg-[var(--bg-tertiary)]/60 backdrop-blur-sm p-6 mb-12 border border-[var(--border-color)] rounded-2xl"
                 >
                     <div className="flex flex-wrap justify-center gap-4 sm:gap-8 text-sm">
-                        <a href={`mailto:${branding.contactEmail || 'office@example.com'}`} className="flex items-center gap-3 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors group">
+                        <a href={`mailto:${branding.contactEmail || 'office@mictech.ac.in'}`} className="flex items-center gap-3 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors group">
                             <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center group-hover:bg-[var(--accent)] group-hover:text-[var(--bg-primary)] transition-all duration-200">
                                 <Mail size={18} />
                             </div>
-                            <span>{branding.contactEmail || 'office@example.com'}</span>
+                            <span>{branding.contactEmail || 'office@mictech.ac.in'}</span>
                         </a>
-                        <a href={`tel:${branding.contactPhone || '+0000000000'}`} className="flex items-center gap-3 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors group">
+                        <a href={`tel:${branding.contactPhone || '+91 73826 16824'}`} className="flex items-center gap-3 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors group">
                             <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center group-hover:bg-[var(--accent)] group-hover:text-[var(--bg-primary)] transition-all duration-200">
                                 <Phone size={18} />
                             </div>
-                            <span>{branding.contactPhone || '+0000000000'}</span>
+                            <span>{branding.contactPhone || '+91 73826 16824'}</span>
                         </a>
                         <span className="flex items-center gap-3 text-[var(--text-secondary)]">
                             <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center">
