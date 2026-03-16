@@ -17,8 +17,10 @@ const ForgotPassword = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isResendingOtp, setIsResendingOtp] = useState(false);
     const [resendCooldown, setResendCooldown] = useState(0);
     const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const resendOtpLockRef = useRef(false);
 
     // Resend cooldown timer
     useEffect(() => {
@@ -56,6 +58,7 @@ const ForgotPassword = () => {
     /* Step 1: Request OTP */
     const handleSendOtp = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isSubmitting) return;
         if (!email) { setError('Please enter your email.'); return; }
         setIsSubmitting(true);
         setError('');
@@ -72,6 +75,7 @@ const ForgotPassword = () => {
 
     /* Step 2 + 3: Verify OTP & reset password in one call */
     const handleResetPassword = async () => {
+        if (isSubmitting) return;
         const otp = otpDigits.join('');
         if (otp.length !== 6) { setError('Please enter the full 6-digit code.'); return; }
         if (!newPassword) { setError('Please enter a new password.'); return; }
@@ -87,6 +91,23 @@ const ForgotPassword = () => {
             setError(err.response?.data?.message || 'Failed to reset password.');
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleResendOtp = async () => {
+        if (resendCooldown > 0 || resendOtpLockRef.current || isResendingOtp) return;
+        resendOtpLockRef.current = true;
+        setIsResendingOtp(true);
+        try {
+            await api.post('/auth/resend-otp', { email, type: 'reset' });
+            setResendCooldown(60);
+            setOtpDigits(['', '', '', '', '', '']);
+            setError('');
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Failed to resend OTP.');
+        } finally {
+            setIsResendingOtp(false);
+            resendOtpLockRef.current = false;
         }
     };
 
@@ -231,21 +252,12 @@ const ForgotPassword = () => {
                                         <ArrowLeft size={14} /> Change email
                                     </button>
                                     <button
-                                        disabled={resendCooldown > 0}
-                                        onClick={async () => {
-                                            try {
-                                                await api.post('/auth/resend-otp', { email, type: 'reset' });
-                                                setResendCooldown(60);
-                                                setOtpDigits(['', '', '', '', '', '']);
-                                                setError('');
-                                            } catch (err: any) {
-                                                setError(err.response?.data?.message || 'Failed to resend OTP.');
-                                            }
-                                        }}
+                                        disabled={resendCooldown > 0 || isResendingOtp}
+                                        onClick={handleResendOtp}
                                         className="text-sm text-[var(--accent)] font-medium hover:underline disabled:text-[var(--text-muted)] disabled:no-underline inline-flex items-center gap-1"
                                     >
-                                        <RefreshCw size={14} />
-                                        {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
+                                        <RefreshCw size={14} className={isResendingOtp ? 'animate-spin' : ''} />
+                                        {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : isResendingOtp ? 'Resending...' : 'Resend Code'}
                                     </button>
                                 </div>
                             </div>

@@ -48,8 +48,11 @@ const Register = () => {
     const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
     const [isVerifying, setIsVerifying] = useState(false);
     const [isSendingOtp, setIsSendingOtp] = useState(false);
+    const [isResendingOtp, setIsResendingOtp] = useState(false);
     const [resendCooldown, setResendCooldown] = useState(0);
     const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const sendOtpLockRef = useRef(false);
+    const resendOtpLockRef = useRef(false);
 
     // Resend cooldown timer
     useEffect(() => {
@@ -107,6 +110,7 @@ const Register = () => {
     /* ─── Step 1: Validate account fields then send OTP ─── */
     const handleAccountContinue = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (sendOtpLockRef.current || isSendingOtp) return;
         setError('');
 
         if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
@@ -123,6 +127,7 @@ const Register = () => {
         }
 
         // Send OTP (server checks if email is already taken)
+        sendOtpLockRef.current = true;
         setIsSendingOtp(true);
         try {
             await api.post('/auth/send-register-otp', { email: formData.email.trim() });
@@ -133,11 +138,13 @@ const Register = () => {
             setError(err.response?.data?.message || 'Failed to send verification code.');
         } finally {
             setIsSendingOtp(false);
+            sendOtpLockRef.current = false;
         }
     };
 
     /* ─── Verify OTP within Step 1 ─── */
     const handleVerifyEmailOtp = async () => {
+        if (isVerifying) return;
         const otp = otpDigits.join('');
         if (otp.length !== 6) { setError('Please enter the full 6-digit code.'); return; }
         setIsVerifying(true);
@@ -152,6 +159,23 @@ const Register = () => {
             setError(err.response?.data?.message || 'Verification failed.');
         } finally {
             setIsVerifying(false);
+        }
+    };
+
+    const handleResendRegisterOtp = async () => {
+        if (resendCooldown > 0 || resendOtpLockRef.current || isResendingOtp) return;
+        resendOtpLockRef.current = true;
+        setIsResendingOtp(true);
+        try {
+            await api.post('/auth/send-register-otp', { email: formData.email });
+            setResendCooldown(60);
+            setOtpDigits(['', '', '', '', '', '']);
+            setError('');
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Failed to resend OTP.');
+        } finally {
+            setIsResendingOtp(false);
+            resendOtpLockRef.current = false;
         }
     };
 
@@ -375,21 +399,12 @@ const Register = () => {
                                                 <ArrowLeft size={14} /> Back
                                             </button>
                                             <button
-                                                disabled={resendCooldown > 0}
-                                                onClick={async () => {
-                                                    try {
-                                                        await api.post('/auth/send-register-otp', { email: formData.email });
-                                                        setResendCooldown(60);
-                                                        setOtpDigits(['', '', '', '', '', '']);
-                                                        setError('');
-                                                    } catch (err: any) {
-                                                        setError(err.response?.data?.message || 'Failed to resend OTP.');
-                                                    }
-                                                }}
+                                                disabled={resendCooldown > 0 || isResendingOtp}
+                                                onClick={handleResendRegisterOtp}
                                                 className="text-sm text-[var(--accent)] font-medium hover:underline disabled:text-[var(--text-muted)] disabled:no-underline inline-flex items-center gap-1"
                                             >
-                                                <RefreshCw size={14} />
-                                                {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
+                                                <RefreshCw size={14} className={isResendingOtp ? 'animate-spin' : ''} />
+                                                {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : isResendingOtp ? 'Resending...' : 'Resend Code'}
                                             </button>
                                         </div>
                                     </div>

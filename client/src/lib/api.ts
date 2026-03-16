@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
+import { uploadProgressStore } from './uploadProgress';
 
 // When VITE_API_URL is set (e.g. "https://api.example.com/api"), axios calls
 // that URL directly. When empty, requests go to the same origin at /api.
@@ -19,6 +20,7 @@ interface CacheEntry {
 
 const _cache = new Map<string, CacheEntry>();
 const DEFAULT_TTL = 15_000; // 15 s – fresh enough for most UI refetches
+let uploadReqCounter = 0;
 
 /** Build a deterministic cache key from method + url + params */
 const cacheKey = (config: AxiosRequestConfig): string => {
@@ -28,6 +30,24 @@ const cacheKey = (config: AxiosRequestConfig): string => {
 
 // ── Request interceptor: return cached data if available ──────
 api.interceptors.request.use((config) => {
+    const method = (config.method || 'get').toLowerCase();
+    const isUpload = typeof FormData !== 'undefined' && config.data instanceof FormData;
+    if (isUpload && method !== 'get') {
+        const uploadId = `up-${Date.now()}-${uploadReqCounter++}`;
+        (config as any).__uploadId = uploadId;
+        const existingProgress = config.onUploadProgress;
+        uploadProgressStore.start(uploadId);
+        config.onUploadProgress = (event) => {
+            const total = event.total || 0;
+            if (total > 0) {
+                uploadProgressStore.update(uploadId, (event.loaded / total) * 100);
+            }
+            if (typeof existingProgress === 'function') {
+                existingProgress(event);
+            }
+        };
+    }
+
     if (config.method === 'get' || !config.method) {
         const key = cacheKey(config);
         const entry = _cache.get(key);
@@ -46,6 +66,10 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => {
         const config = response.config;
+        const uploadId = (config as any).__uploadId;
+        if (uploadId) {
+            uploadProgressStore.finish(uploadId);
+        }
         if (
             (config.method === 'get' || !config.method) &&
             response.status >= 200 &&
@@ -69,6 +93,10 @@ api.interceptors.response.use(
         return response;
     },
     (error) => {
+        const uploadId = (error?.config as any)?.__uploadId;
+        if (uploadId) {
+            uploadProgressStore.fail(uploadId);
+        }
         // Auto-redirect to login on 401 (session expired)
         if (error.response?.status === 401) {
             flushClientCache();

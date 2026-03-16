@@ -34,6 +34,7 @@ import Gallery from './pages/Gallery';
 import Saved from './pages/Saved';
 import Developers from './pages/Developers';
 import ForgotPassword from './pages/ForgotPassword';
+import UploadProgressToast from './components/UploadProgressToast';
 
 // Basic logging hook
 function usePageTracking() {
@@ -84,64 +85,67 @@ const PublicProfessionalRoute = ({ children }: { children: React.ReactNode }) =>
 function App() {
   usePageTracking();
   return (
-    <Routes>
-      {/* Public Routes with standard Layout */}
-      <Route element={<Layout />}>
-        <Route path="/" element={
-          <AuthRedirect>
-            <Landing />
-          </AuthRedirect>
-        } />
-        <Route path="/verification-pending" element={<VerificationPending />} />
-      </Route>
+    <>
+      <Routes>
+        {/* Public Routes with standard Layout */}
+        <Route element={<Layout />}>
+          <Route path="/" element={
+            <AuthRedirect>
+              <Landing />
+            </AuthRedirect>
+          } />
+          <Route path="/verification-pending" element={<VerificationPending />} />
+        </Route>
 
-      {/* Auth Pages - No Layout */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
+        {/* Auth Pages - No Layout */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
-      {/* Protected Routes - LinkedIn-style layout */}
-      <Route path="/feed" element={<ProfessionalRoute><Feed /></ProfessionalRoute>} />
-      <Route path="/profile" element={<ProfessionalRoute><Profile /></ProfessionalRoute>} />
-      <Route path="/profile/:id" element={<ProfessionalRoute><Profile /></ProfessionalRoute>} />
-      <Route path="/directory" element={<ProfessionalRoute><Directory /></ProfessionalRoute>} />
-<Route path="/events" element={<ProfessionalRoute><Events /></ProfessionalRoute>} />
+        {/* Protected Routes - LinkedIn-style layout */}
+        <Route path="/feed" element={<ProfessionalRoute><Feed /></ProfessionalRoute>} />
+        <Route path="/profile" element={<ProfessionalRoute><Profile /></ProfessionalRoute>} />
+        <Route path="/profile/:id" element={<ProfessionalRoute><Profile /></ProfessionalRoute>} />
+        <Route path="/directory" element={<ProfessionalRoute><Directory /></ProfessionalRoute>} />
+        <Route path="/events" element={<ProfessionalRoute><Events /></ProfessionalRoute>} />
         <Route path="/events/:id" element={<ProfessionalRoute><EventDetail /></ProfessionalRoute>} />
         <Route path="/events/my" element={<ProfessionalRoute><MyEvents /></ProfessionalRoute>} />
         <Route path="/gallery" element={<ProfessionalRoute><Gallery /></ProfessionalRoute>} />
-      <Route path="/jobs" element={<ProfessionalRoute><Jobs /></ProfessionalRoute>} />
-      <Route path="/jobs/post" element={<ProfessionalRoute><PostJob /></ProfessionalRoute>} />
-      <Route path="/jobs/:id" element={<ProfessionalRoute><JobDetail /></ProfessionalRoute>} />
-      <Route path="/notifications" element={<ProfessionalRoute><Notifications /></ProfessionalRoute>} />
-      <Route path="/settings" element={<ProfessionalRoute><Settings /></ProfessionalRoute>} />
-      <Route path="/settings/account-info" element={<ProfessionalRoute><AccountInfo /></ProfessionalRoute>} />
-      <Route path="/settings/email" element={<ProfessionalRoute><EmailSettings /></ProfessionalRoute>} />
-      <Route path="/settings/phone" element={<ProfessionalRoute><PhoneSettings /></ProfessionalRoute>} />
-      <Route path="/settings/change-password" element={<ProfessionalRoute><ChangePassword /></ProfessionalRoute>} />
-      <Route path="/settings/notifications" element={<ProfessionalRoute><NotificationPreferences /></ProfessionalRoute>} />
-      <Route path="/saved" element={<ProfessionalRoute><Saved /></ProfessionalRoute>} />
-      <Route path="/developers" element={<PublicProfessionalRoute><Developers /></PublicProfessionalRoute>} />
-      <Route path="/contact" element={<PublicProfessionalRoute><Contact /></PublicProfessionalRoute>} />
+        <Route path="/jobs" element={<ProfessionalRoute><Jobs /></ProfessionalRoute>} />
+        <Route path="/jobs/post" element={<ProfessionalRoute><PostJob /></ProfessionalRoute>} />
+        <Route path="/jobs/:id" element={<ProfessionalRoute><JobDetail /></ProfessionalRoute>} />
+        <Route path="/notifications" element={<ProfessionalRoute><Notifications /></ProfessionalRoute>} />
+        <Route path="/settings" element={<ProfessionalRoute><Settings /></ProfessionalRoute>} />
+        <Route path="/settings/account-info" element={<ProfessionalRoute><AccountInfo /></ProfessionalRoute>} />
+        <Route path="/settings/email" element={<ProfessionalRoute><EmailSettings /></ProfessionalRoute>} />
+        <Route path="/settings/phone" element={<ProfessionalRoute><PhoneSettings /></ProfessionalRoute>} />
+        <Route path="/settings/change-password" element={<ProfessionalRoute><ChangePassword /></ProfessionalRoute>} />
+        <Route path="/settings/notifications" element={<ProfessionalRoute><NotificationPreferences /></ProfessionalRoute>} />
+        <Route path="/saved" element={<ProfessionalRoute><Saved /></ProfessionalRoute>} />
+        <Route path="/developers" element={<PublicProfessionalRoute><Developers /></PublicProfessionalRoute>} />
+        <Route path="/contact" element={<PublicProfessionalRoute><Contact /></PublicProfessionalRoute>} />
 
-      {/* Admin Route */}
-      <Route path="/admin" element={
-        <ProtectedRoute requireAdmin>
-          <ProfessionalChatLayout><AdminDashboard /></ProfessionalChatLayout>
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/news" element={
-        <ProtectedRoute requireAdmin>
-          <ProfessionalChatLayout><NewsAdmin /></ProfessionalChatLayout>
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/telemetry" element={
-        <ProtectedRoute requireAdmin>
-          <ProfessionalChatLayout><TelemetryAdmin /></ProfessionalChatLayout>
-        </ProtectedRoute>
-      } />
-      <Route path="/news" element={<PublicProfessionalRoute><NewsList /></PublicProfessionalRoute>} />
-      <Route path="/news/:id" element={<PublicProfessionalRoute><NewsDetail /></PublicProfessionalRoute>} />
-    </Routes>
+        {/* Admin Route */}
+        <Route path="/admin" element={
+          <ProtectedRoute requireAdmin>
+            <ProfessionalChatLayout><AdminDashboard /></ProfessionalChatLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/news" element={
+          <ProtectedRoute requireAdmin>
+            <ProfessionalChatLayout><NewsAdmin /></ProfessionalChatLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/telemetry" element={
+          <ProtectedRoute requireAdmin>
+            <ProfessionalChatLayout><TelemetryAdmin /></ProfessionalChatLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/news" element={<PublicProfessionalRoute><NewsList /></PublicProfessionalRoute>} />
+        <Route path="/news/:id" element={<PublicProfessionalRoute><NewsDetail /></PublicProfessionalRoute>} />
+      </Routes>
+      <UploadProgressToast />
+    </>
   );
 }
 

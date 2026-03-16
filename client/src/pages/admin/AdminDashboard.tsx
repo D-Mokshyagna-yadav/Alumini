@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { CheckCircle, XCircle, Clock, Users, UserCheck, UserX, Search, ChevronDown, ChevronUp, Eye, EyeOff, Plus, Edit2, Trash2, X, Lock, FileText, Briefcase, Calendar, Shield, ShieldOff, Image as ImageIcon, Upload, FolderPlus, ThumbsUp, MessageCircle, MapPin, Phone, Mail, GraduationCap, Building2, BadgeCheck, Heart, ToggleLeft, ToggleRight, Newspaper, Star, Landmark } from 'lucide-react';
 import { resolveMediaUrl } from '../../lib/media';
 import CachedImage from '../../components/CachedImage';
@@ -103,11 +103,13 @@ const AdminDashboard = () => {
     const [showCreateEventModal, setShowCreateEventModal] = useState(false);
     const [newEvent, setNewEvent] = useState({ title: '', date: '', time: '', location: '', type: 'in-person', description: '' });
     const [eventBanner, setEventBanner] = useState<File | null>(null);
+    const [creatingEvent, setCreatingEvent] = useState(false);
 
     const [showCreateJobModal, setShowCreateJobModal] = useState(false);
     const [newJob, setNewJob] = useState({ title: '', company: '', location: '', type: 'Full-time', mode: 'Remote', description: '', salary: '' });
     const [jobRequirements, setJobRequirements] = useState('');
     const [jobImage, setJobImage] = useState<File | null>(null);
+    const [creatingJob, setCreatingJob] = useState(false);
 
     // Gallery
     const [allAlbums, setAllAlbums] = useState<any[]>([]);
@@ -139,6 +141,7 @@ const AdminDashboard = () => {
     const [alumniImage, setAlumniImage] = useState<File | null>(null);
     const [alumniUserSearch, setAlumniUserSearch] = useState('');
     const [alumniUserResults, setAlumniUserResults] = useState<any[]>([]);
+    const [savingAlumni, setSavingAlumni] = useState(false);
 
     // Administration
     const [allAdminMembers, setAllAdminMembers] = useState<any[]>([]);
@@ -179,6 +182,7 @@ const AdminDashboard = () => {
 
     const [toast, setToast] = useState<string | null>(null);
     const confirm = useConfirm();
+    const createLocksRef = useRef({ event: false, job: false, alumni: false });
 
     // Auto-approval settings
     const [autoApproveUsers, setAutoApproveUsers] = useState(false);
@@ -500,7 +504,10 @@ const AdminDashboard = () => {
 
     // ==================== CREATE EVENT ====================
     const handleAdminCreateEvent = async () => {
+        if (createLocksRef.current.event) return;
         if (!newEvent.title || !newEvent.date) { setToast('Title and date are required'); return; }
+        createLocksRef.current.event = true;
+        setCreatingEvent(true);
         try {
             let bannerUrl: string | undefined;
             if (eventBanner) {
@@ -519,12 +526,18 @@ const AdminDashboard = () => {
             setToast('Event created and published');
         } catch (err: any) {
             setToast(err.response?.data?.message || 'Failed to create event');
+        } finally {
+            createLocksRef.current.event = false;
+            setCreatingEvent(false);
         }
     };
 
     // ==================== CREATE JOB ====================
     const handleAdminCreateJob = async () => {
+        if (createLocksRef.current.job) return;
         if (!newJob.title || !newJob.company) { setToast('Title and company are required'); return; }
+        createLocksRef.current.job = true;
+        setCreatingJob(true);
         try {
             let imageUrl: string | undefined;
             if (jobImage) {
@@ -545,6 +558,9 @@ const AdminDashboard = () => {
             setToast('Job created and published');
         } catch (err: any) {
             setToast(err.response?.data?.message || 'Failed to create job');
+        } finally {
+            createLocksRef.current.job = false;
+            setCreatingJob(false);
         }
     };
 
@@ -951,10 +967,13 @@ const AdminDashboard = () => {
     };
 
     const handleSaveAlumni = async () => {
+        if (createLocksRef.current.alumni) return;
         if (!alumniForm.name.trim() || !alumniForm.role.trim() || !alumniForm.batch.trim()) {
             setToast('Name, role and batch are required');
             return;
         }
+        createLocksRef.current.alumni = true;
+        setSavingAlumni(true);
         try {
             let imageUrl: string | undefined;
             if (alumniImage) {
@@ -986,6 +1005,9 @@ const AdminDashboard = () => {
             setShowAlumniModal(false);
         } catch (err: any) {
             setToast(err.response?.data?.message || 'Failed to save alumni');
+        } finally {
+            createLocksRef.current.alumni = false;
+            setSavingAlumni(false);
         }
     };
 
@@ -1829,7 +1851,7 @@ const AdminDashboard = () => {
                                         <div key={user._id} className="p-4 hover:bg-[var(--bg-tertiary)] transition-colors">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-11 h-11 bg-[var(--accent)] flex items-center justify-center text-[var(--bg-primary)] font-bold text-sm overflow-hidden">
+                                                    <div className="w-11 h-11 bg-[var(--accent)] rounded-full flex items-center justify-center text-[var(--bg-primary)] font-bold text-sm overflow-hidden">
                                                         <Avatar src={user.avatar} iconSize={18} />
                                                     </div>
                                                     <div>
@@ -2005,7 +2027,7 @@ const AdminDashboard = () => {
                             </div>
                             <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
                                 <button onClick={() => setShowCreateEventModal(false)} className="px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]">Cancel</button>
-                                <Button onClick={handleAdminCreateEvent} disabled={!newEvent.title || !newEvent.date}>Create Event</Button>
+                                <Button onClick={handleAdminCreateEvent} disabled={creatingEvent || !newEvent.title || !newEvent.date} isLoading={creatingEvent}>Create Event</Button>
                             </div>
                         </div>
                     </div>
@@ -2070,7 +2092,7 @@ const AdminDashboard = () => {
                             </div>
                             <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
                                 <button onClick={() => setShowCreateJobModal(false)} className="px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]">Cancel</button>
-                                <Button onClick={handleAdminCreateJob} disabled={!newJob.title || !newJob.company}>Publish Job</Button>
+                                <Button onClick={handleAdminCreateJob} disabled={creatingJob || !newJob.title || !newJob.company} isLoading={creatingJob}>Publish Job</Button>
                             </div>
                         </div>
                     </div>
@@ -2397,7 +2419,7 @@ const AdminDashboard = () => {
                             </div>
                             <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
                                 <button onClick={() => { setShowAlumniModal(false); resetAlumniForm(); }} className="px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]">Cancel</button>
-                                <Button onClick={handleSaveAlumni} disabled={!alumniForm.name.trim() || !alumniForm.role.trim() || !alumniForm.batch.trim()}>
+                                <Button onClick={handleSaveAlumni} disabled={savingAlumni || !alumniForm.name.trim() || !alumniForm.role.trim() || !alumniForm.batch.trim()} isLoading={savingAlumni}>
                                     {alumniModalMode === 'edit' ? 'Save Changes' : 'Add Alumni'}
                                 </Button>
                             </div>

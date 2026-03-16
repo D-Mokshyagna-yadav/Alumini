@@ -25,8 +25,11 @@ const Login = () => {
     const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
     const [isVerifying, setIsVerifying] = useState(false);
     const [isSendingOtp, setIsSendingOtp] = useState(false);
+    const [isResendingOtp, setIsResendingOtp] = useState(false);
     const [resendCooldown, setResendCooldown] = useState(0);
     const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const otpRequestLockRef = useRef(false);
+    const otpResendLockRef = useRef(false);
 
     useEffect(() => {
         if (resendCooldown <= 0) return;
@@ -109,8 +112,10 @@ const Login = () => {
     /* Send OTP for passwordless login */
     const handleRequestOtpLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (otpRequestLockRef.current || isSendingOtp) return;
         const email = formData.email.trim();
         if (!email) { setError('Please enter your email address.'); return; }
+        otpRequestLockRef.current = true;
         setIsSendingOtp(true);
         setError('');
         try {
@@ -132,11 +137,13 @@ const Login = () => {
             setError(data?.message || 'Failed to send OTP.');
         } finally {
             setIsSendingOtp(false);
+            otpRequestLockRef.current = false;
         }
     };
 
     /* Verify OTP (used by both 2FA and OTP-login) */
     const handleVerifyOtp = async () => {
+        if (isVerifying) return;
         const otp = otpDigits.join('');
         if (otp.length !== 6) { setError('Please enter the full 6-digit code.'); return; }
         setIsVerifying(true);
@@ -153,6 +160,9 @@ const Login = () => {
 
     /* Resend OTP for 2FA or OTP-login */
     const handleResendOtp = async () => {
+        if (resendCooldown > 0 || otpResendLockRef.current || isResendingOtp) return;
+        otpResendLockRef.current = true;
+        setIsResendingOtp(true);
         try {
             if (mode === '2fa') {
                 // Re-trigger password login to resend 2FA OTP
@@ -166,6 +176,9 @@ const Login = () => {
             setError('');
         } catch {
             setError('Failed to resend code.');
+        } finally {
+            setIsResendingOtp(false);
+            otpResendLockRef.current = false;
         }
     };
 
@@ -313,12 +326,12 @@ const Login = () => {
                                             <ArrowLeft size={14} /> Back
                                         </button>
                                         <button
-                                            disabled={resendCooldown > 0}
+                                            disabled={resendCooldown > 0 || isResendingOtp}
                                             onClick={handleResendOtp}
                                             className="text-sm text-[var(--accent)] font-medium hover:underline disabled:text-[var(--text-muted)] disabled:no-underline inline-flex items-center gap-1"
                                         >
-                                            <RefreshCw size={14} />
-                                            {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
+                                            <RefreshCw size={14} className={isResendingOtp ? 'animate-spin' : ''} />
+                                            {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : isResendingOtp ? 'Resending...' : 'Resend Code'}
                                         </button>
                                     </div>
                                 </div>

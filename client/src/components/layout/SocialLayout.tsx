@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
     Home, Search, Bell, Bookmark, User, Settings,
-    PlusSquare, LogOut, Users, Briefcase, Calendar
+    PlusSquare, LogOut, Users, Briefcase, Calendar, Newspaper
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -17,6 +17,7 @@ const navItems = [
     { icon: Bookmark, label: 'Saved', href: '/saved' },
     { icon: Calendar, label: 'Events', href: '/events' },
     { icon: Briefcase, label: 'Jobs', href: '/jobs' },
+    { icon: Newspaper, label: 'News', href: '/news' },
     { icon: User, label: 'Profile', href: '/profile' },
 ];
 

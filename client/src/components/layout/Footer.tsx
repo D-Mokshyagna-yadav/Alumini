@@ -14,11 +14,8 @@ const Footer = () => {
         'Community': [
             { name: 'Alumni Directory', href: '/directory' },
             { name: 'Events', href: '/events' },
-            { name: 'Chapters', href: '/directory' },
         ],
         'Resources': [
-            { name: 'Career Services', href: '/jobs' },
-            { name: 'Benefits', href: '/about' },
             { name: 'Give Back', href: '/contact' },
             { name: 'Contact Us', href: '/contact' },
         ],

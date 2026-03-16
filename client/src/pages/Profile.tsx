@@ -464,10 +464,10 @@ const Profile = () => {
                     <motion.div 
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 overflow-hidden shadow-md shadow-black/5"
+                        className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 overflow-visible shadow-md shadow-black/5"
                     >
                         {/* Cover Photo */}
-                        <div className="h-[180px] sm:h-[230px] md:h-[270px] relative bg-[var(--accent)]">
+                        <div className="h-[180px] sm:h-[230px] md:h-[270px] relative bg-[var(--accent)] overflow-hidden">
                             {coverPreview || profileUser?.coverImage ? (
                                 <CachedImage
                                     src={coverPreview || resolveMediaUrl(profileUser?.coverImage)}
