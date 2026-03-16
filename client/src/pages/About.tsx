@@ -108,7 +108,7 @@ const About = () => {
                                 <Target className="w-8 h-8 text-[var(--accent)]" />
                             </div>
                             <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Our Vision</h3>
-                            <p className="text-lg text-[var(--text-secondary)] leading-relaxed">
+                            <p className="text-lg text-[var(--text-secondary)] leading-relaxed text-justify">
                                 To foster excellence in engineering by providing high-quality technical education, instilling core values, and promoting research and technical services that align with global competence and societal needs. We aim to produce professionally skilled and intellectually capable individuals who can lead the future.
                             </p>
                         </motion.div>

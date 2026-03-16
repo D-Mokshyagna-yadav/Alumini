@@ -9,7 +9,7 @@ HERO TEXT STYLES
     background-clip: text;
     color: transparent;
     font-weight: 800;
-    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.45), 0 1px 0 #fff;
+    text-shadow: none;
     letter-spacing: 0.02em;
 }
 

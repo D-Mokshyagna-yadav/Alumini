@@ -355,6 +355,17 @@ app.get('*', (req, res) => {
     if (req.path.startsWith('/api/') || req.path.startsWith('/socket.io')) {
         return res.status(404).json({ message: 'Not found' });
     }
+
+    // If the request looks like a static asset (has a file extension),
+    // return 404 instead of index.html to avoid MIME-type mismatches.
+    if (/\.[a-zA-Z0-9]+$/.test(req.path)) {
+        return res.status(404).end();
+    }
+
+    // Never cache SPA HTML shell aggressively; always fetch latest index.
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.sendFile(path.join(clientDistPath, 'index.html'));
 });
 
