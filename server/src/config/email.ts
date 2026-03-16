@@ -366,7 +366,7 @@ export async function sendContactEmail(data: {
   message: string;
 }) {
   const { name, email, subject, message } = data;
-  const adminEmail = process.env.CONTACT_EMAIL || process.env.GMAIL_USER;
+  const adminEmail = process.env.CONTACT_EMAIL || 'alumni@mictech.ac.in';
 
   const body = `
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 16px;">
