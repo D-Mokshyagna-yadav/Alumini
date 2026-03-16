@@ -30,6 +30,7 @@ const Login = () => {
     const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
     const otpRequestLockRef = useRef(false);
     const otpResendLockRef = useRef(false);
+    const loginLockRef = useRef(false);
 
     useEffect(() => {
         if (resendCooldown <= 0) return;
@@ -80,6 +81,8 @@ const Login = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (loginLockRef.current || isLoading) return;
+        loginLockRef.current = true;
         setError('');
         try {
             const result = await login(formData.email, formData.password);
@@ -88,7 +91,6 @@ const Login = () => {
             } else {
                 if (result.require2fa) {
                     setOtpEmail(result.email || formData.email);
-                    setResendCooldown(60);
                     resetOtpState();
                     setResendCooldown(60);
                     setMode('2fa');
@@ -106,6 +108,8 @@ const Login = () => {
             }
         } catch (err: any) {
             setError(err.response?.data?.message || 'Invalid email or password');
+        } finally {
+            loginLockRef.current = false;
         }
     };
 

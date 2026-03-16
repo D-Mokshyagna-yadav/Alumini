@@ -15,6 +15,7 @@ const EmailSettings = () => {
     const [password, setPassword] = useState('');
 
     const handleAddEmail = async () => {
+        if (loading) return;
         if (!newEmail || !password) {
             toast.show('Please fill in all fields', 'error');
             return;

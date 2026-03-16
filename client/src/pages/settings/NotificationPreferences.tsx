@@ -38,6 +38,7 @@ const NotificationPreferences = () => {
     };
 
     const handleSave = async () => {
+        if (loading) return;
         setLoading(true);
         try {
             await api.patch('/users/settings/notifications', preferences);

@@ -89,28 +89,34 @@ const Profile = () => {
     const [stats, setStats] = useState({ connections: 0, posts: 0, achievements: 0, profileViews: 0 });
 
     const handleDeleteProfilePost = async (postId: string) => {
+        if (postActionLoading) return;
         const ok = await confirm({ title: 'Delete Post', message: 'Are you sure you want to delete this post? This cannot be undone.', confirmText: 'Delete', danger: true });
         if (!ok) return;
+        setPostActionLoading(true);
         try {
             await api.delete(`/posts/${postId}`);
             setUserPosts(prev => prev.filter(p => p._id !== postId));
             toast.show('Post deleted', 'success');
-        } catch { toast.show('Failed to delete post', 'error'); }
+        } catch { toast.show('Failed to delete post', 'error'); } finally { setPostActionLoading(false); }
     };
 
     const handleEditProfilePost = async (postId: string) => {
+        if (postActionLoading) return;
         if (!editPostContent.trim()) return;
+        setPostActionLoading(true);
         try {
             const res = await api.put(`/posts/${postId}`, { content: editPostContent });
             setUserPosts(prev => prev.map(p => p._id === postId ? { ...p, content: res.data.post.content } : p));
             setEditingPostId(null);
             toast.show('Post updated', 'success');
-        } catch { toast.show('Failed to update post', 'error'); }
+        } catch { toast.show('Failed to update post', 'error'); } finally { setPostActionLoading(false); }
     };
 
     const handleDeleteProfileComment = async (postId: string, commentId: string) => {
+        if (postActionLoading) return;
         const ok = await confirm({ title: 'Delete Comment', message: 'Are you sure you want to delete this comment?', confirmText: 'Delete', danger: true });
         if (!ok) return;
+        setPostActionLoading(true);
         try {
             const res = await api.delete(`/posts/${postId}/comments/${commentId}`);
             setUserComments(prev => prev.filter(c => c._id !== commentId));
@@ -119,10 +125,12 @@ const Profile = () => {
                 setUserPosts(prev => prev.map(p => p._id === postId ? { ...p, comments: res.data.comments } : p));
             }
             toast.show('Comment deleted', 'success');
-        } catch { toast.show('Failed to delete comment', 'error'); }
+        } catch { toast.show('Failed to delete comment', 'error'); } finally { setPostActionLoading(false); }
     };
 
     const handleProfilePostLike = async (postId: string) => {
+        if (postActionLoading) return;
+        setPostActionLoading(true);
         try {
             await api.post(`/posts/${postId}/like`);
             setUserPosts(prev => prev.map(post => {
@@ -132,11 +140,13 @@ const Profile = () => {
                 const newLikes = likes.includes(userId) ? likes.filter((id: string) => id !== userId) : [...likes, userId];
                 return { ...post, likes: newLikes };
             }));
-        } catch { /* silent */ }
+        } catch { /* silent */ } finally { setPostActionLoading(false); }
     };
 
     const handleProfilePostComment = async (postId: string) => {
+        if (postActionLoading) return;
         if (!profileCommentText.trim()) return;
+        setPostActionLoading(true);
         try {
             const res = await api.post(`/posts/${postId}/comment`, { text: profileCommentText });
             setUserPosts(prev => prev.map(post =>
@@ -144,27 +154,31 @@ const Profile = () => {
             ));
             setProfileCommentText('');
             setActiveProfileCommentPost(null);
-        } catch { /* silent */ }
+        } catch { /* silent */ } finally { setPostActionLoading(false); }
     };
 
     const handleDeleteProfilePostComment = async (postId: string, commentId: string) => {
+        if (postActionLoading) return;
         const ok = await confirm({ title: 'Delete Comment', message: 'Are you sure you want to delete this comment?', confirmText: 'Delete', danger: true });
         if (!ok) return;
+        setPostActionLoading(true);
         try {
             const res = await api.delete(`/posts/${postId}/comments/${commentId}`);
             setUserPosts(prev => prev.map(p => p._id === postId ? { ...p, comments: res.data.comments } : p));
             toast.show('Comment deleted', 'success');
-        } catch { toast.show('Failed to delete comment', 'error'); }
+        } catch { toast.show('Failed to delete comment', 'error'); } finally { setPostActionLoading(false); }
     };
 
     const handleEditProfilePostComment = async (postId: string, commentId: string) => {
+        if (postActionLoading) return;
         if (!editProfileCommentText.trim()) return;
+        setPostActionLoading(true);
         try {
             const res = await api.put(`/posts/${postId}/comments/${commentId}`, { text: editProfileCommentText });
             setUserPosts(prev => prev.map(p => p._id === postId ? { ...p, comments: res.data.comments } : p));
             setEditingProfileCommentId(null);
             toast.show('Comment updated', 'success');
-        } catch { toast.show('Failed to update comment', 'error'); }
+        } catch { toast.show('Failed to update comment', 'error'); } finally { setPostActionLoading(false); }
     };
 
     const getTimeAgo = (dateStr: string) => {
@@ -177,13 +191,15 @@ const Profile = () => {
     };
 
     const handleEditProfileComment = async (postId: string, commentId: string) => {
+        if (postActionLoading) return;
         if (!editCommentText.trim()) return;
+        setPostActionLoading(true);
         try {
             await api.put(`/posts/${postId}/comments/${commentId}`, { text: editCommentText });
             setUserComments(prev => prev.map(c => c._id === commentId ? { ...c, text: editCommentText } : c));
             setEditingCommentId(null);
             toast.show('Comment updated', 'success');
-        } catch { toast.show('Failed to update comment', 'error'); }
+        } catch { toast.show('Failed to update comment', 'error'); } finally { setPostActionLoading(false); }
     };
     const [connectionStatus, setConnectionStatus] = useState<'none'|'pending_sent'|'pending_received'|'accepted'>('none');
     const [connectionRequestId, setConnectionRequestId] = useState<string | null>(null);
@@ -197,6 +213,7 @@ const Profile = () => {
     const [loadingPosts, setLoadingPosts] = useState(false);
     const [userComments, setUserComments] = useState<any[]>([]);
     const [loadingComments, setLoadingComments] = useState(false);
+    const [postActionLoading, setPostActionLoading] = useState(false);
 
     // Inline edit state for posts and comments
     const [editingPostId, setEditingPostId] = useState<string | null>(null);
@@ -322,8 +339,10 @@ const Profile = () => {
     };
 
     const handleRemoveConnection = async () => {
+        if (connectionActionLoading) return;
         const targetId = id || viewUser?._id;
         if (!targetId) return;
+        setConnectionActionLoading(true);
         try {
             await api.delete(`/connections/remove/${targetId}`);
             setConnectionStatus('none');
@@ -335,6 +354,8 @@ const Profile = () => {
         } catch (error: any) {
             console.error('Failed to remove connection', error);
             toast.show(error?.response?.data?.message || 'Failed to remove connection', 'error');
+        } finally {
+            setConnectionActionLoading(false);
         }
     };
 
@@ -381,6 +402,7 @@ const Profile = () => {
     }, [activeTab, id, user?.id]);
 
     const handleSave = async () => {
+        if (saving) return;
         try {
             setSaving(true);
 

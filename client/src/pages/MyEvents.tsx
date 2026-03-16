@@ -16,6 +16,7 @@ const MyEvents = () => {
     const [bannerFile, setBannerFile] = useState<File | null>(null);
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
     const [editSubmitting, setEditSubmitting] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     useEffect(() => {
         let mounted = true;
@@ -41,8 +42,10 @@ const MyEvents = () => {
     }, [toast]);
 
     const handleDelete = async (id: string) => {
+        if (deleting) return;
         const ok = await confirm({ title: 'Delete Event', message: 'Delete this event? This cannot be undone.', confirmText: 'Delete', danger: true });
         if (!ok) return;
+        setDeleting(true);
         // optimistic remove
         const prev = events.slice();
         setEvents(prev.filter(e => e._id !== id));
@@ -53,6 +56,8 @@ const MyEvents = () => {
             console.error(err);
             setEvents(prev);
             setToast('Failed to delete event');
+        } finally {
+            setDeleting(false);
         }
     };
 

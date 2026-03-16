@@ -31,6 +31,8 @@ const NewsAdmin = () => {
     const confirm = useConfirm();
     const [items, setItems] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     const [title, setTitle] = useState('');
     const [link, setLink] = useState('');
@@ -81,7 +83,9 @@ const NewsAdmin = () => {
     };
 
     const handleSubmit = async () => {
+        if (submitting) return;
         if (!title.trim()) return toast.show('Title is required', 'error');
+        setSubmitting(true);
         try {
             let imageRel: string | undefined;
             if (imageFile) {
@@ -119,6 +123,8 @@ const NewsAdmin = () => {
         } catch (err) {
             console.error(err);
             toast.show('Failed to save news', 'error');
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -197,8 +203,10 @@ const NewsAdmin = () => {
     }, [editingId, body]);
 
     const handleDelete = async (id: string) => {
+        if (deleting) return;
         const ok = await confirm({ title: 'Delete News', message: 'Delete this news item?', confirmText: 'Delete', danger: true });
         if (!ok) return;
+        setDeleting(true);
         try {
             await api.delete(`/public/news/${id}`);
             setItems(prev => prev.filter(i => i._id !== id));
@@ -207,6 +215,8 @@ const NewsAdmin = () => {
         } catch (err) {
             console.error(err);
             toast.show('Delete failed', 'error');
+        } finally {
+            setDeleting(false);
         }
     };
 

@@ -184,6 +184,11 @@ const AdminDashboard = () => {
     const confirm = useConfirm();
     const createLocksRef = useRef({ event: false, job: false, alumni: false });
 
+    // Action locks to prevent double-submit
+    const actionLocksRef = useRef<Set<string>>(new Set());
+    const lock = (key: string) => { if (actionLocksRef.current.has(key)) return false; actionLocksRef.current.add(key); return true; };
+    const unlock = (key: string) => actionLocksRef.current.delete(key);
+
     // Auto-approval settings
     const [autoApproveUsers, setAutoApproveUsers] = useState(false);
     const [autoApprovePosts, setAutoApprovePosts] = useState(false);
@@ -252,11 +257,13 @@ const AdminDashboard = () => {
 
     // ==================== USER ACTIONS ====================
     const handleVerify = async (userId: string) => {
+        if (!lock('handleVerify')) return;
         // Guard: only verify users currently in the pending list
         const user = pendingUsers.find(u => u._id === userId);
         if (!user || user.status === 'active') {
             setToast('User is already verified');
             setShowUserModal(false);
+            unlock('handleVerify');
             return;
         }
         setActionLoading(userId);
@@ -275,6 +282,7 @@ const AdminDashboard = () => {
         } finally {
             setActionLoading(null);
             setShowUserModal(false);
+            unlock('handleVerify');
         }
     };
 
@@ -289,6 +297,7 @@ const AdminDashboard = () => {
             setToast('Please provide a reason for rejection');
             return;
         }
+        if (!lock('submitRejectUser')) return;
         setActionLoading(rejectTarget);
         const prevPending = pendingUsers.slice();
         setPendingUsers(prev => prev.filter(u => u._id !== rejectTarget));
@@ -307,6 +316,7 @@ const AdminDashboard = () => {
             setActionLoading(null);
             setRejectTarget(null);
             setRejectReason('');
+            unlock('submitRejectUser');
         }
     };
 
@@ -317,6 +327,7 @@ const AdminDashboard = () => {
     const handleDeleteUser = async (userId: string) => {
         const ok = await confirm({ title: 'Delete User', message: 'Are you sure you want to delete this user? This action cannot be undone.', confirmText: 'Delete', danger: true });
         if (!ok) return;
+        if (!lock('handleDeleteUser')) return;
         try {
             await api.delete(`/admin/user/${userId}`);
             setPendingUsers(prev => prev.filter(u => u._id !== userId));
@@ -325,6 +336,8 @@ const AdminDashboard = () => {
             setToast('User deleted successfully');
         } catch (err) {
             setToast('Failed to delete user');
+        } finally {
+            unlock('handleDeleteUser');
         }
     };
 
@@ -333,6 +346,7 @@ const AdminDashboard = () => {
         const action = newRole === 'admin' ? 'promote to admin' : 'demote from admin';
         const ok = await confirm({ title: 'Change Role', message: `Are you sure you want to ${action} "${user.name}"?`, confirmText: action === 'promote to admin' ? 'Promote' : 'Demote' });
         if (!ok) return;
+        if (!lock('handleToggleAdmin')) return;
         try {
             const res = await api.put(`/admin/user/${user._id}`, { role: newRole });
             const updated = res.data.user;
@@ -341,6 +355,8 @@ const AdminDashboard = () => {
             setToast(`${user.name} ${newRole === 'admin' ? 'promoted to admin' : 'demoted from admin'}`);
         } catch (err) {
             setToast('Failed to change role');
+        } finally {
+            unlock('handleToggleAdmin');
         }
     };
 
@@ -348,6 +364,7 @@ const AdminDashboard = () => {
     const handleApproveEvent = async (eventId: string) => {
         const ok = await confirm({ title: 'Approve Event', message: 'Are you sure you want to approve this event?', confirmText: 'Approve' });
         if (!ok) return;
+        if (!lock('handleApproveEvent')) return;
         try {
             await api.post(`/admin/approve-event/${eventId}`);
             setAllEvents(prev => prev.map(e => e._id === eventId ? { ...e, status: 'APPROVED' } : e));
@@ -355,6 +372,8 @@ const AdminDashboard = () => {
         } catch (err) {
             console.error('Approve event failed', err);
             setToast('Failed to approve event');
+        } finally {
+            unlock('handleApproveEvent');
         }
     };
 
@@ -366,6 +385,7 @@ const AdminDashboard = () => {
 
     const submitRejectEvent = async () => {
         if (!rejectTarget) return;
+        if (!lock('submitRejectEvent')) return;
         try {
             await api.post(`/admin/reject-event/${rejectTarget}`, { reason: rejectReason });
             setAllEvents(prev => prev.map(e => e._id === rejectTarget ? { ...e, status: 'REJECTED' } : e));
@@ -377,12 +397,14 @@ const AdminDashboard = () => {
             setShowRejectModal(false);
             setRejectTarget(null);
             setRejectReason('');
+            unlock('submitRejectEvent');
         }
     };
 
     const handleDeleteEvent = async (eventId: string) => {
         const ok = await confirm({ title: 'Delete Event', message: 'Permanently delete this event? This cannot be undone.', confirmText: 'Delete', danger: true });
         if (!ok) return;
+        if (!lock('handleDeleteEvent')) return;
         try {
             await api.delete(`/admin/event/${eventId}`);
             setAllEvents(prev => prev.filter(e => e._id !== eventId));
@@ -390,11 +412,14 @@ const AdminDashboard = () => {
             setToast('Event deleted');
         } catch (err) {
             setToast('Failed to delete event');
+        } finally {
+            unlock('handleDeleteEvent');
         }
     };
 
     // ==================== POST ACTIONS ====================
     const handleApprovePost = async (postId: string) => {
+        if (!lock('handleApprovePost')) return;
         try {
             await api.post(`/admin/approve-post/${postId}`);
             setAllPosts(prev => prev.map(p => p._id === postId ? { ...p, status: 'approved' } : p));
@@ -402,11 +427,14 @@ const AdminDashboard = () => {
             setToast('Post approved and published');
         } catch (err) {
             setToast('Failed to approve post');
+        } finally {
+            unlock('handleApprovePost');
         }
     };
 
     const handleRejectPost = async (postId: string) => {
         const reason = prompt('Reason for rejecting this post (optional):');
+        if (!lock('handleRejectPost')) return;
         try {
             await api.post(`/admin/reject-post/${postId}`, { reason: reason || '' });
             setAllPosts(prev => prev.map(p => p._id === postId ? { ...p, status: 'rejected' } : p));
@@ -414,12 +442,15 @@ const AdminDashboard = () => {
             setToast('Post rejected');
         } catch (err) {
             setToast('Failed to reject post');
+        } finally {
+            unlock('handleRejectPost');
         }
     };
 
     const handleDeletePost = async (postId: string) => {
         const ok = await confirm({ title: 'Delete Post', message: 'Permanently delete this post? This cannot be undone.', confirmText: 'Delete', danger: true });
         if (!ok) return;
+        if (!lock('handleDeletePost')) return;
         try {
             await api.delete(`/admin/post/${postId}`);
             setAllPosts(prev => prev.filter(p => p._id !== postId));
@@ -427,6 +458,8 @@ const AdminDashboard = () => {
             setToast('Post deleted');
         } catch (err) {
             setToast('Failed to delete post');
+        } finally {
+            unlock('handleDeletePost');
         }
     };
 
@@ -444,6 +477,7 @@ const AdminDashboard = () => {
 
     // ==================== JOB ACTIONS ====================
     const handleApproveJob = async (jobId: string) => {
+        if (!lock('handleApproveJob')) return;
         try {
             await api.post(`/admin/approve-job/${jobId}`);
             setAllJobs(prev => prev.map(j => j._id === jobId ? { ...j, status: 'approved' } : j));
@@ -451,11 +485,14 @@ const AdminDashboard = () => {
             setToast('Job approved and published');
         } catch (err) {
             setToast('Failed to approve job');
+        } finally {
+            unlock('handleApproveJob');
         }
     };
 
     const handleRejectJob = async (jobId: string) => {
         const reason = prompt('Reason for rejecting this job (optional):');
+        if (!lock('handleRejectJob')) return;
         try {
             await api.post(`/admin/reject-job/${jobId}`, { reason: reason || '' });
             setAllJobs(prev => prev.map(j => j._id === jobId ? { ...j, status: 'rejected' } : j));
@@ -463,12 +500,15 @@ const AdminDashboard = () => {
             setToast('Job rejected');
         } catch (err) {
             setToast('Failed to reject job');
+        } finally {
+            unlock('handleRejectJob');
         }
     };
 
     const handleDeleteJob = async (jobId: string) => {
         const ok = await confirm({ title: 'Delete Job', message: 'Permanently delete this job posting? This cannot be undone.', confirmText: 'Delete', danger: true });
         if (!ok) return;
+        if (!lock('handleDeleteJob')) return;
         try {
             await api.delete(`/admin/job/${jobId}`);
             setAllJobs(prev => prev.filter(j => j._id !== jobId));
@@ -476,12 +516,15 @@ const AdminDashboard = () => {
             setToast('Job deleted');
         } catch (err) {
             setToast('Failed to delete job');
+        } finally {
+            unlock('handleDeleteJob');
         }
     };
 
     // ==================== CREATE POST ====================
     const handleAdminCreatePost = async () => {
         if (!newPostContent.trim()) { setToast('Post content is required'); return; }
+        if (!lock('handleAdminCreatePost')) return;
         try {
             let mediaPayload: any[] = [];
             if (postAttachments.length > 0) {
@@ -499,6 +542,8 @@ const AdminDashboard = () => {
             setToast('Post created and published');
         } catch (err: any) {
             setToast(err.response?.data?.message || 'Failed to create post');
+        } finally {
+            unlock('handleAdminCreatePost');
         }
     };
 
@@ -574,6 +619,7 @@ const AdminDashboard = () => {
 
     const handleEditPost = async () => {
         if (!editPostId || !editPostContent.trim()) return;
+        if (!lock('handleEditPost')) return;
         try {
             const res = await api.put(`/posts/${editPostId}`, { content: editPostContent, visibility: editPostVisibility });
             if (res.data.post) {
@@ -583,6 +629,8 @@ const AdminDashboard = () => {
             setToast('Post updated');
         } catch (err: any) {
             setToast(err.response?.data?.message || 'Failed to update post');
+        } finally {
+            unlock('handleEditPost');
         }
     };
 
@@ -602,6 +650,7 @@ const AdminDashboard = () => {
 
     const handleEditEvent = async () => {
         if (!editEventId || !editEventForm.title) return;
+        if (!lock('handleEditEvent')) return;
         try {
             let bannerUrl: string | undefined;
             if (editEventBanner) {
@@ -620,6 +669,8 @@ const AdminDashboard = () => {
             setToast('Event updated');
         } catch (err: any) {
             setToast(err.response?.data?.message || 'Failed to update event');
+        } finally {
+            unlock('handleEditEvent');
         }
     };
 
@@ -642,6 +693,7 @@ const AdminDashboard = () => {
 
     const handleEditJob = async () => {
         if (!editJobId || !editJobForm.title) return;
+        if (!lock('handleEditJob')) return;
         try {
             let imageUrl: string | undefined;
             if (editJobImage) {
@@ -662,6 +714,8 @@ const AdminDashboard = () => {
             setToast('Job updated');
         } catch (err: any) {
             setToast(err.response?.data?.message || 'Failed to update job');
+        } finally {
+            unlock('handleEditJob');
         }
     };
 
@@ -694,6 +748,7 @@ const AdminDashboard = () => {
 
     const handleSaveNews = async () => {
         if (!newsForm.title.trim()) { setToast('Title is required'); return; }
+        if (!lock('handleSaveNews')) return;
         try {
             let imageUrl: string | undefined;
             if (newsImage) {
@@ -720,20 +775,26 @@ const AdminDashboard = () => {
             setShowNewsModal(false);
         } catch (err: any) {
             setToast(err.response?.data?.message || 'Failed to save news');
+        } finally {
+            unlock('handleSaveNews');
         }
     };
 
     const handleDeleteNews = async (id: string) => {
+        if (!lock('handleDeleteNews')) return;
         try {
             await api.delete(`/public/news/${id}`);
             setAllNews(prev => prev.filter(n => n._id !== id));
             setToast('News deleted');
         } catch {
             setToast('Failed to delete news');
+        } finally {
+            unlock('handleDeleteNews');
         }
     };
 
     const handleToggleNewsDraft = async (item: any) => {
+        if (!lock('handleToggleNewsDraft')) return;
         try {
             const res = await api.put(`/public/news/${item._id}`, { draft: !item.draft });
             if (res.data.item) {
@@ -742,12 +803,15 @@ const AdminDashboard = () => {
             setToast(item.draft ? 'News published' : 'News moved to drafts');
         } catch {
             setToast('Failed to update news');
+        } finally {
+            unlock('handleToggleNewsDraft');
         }
     };
 
     // ==================== GALLERY ACTIONS ====================
     const handleCreateAlbum = async () => {
         if (!newAlbumTitle.trim()) { setToast('Album title is required'); return; }
+        if (!lock('handleCreateAlbum')) return;
         try {
             const res = await api.post('/gallery/album', { title: newAlbumTitle, description: newAlbumDesc });
             setAllAlbums(prev => [res.data.album, ...prev]);
@@ -757,6 +821,8 @@ const AdminDashboard = () => {
             setToast('Album created');
         } catch (err: any) {
             setToast(err.response?.data?.message || 'Failed to create album');
+        } finally {
+            unlock('handleCreateAlbum');
         }
     };
 
@@ -769,6 +835,7 @@ const AdminDashboard = () => {
 
     const handleEditAlbum = async () => {
         if (!editAlbumId || !editAlbumTitle.trim()) return;
+        if (!lock('handleEditAlbum')) return;
         try {
             await api.put(`/gallery/album/${editAlbumId}`, { title: editAlbumTitle, description: editAlbumDesc });
             setAllAlbums(prev => prev.map(a => a.id === editAlbumId ? { ...a, title: editAlbumTitle, description: editAlbumDesc } : a));
@@ -776,23 +843,29 @@ const AdminDashboard = () => {
             setToast('Album updated');
         } catch (err: any) {
             setToast(err.response?.data?.message || 'Failed to update album');
+        } finally {
+            unlock('handleEditAlbum');
         }
     };
 
     const handleDeleteAlbum = async (albumId: string) => {
         const ok = await confirm({ title: 'Delete Album', message: 'Delete this album and all its contents? This cannot be undone.', confirmText: 'Delete', danger: true });
         if (!ok) return;
+        if (!lock('handleDeleteAlbum')) return;
         try {
             await api.delete(`/gallery/album/${albumId}`);
             setAllAlbums(prev => prev.filter(a => a.id !== albumId));
             setToast('Album deleted');
         } catch (err: any) {
             setToast(err.response?.data?.message || 'Failed to delete album');
+        } finally {
+            unlock('handleDeleteAlbum');
         }
     };
 
     const handleUploadMedia = async () => {
         if (!uploadAlbumId || mediaFiles.length === 0) return;
+        if (!lock('handleUploadMedia')) return;
         try {
             const formData = new FormData();
             mediaFiles.forEach(f => formData.append('images', f));
@@ -805,23 +878,29 @@ const AdminDashboard = () => {
             setToast(`${newMedia.length} file(s) uploaded`);
         } catch (err: any) {
             setToast(err.response?.data?.message || 'Failed to upload');
+        } finally {
+            unlock('handleUploadMedia');
         }
     };
 
     const handleDeleteMedia = async (albumId: string, mediaId: string) => {
         const ok = await confirm({ title: 'Delete Media', message: 'Delete this media item?', confirmText: 'Delete', danger: true });
         if (!ok) return;
+        if (!lock('handleDeleteMedia')) return;
         try {
             await api.delete(`/gallery/album/${albumId}/images/${mediaId}`);
             setAllAlbums(prev => prev.map(a => a.id === albumId ? { ...a, images: (a.images || []).filter((i: any) => i.id !== mediaId) } : a));
             setToast('Media deleted');
         } catch (err: any) {
             setToast(err.response?.data?.message || 'Failed to delete');
+        } finally {
+            unlock('handleDeleteMedia');
         }
     };
 
     // ==================== AUTO-APPROVAL TOGGLE ====================
     const handleToggleAutoApprove = async (field: 'autoApproveUsers' | 'autoApprovePosts' | 'autoApproveJobs') => {
+        if (!lock('handleToggleAutoApprove')) return;
         const currentValue = field === 'autoApproveUsers' ? autoApproveUsers : field === 'autoApprovePosts' ? autoApprovePosts : autoApproveJobs;
         const newValue = !currentValue;
         // Optimistic update
@@ -838,6 +917,8 @@ const AdminDashboard = () => {
             else if (field === 'autoApprovePosts') setAutoApprovePosts(!newValue);
             else setAutoApproveJobs(!newValue);
             setToast('Failed to update setting');
+        } finally {
+            unlock('handleToggleAutoApprove');
         }
     };
 
@@ -905,6 +986,7 @@ const AdminDashboard = () => {
     };
 
     const handleCreateUser = async () => {
+        if (!lock('handleCreateUser')) return;
         setUserModalLoading(true);
         try {
             const res = await api.post('/admin/create-user', userForm);
@@ -916,11 +998,13 @@ const AdminDashboard = () => {
             setToast(err.response?.data?.message || 'Failed to create user');
         } finally {
             setUserModalLoading(false);
+            unlock('handleCreateUser');
         }
     };
 
     const handleUpdateUser = async () => {
         if (!editingUserId) return;
+        if (!lock('handleUpdateUser')) return;
         setUserModalLoading(true);
         try {
             const payload: any = { ...userForm };
@@ -934,6 +1018,7 @@ const AdminDashboard = () => {
             setToast(err.response?.data?.message || 'Failed to update user');
         } finally {
             setUserModalLoading(false);
+            unlock('handleUpdateUser');
         }
     };
 
@@ -1014,12 +1099,15 @@ const AdminDashboard = () => {
     const handleDeleteAlumni = async (id: string) => {
         const ok = await confirm({ title: 'Delete Alumni', message: 'Remove this notable alumni entry?' });
         if (!ok) return;
+        if (!lock('handleDeleteAlumni')) return;
         try {
             await api.delete(`/admin/notable-alumni/${id}`);
             setAllNotableAlumni(prev => prev.filter(a => a._id !== id));
             setToast('Alumni deleted');
         } catch {
             setToast('Failed to delete alumni');
+        } finally {
+            unlock('handleDeleteAlumni');
         }
     };
 
@@ -1070,6 +1158,7 @@ const AdminDashboard = () => {
             setToast('Name and designation are required');
             return;
         }
+        if (!lock('handleSaveAdminMember')) return;
         try {
             if (adminMemberMode === 'edit' && editingMemberId) {
                 const res = await api.put(`/admin/administration/${editingMemberId}`, adminMemberForm);
@@ -1086,18 +1175,23 @@ const AdminDashboard = () => {
             setShowAdminMemberModal(false);
         } catch (err: any) {
             setToast(err.response?.data?.message || 'Failed to save member');
+        } finally {
+            unlock('handleSaveAdminMember');
         }
     };
 
     const handleDeleteAdminMember = async (id: string) => {
         const ok = await confirm({ title: 'Delete Member', message: 'Remove this administration member?' });
         if (!ok) return;
+        if (!lock('handleDeleteAdminMember')) return;
         try {
             await api.delete(`/admin/administration/${id}`);
             setAllAdminMembers(prev => prev.filter(m => m._id !== id));
             setToast('Member deleted');
         } catch {
             setToast('Failed to delete member');
+        } finally {
+            unlock('handleDeleteAdminMember');
         }
     };
 
@@ -1180,6 +1274,7 @@ const AdminDashboard = () => {
 
     // ==================== COMPANIES (Alumni Work At) ====================
     const handleSaveCompanies = async (updatedCompanies: string[]) => {
+        if (!lock('handleSaveCompanies')) return;
         setCompaniesSaving(true);
         try {
             const mergedData = { ...homeData, companies: updatedCompanies };
@@ -1191,6 +1286,7 @@ const AdminDashboard = () => {
             setToast('Failed to save companies');
         } finally {
             setCompaniesSaving(false);
+            unlock('handleSaveCompanies');
         }
     };
 

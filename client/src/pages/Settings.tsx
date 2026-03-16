@@ -35,6 +35,7 @@ const Settings = () => {
     ];
 
     const saveJobPreferences = async () => {
+        if (savingPrefs) return;
         setSavingPrefs(true);
         try {
             await api.put('/users/profile', {
@@ -411,6 +412,7 @@ const Settings = () => {
 
                                     <button
                                         onClick={async () => {
+                                            if (savingPrivacy) return;
                                             setSavingPrivacy(true);
                                             try {
                                                 await api.put('/users/profile', { privacySettings: { emailVisibility, phoneVisibility, connectionsVisibility } });
@@ -452,6 +454,7 @@ const Settings = () => {
                                         </div>
                                         <button
                                             onClick={async () => {
+                                                if (saving2fa) return;
                                                 setSaving2fa(true);
                                                 try {
                                                     const newVal = !twoFactorEnabled;

@@ -42,6 +42,8 @@ const JobDetail = () => {
     const [editForm, setEditForm] = useState<any>({});
     const [editImage, setEditImage] = useState<File | null>(null);
     const [editSubmitting, setEditSubmitting] = useState(false);
+    const [savingJob, setSavingJob] = useState(false);
+    const [applyingJob, setApplyingJob] = useState(false);
     const toast = useToast();
     const { isAuthenticated, user } = useAuth();
     const { on: onSocket } = useSocket();
@@ -143,6 +145,7 @@ const JobDetail = () => {
 
     const handleEditSubmit = async () => {
         if (!job) return;
+        if (editSubmitting) return;
         setEditSubmitting(true);
         try {
             let imageUrl = editForm.image;
@@ -176,17 +179,23 @@ const JobDetail = () => {
 
     const handleSave = async () => {
         if (!job) return;
+        if (savingJob) return;
+        setSavingJob(true);
         try {
             await api.post(`/jobs/${job.id}/save`);
             setJob({ ...job, isSaved: !job.isSaved });
             toast.show(job.isSaved ? 'Job unsaved' : 'Job saved', 'success');
         } catch (err) {
             console.error('Failed to save job', err);
+        } finally {
+            setSavingJob(false);
         }
     };
 
     const handleApply = async () => {
         if (!job) return;
+        if (applyingJob) return;
+        setApplyingJob(true);
         try {
             if (!isAuthenticated) {
                 toast.show('Please login to apply', 'error');
@@ -198,6 +207,8 @@ const JobDetail = () => {
             if (job.canViewApplicants) fetchApplicants(true);
         } catch (err: any) {
             toast.show(err.response?.data?.message || 'Failed to apply', 'error');
+        } finally {
+            setApplyingJob(false);
         }
     };
 
