@@ -129,9 +129,9 @@ const Navbar = () => {
                         <img src="/logo-small.png" alt="Logo" className="w-14 h-14 rounded-xl object-contain" />
                         {isLandingPage ? (
                             <div className="hidden sm:block leading-tight">
-                                <div className="text-[11px] font-bold tracking-wide text-red-600">DVR &amp; DR. HS</div>
-                                <div className="text-[12px] font-bold tracking-wide" style={{ color: '#4169E1' }}>MIC COLLEGE OF TECHNOLOGY</div>
-                                <div className="text-[11px] font-bold tracking-wide text-red-600">AUTONOMOUS</div>
+                                <div className={`text-[11px] font-bold tracking-wide ${isTransparent ? 'text-white' : 'text-red-600'}`}>DVR &amp; DR. HS</div>
+                                <div className={`text-[12px] font-bold tracking-wide ${isTransparent ? 'text-white' : 'text-blue-600'}`}>MIC COLLEGE OF TECHNOLOGY</div>
+                                <div className={`text-[11px] font-bold tracking-wide ${isTransparent ? 'text-white' : 'text-red-600'}`}>AUTONOMOUS</div>
                             </div>
                         ) : (
                             <span className={`hidden sm:block font-bold text-base tracking-tight ${isTransparent ? 'text-white' : 'text-[var(--text-primary)]'}`}>
