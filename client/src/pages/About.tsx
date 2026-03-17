@@ -251,21 +251,21 @@ const About = () => {
                                     <h3 className="text-2xl font-bold text-[var(--accent)] mb-8">Governing Body</h3>
                                     <table className="w-full border-collapse" style={{ borderSpacing: 0 }}>
                                         <thead>
-                                            <tr>
+                                            <tr className="border-b border-[var(--border-color)]/30">
                                                 <th className="text-left text-xs uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3 border-none">Name</th>
                                                 <th className="text-right text-xs uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3 border-none">Role</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr>
+                                            <tr className="border-b border-[var(--border-color)]/20">
                                                 <td className="py-4 font-medium text-base text-[var(--text-primary)] border-none">Dr. M.V. Ramana Rao</td>
                                                 <td className="py-4 text-sm text-[var(--text-secondary)] text-right border-none">Chairman</td>
                                             </tr>
-                                            <tr>
+                                            <tr className="border-b border-[var(--border-color)]/20">
                                                 <td className="py-4 font-medium text-base text-[var(--text-primary)] border-none">Sri N. Srinivasa Rao</td>
                                                 <td className="py-4 text-sm text-[var(--text-secondary)] text-right border-none">Vice Chairman</td>
                                             </tr>
-                                            <tr>
+                                            <tr className="border-b border-[var(--border-color)]/20">
                                                 <td className="py-4 font-medium text-base text-[var(--text-primary)] border-none">Sri M. Srinivasa Rao</td>
                                                 <td className="py-4 text-sm text-[var(--text-secondary)] text-right border-none">Director (P&D)</td>
                                             </tr>
@@ -280,24 +280,25 @@ const About = () => {
                                     <h3 className="text-2xl font-bold text-[var(--accent)] mb-8">Key Officials</h3>
                                     <table className="w-full border-collapse" style={{ borderSpacing: 0 }}>
                                         <thead>
-                                            <tr>
+                                            <tr className="border-b border-[var(--border-color)]/30">
                                                 <th className="text-left text-xs uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3 border-none">Name</th>
                                                 <th className="text-right text-xs uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3 border-none">Role</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr>
+                                            <tr className="border-b border-[var(--border-color)]/20">
                                                 <td className="py-4 font-medium text-base text-[var(--text-primary)] border-none">Dr. T. Vamsee Kiran</td>
                                                 <td className="py-4 text-sm text-[var(--text-secondary)] text-right border-none">Principal</td>
                                             </tr>
-                                            <tr>
+                                            <tr className="border-b border-[var(--border-color)]/20">
                                                 <td className="py-4 font-medium text-base text-[var(--text-primary)] border-none">Dr. G. Rajesh</td>
                                                 <td className="py-4 text-sm text-[var(--text-secondary)] text-right border-none">Dean (Academics)</td>
                                             </tr>
-                                            <tr>
+                                            <tr className="border-b border-[var(--border-color)]/20">
                                                 <td className="py-4 font-medium text-base text-[var(--text-primary)] border-none">Dr. A. Guravaiah</td>
                                                 <td className="py-4 text-sm text-[var(--text-secondary)] text-right border-none">Dean (R&D)</td>
                                             </tr>
+                                        
                                         </tbody>
                                     </table>
                                 </div>
