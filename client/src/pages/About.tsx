@@ -245,58 +245,58 @@ const About = () => {
                     {/* Administration / Governing Body */}
                     <div id="leadership" className="max-w-6xl mx-auto">
                         <h2 className="text-2xl sm:text-3xl font-heading font-bold text-[var(--text-primary)] text-center mb-12">Administration</h2>
-                        <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl shadow-sm border border-[var(--border-color)]/30 rounded-2xl overflow-hidden">
-                            <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[var(--border-color)]">
+                        <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl shadow-sm border-none rounded-2xl overflow-hidden">
+                            <div className="grid md:grid-cols-2">
                                 <div className="p-6 sm:p-10">
                                     <h3 className="text-2xl font-bold text-[var(--accent)] mb-8">Governing Body</h3>
-                                    <table className="w-full border-collapse">
+                                    <table className="w-full border-collapse" style={{ borderSpacing: 0 }}>
                                         <thead>
-                                            <tr className="border-b border-[var(--border-color)]/15">
-                                                <th className="text-left text-xs uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3">Name</th>
-                                                <th className="text-right text-xs uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3">Role</th>
+                                            <tr>
+                                                <th className="text-left text-xs uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3 border-none">Name</th>
+                                                <th className="text-right text-xs uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3 border-none">Role</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr className="border-b border-[var(--border-color)]/10">
-                                                <td className="py-4 font-medium text-base text-[var(--text-primary)]">Dr. M.V. Ramana Rao</td>
-                                                <td className="py-4 text-sm text-[var(--text-secondary)] text-right">Chairman</td>
-                                            </tr>
-                                            <tr className="border-b border-[var(--border-color)]/10">
-                                                <td className="py-4 font-medium text-base text-[var(--text-primary)]">Sri N. Srinivasa Rao</td>
-                                                <td className="py-4 text-sm text-[var(--text-secondary)] text-right">Vice Chairman</td>
-                                            </tr>
-                                            <tr className="border-b border-[var(--border-color)]/10">
-                                                <td className="py-4 font-medium text-base text-[var(--text-primary)]">Sri M. Srinivasa Rao</td>
-                                                <td className="py-4 text-sm text-[var(--text-secondary)] text-right">Director (P&D)</td>
+                                            <tr>
+                                                <td className="py-4 font-medium text-base text-[var(--text-primary)] border-none">Dr. M.V. Ramana Rao</td>
+                                                <td className="py-4 text-sm text-[var(--text-secondary)] text-right border-none">Chairman</td>
                                             </tr>
                                             <tr>
-                                                <td className="py-4 font-medium text-base text-[var(--text-primary)]">Sri D. Panduranga Rao</td>
-                                                <td className="py-4 text-sm text-[var(--text-secondary)] text-right">CEO</td>
+                                                <td className="py-4 font-medium text-base text-[var(--text-primary)] border-none">Sri N. Srinivasa Rao</td>
+                                                <td className="py-4 text-sm text-[var(--text-secondary)] text-right border-none">Vice Chairman</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="py-4 font-medium text-base text-[var(--text-primary)] border-none">Sri M. Srinivasa Rao</td>
+                                                <td className="py-4 text-sm text-[var(--text-secondary)] text-right border-none">Director (P&D)</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="py-4 font-medium text-base text-[var(--text-primary)] border-none">Sri D. Panduranga Rao</td>
+                                                <td className="py-4 text-sm text-[var(--text-secondary)] text-right border-none">CEO</td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
                                 <div className="p-6 sm:p-10">
                                     <h3 className="text-2xl font-bold text-[var(--accent)] mb-8">Key Officials</h3>
-                                    <table className="w-full border-collapse">
+                                    <table className="w-full border-collapse" style={{ borderSpacing: 0 }}>
                                         <thead>
-                                            <tr className="border-b border-[var(--border-color)]/15">
-                                                <th className="text-left text-xs uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3">Name</th>
-                                                <th className="text-right text-xs uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3">Role</th>
+                                            <tr>
+                                                <th className="text-left text-xs uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3 border-none">Name</th>
+                                                <th className="text-right text-xs uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3 border-none">Role</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr className="border-b border-[var(--border-color)]/10">
-                                                <td className="py-4 font-medium text-base text-[var(--text-primary)]">Dr. T. Vamsee Kiran</td>
-                                                <td className="py-4 text-sm text-[var(--text-secondary)] text-right">Principal</td>
-                                            </tr>
-                                            <tr className="border-b border-[var(--border-color)]/10">
-                                                <td className="py-4 font-medium text-base text-[var(--text-primary)]">Dr. G. Rajesh</td>
-                                                <td className="py-4 text-sm text-[var(--text-secondary)] text-right">Dean (Academics)</td>
+                                            <tr>
+                                                <td className="py-4 font-medium text-base text-[var(--text-primary)] border-none">Dr. T. Vamsee Kiran</td>
+                                                <td className="py-4 text-sm text-[var(--text-secondary)] text-right border-none">Principal</td>
                                             </tr>
                                             <tr>
-                                                <td className="py-4 font-medium text-base text-[var(--text-primary)]">Dr. A. Guravaiah</td>
-                                                <td className="py-4 text-sm text-[var(--text-secondary)] text-right">Dean (R&D)</td>
+                                                <td className="py-4 font-medium text-base text-[var(--text-primary)] border-none">Dr. G. Rajesh</td>
+                                                <td className="py-4 text-sm text-[var(--text-secondary)] text-right border-none">Dean (Academics)</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="py-4 font-medium text-base text-[var(--text-primary)] border-none">Dr. A. Guravaiah</td>
+                                                <td className="py-4 text-sm text-[var(--text-secondary)] text-right border-none">Dean (R&D)</td>
                                             </tr>
                                         </tbody>
                                     </table>
