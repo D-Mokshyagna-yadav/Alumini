@@ -243,44 +243,44 @@ const About = () => {
                     </div>
 
                     {/* Administration / Governing Body */}
-                    <div id="leadership" className="max-w-4xl mx-auto">
+                    <div id="leadership" className="max-w-6xl mx-auto">
                         <h2 className="text-2xl sm:text-3xl font-heading font-bold text-[var(--text-primary)] text-center mb-12">Administration</h2>
                         <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl shadow-sm border border-[var(--border-color)]/30 rounded-2xl overflow-hidden">
                             <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[var(--border-color)]">
-                                <div className="p-4 sm:p-8">
-                                    <h3 className="text-xl font-bold text-[var(--accent)] mb-6">Governing Body</h3>
-                                    <ul className="space-y-4">
-                                        <li className="flex justify-between items-center border-b border-[var(--border-color)] pb-2 last:border-0 last:pb-0">
-                                            <span className="font-medium text-[var(--text-primary)]">Dr. M.V. Ramana Rao</span>
+                                <div className="p-6 sm:p-10">
+                                    <h3 className="text-2xl font-bold text-[var(--accent)] mb-8">Governing Body</h3>
+                                    <ul className="space-y-0">
+                                        <li className="flex justify-between items-center border-b border-[var(--border-color)]/20 py-4">
+                                            <span className="font-medium text-base text-[var(--text-primary)]">Dr. M.V. Ramana Rao</span>
                                             <span className="text-sm text-[var(--text-secondary)]">Chairman</span>
                                         </li>
-                                        <li className="flex justify-between items-center border-b border-[var(--border-color)] pb-2 last:border-0 last:pb-0">
-                                            <span className="font-medium text-[var(--text-primary)]">Sri N. Srinivasa Rao</span>
+                                        <li className="flex justify-between items-center border-b border-[var(--border-color)]/20 py-4">
+                                            <span className="font-medium text-base text-[var(--text-primary)]">Sri N. Srinivasa Rao</span>
                                             <span className="text-sm text-[var(--text-secondary)]">Vice Chairman</span>
                                         </li>
-                                        <li className="flex justify-between items-center border-b border-[var(--border-color)] pb-2 last:border-0 last:pb-0">
-                                            <span className="font-medium text-[var(--text-primary)]">Sri M. Srinivasa Rao</span>
+                                        <li className="flex justify-between items-center border-b border-[var(--border-color)]/20 py-4">
+                                            <span className="font-medium text-base text-[var(--text-primary)]">Sri M. Srinivasa Rao</span>
                                             <span className="text-sm text-[var(--text-secondary)]">Director (P&D)</span>
                                         </li>
-                                        <li className="flex justify-between items-center border-b border-[var(--border-color)] pb-2 last:border-0 last:pb-0">
-                                            <span className="font-medium text-[var(--text-primary)]">Sri D. Panduranga Rao</span>
+                                        <li className="flex justify-between items-center py-4">
+                                            <span className="font-medium text-base text-[var(--text-primary)]">Sri D. Panduranga Rao</span>
                                             <span className="text-sm text-[var(--text-secondary)]">CEO</span>
                                         </li>
                                     </ul>
                                 </div>
-                                <div className="p-4 sm:p-8">
-                                    <h3 className="text-xl font-bold text-[var(--accent)] mb-6">Key Officials</h3>
-                                    <ul className="space-y-4">
-                                        <li className="flex justify-between items-center border-b border-[var(--border-color)] pb-2 last:border-0 last:pb-0">
-                                            <span className="font-medium text-[var(--text-primary)]">Dr. T. Vamsee Kiran</span>
+                                <div className="p-6 sm:p-10">
+                                    <h3 className="text-2xl font-bold text-[var(--accent)] mb-8">Key Officials</h3>
+                                    <ul className="space-y-0">
+                                        <li className="flex justify-between items-center border-b border-[var(--border-color)]/20 py-4">
+                                            <span className="font-medium text-base text-[var(--text-primary)]">Dr. T. Vamsee Kiran</span>
                                             <span className="text-sm text-[var(--text-secondary)]">Principal</span>
                                         </li>
-                                        <li className="flex justify-between items-center border-b border-[var(--border-color)] pb-2 last:border-0 last:pb-0">
-                                            <span className="font-medium text-[var(--text-primary)]">Dr. G. Rajesh</span>
+                                        <li className="flex justify-between items-center border-b border-[var(--border-color)]/20 py-4">
+                                            <span className="font-medium text-base text-[var(--text-primary)]">Dr. G. Rajesh</span>
                                             <span className="text-sm text-[var(--text-secondary)]">Dean (Academics)</span>
                                         </li>
-                                        <li className="flex justify-between items-center border-b border-[var(--border-color)] pb-2 last:border-0 last:pb-0">
-                                            <span className="font-medium text-[var(--text-primary)]">Dr. A. Guravaiah</span>
+                                        <li className="flex justify-between items-center py-4">
+                                            <span className="font-medium text-base text-[var(--text-primary)]">Dr. A. Guravaiah</span>
                                             <span className="text-sm text-[var(--text-secondary)]">Dean (R&D)</span>
                                         </li>
                                     </ul>
