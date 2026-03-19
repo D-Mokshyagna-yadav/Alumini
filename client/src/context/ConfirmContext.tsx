@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { modalVariant } from '../components/animation/motionVariants';
 import { AlertTriangle } from 'lucide-react';
 
 interface ConfirmOptions {
@@ -42,15 +43,15 @@ export const ConfirmProvider: React.FC<{ children: React.ReactNode }> = ({ child
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.15 }}
+                        transition={{ duration: 0.12 }}
                         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
                         onClick={() => handleClose(false)}
                     >
                         <motion.div
-                            initial={{ scale: 0.92, opacity: 0, y: 10 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.92, opacity: 0, y: 10 }}
-                            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                            variants={modalVariant}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
                             onClick={(e) => e.stopPropagation()}
                             className="bg-[var(--bg-secondary)] w-full max-w-[380px] rounded-2xl overflow-hidden shadow-2xl border border-[var(--border-color)]/30"
                         >

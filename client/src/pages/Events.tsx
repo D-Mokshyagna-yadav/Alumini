@@ -69,6 +69,8 @@ const Events = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const { on: onSocket } = useSocket();
+    const roleString = (user?.role || '')?.toString().toLowerCase();
+    const canCreateEvent = roleString === 'admin' || roleString === 'alumni' || roleString.includes('alum');
     const isAdmin = user?.role === 'admin';
     const [counts, setCounts] = useState<{ all: number; upcoming: number; completed: number }>({ all: 0, upcoming: 0, completed: 0 });
 
@@ -96,9 +98,13 @@ const Events = () => {
 
                 const res = await api.post('/events', payload);
                 if (res.status === 200 || res.status === 201) {
-                    toast.show('Event created and published.', 'success');
-                    // If server returned event, add a local pending copy so creator sees it
                     const created = res.data.event;
+                    if (created && String((created.status || '')).toUpperCase() === 'APPROVED') {
+                        toast.show('Event created and published.', 'success');
+                    } else {
+                        toast.show('Event submitted for admin approval.', 'success');
+                    }
+                    // If server returned event, add a local pending copy so creator sees it
                     if (created) {
                         const mapped = {
                             id: created._id || Date.now(),
@@ -390,7 +396,7 @@ const Events = () => {
                     <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-2xl shadow-sm p-4 sm:p-6">
                         <div className="flex items-center justify-between gap-4 mb-4">
                             <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] flex-shrink-0">Events</h1>
-                            {isAdmin && (
+                            {canCreateEvent && (
                                 <button
                                     onClick={() => setShowEventModal(true)}
                                     className="hidden lg:flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-medium hover:bg-[var(--accent-hover)] transition-colors flex-shrink-0"
@@ -421,7 +427,7 @@ const Events = () => {
                             </div>
                         </div>
                         {/* Mobile Create button below search */}
-                        {isAdmin && (
+                        {canCreateEvent && (
                             <button
                                 onClick={() => setShowEventModal(true)}
                                 className="lg:hidden flex items-center justify-center gap-1.5 w-full mt-3 px-3 py-2 bg-[var(--accent)] text-[var(--bg-primary)] text-xs font-medium hover:bg-[var(--accent-hover)] transition-colors"

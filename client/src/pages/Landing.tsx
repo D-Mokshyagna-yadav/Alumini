@@ -194,31 +194,31 @@ const Landing = () => {
 
                     {/* Administration */}
                     {(governing.length > 0 || officials.length > 0) && (
-                    <div className="max-w-4xl mx-auto">
+                    <div style={{ maxWidth: '1600px', margin: '0 auto', paddingLeft: '48px', paddingRight: '48px' }}>
                         <h2 className="text-2xl sm:text-3xl font-heading font-bold text-[var(--text-primary)] text-center mb-12">Administration</h2>
                         <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl shadow-sm border border-[var(--border-color)]/30 rounded-2xl overflow-hidden">
                             <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[var(--border-color)]">
                                 {governing.length > 0 && (
-                                <div className="p-4 sm:p-8">
+                                <div className="p-8">
                                     <h3 className="text-xl font-bold text-[var(--accent)] mb-6">Governing Body</h3>
                                     <ul className="space-y-4">
                                         {governing.map((m, i) => (
-                                            <li key={i} className={`flex justify-between items-center${i < governing.length - 1 ? ' border-b border-[var(--border-color)] pb-2' : ''}`}>
-                                                <span className="font-medium text-[var(--text-primary)]">{m.name}</span>
-                                                <span className="text-sm text-[var(--text-secondary)]">{m.designation}</span>
+                                            <li key={i} className={`flex items-center min-w-0${i < governing.length - 1 ? ' border-b border-[var(--border-color)] pb-2' : ''}`}>
+                                                <span className="w-1/2 text-left font-medium text-[var(--text-primary)] truncate pr-6">{m.name}</span>
+                                                <span className="w-1/2 text-right text-sm text-[var(--text-secondary)] whitespace-normal break-words leading-relaxed">{m.designation}</span>
                                             </li>
                                         ))}
                                     </ul>
                                 </div>
                                 )}
                                 {officials.length > 0 && (
-                                <div className="p-4 sm:p-8">
+                                <div className="p-8">
                                     <h3 className="text-xl font-bold text-[var(--accent)] mb-6">Key Officials</h3>
                                     <ul className="space-y-4">
                                         {officials.map((m, i) => (
-                                            <li key={i} className={`flex justify-between items-center${i < officials.length - 1 ? ' border-b border-[var(--border-color)] pb-2' : ''}`}>
-                                                <span className="font-medium text-[var(--text-primary)]">{m.name}</span>
-                                                <span className="text-sm text-[var(--text-secondary)]">{m.designation}</span>
+                                            <li key={i} className={`flex items-center min-w-0${i < officials.length - 1 ? ' border-b border-[var(--border-color)] pb-2' : ''}`}>
+                                                <span className="w-1/2 text-left font-medium text-[var(--text-primary)] truncate pr-6">{m.name}</span>
+                                                <span className="w-1/2 text-right text-sm text-[var(--text-secondary)] whitespace-normal break-words leading-relaxed">{m.designation}</span>
                                             </li>
                                         ))}
                                     </ul>

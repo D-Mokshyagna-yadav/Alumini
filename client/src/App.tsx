@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import ProfessionalChatLayout from './components/layout/ProfessionalChatLayout';
+import PageTransition from './components/layout/PageTransition';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
 import Landing from './pages/Landing';
@@ -90,7 +91,9 @@ const AuthRedirect = ({ children }: { children: React.ReactNode }) => {
 const ProfessionalRoute = ({ children }: { children: React.ReactNode }) => {
   return (
     <ProtectedRoute>
-      <ProfessionalChatLayout>{children}</ProfessionalChatLayout>
+      <ProfessionalChatLayout>
+        <PageTransition>{children}</PageTransition>
+      </ProfessionalChatLayout>
     </ProtectedRoute>
   );
 };
@@ -98,7 +101,9 @@ const ProfessionalRoute = ({ children }: { children: React.ReactNode }) => {
 // Layout wrapper without auth requirement (public pages using professional layout)
 const PublicProfessionalRoute = ({ children }: { children: React.ReactNode }) => {
   return (
-    <ProfessionalChatLayout>{children}</ProfessionalChatLayout>
+    <ProfessionalChatLayout>
+      <PageTransition>{children}</PageTransition>
+    </ProfessionalChatLayout>
   );
 };
 
@@ -111,10 +116,12 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/" element={
             <AuthRedirect>
-              <Landing />
+              <PageTransition>
+                <Landing />
+              </PageTransition>
             </AuthRedirect>
           } />
-          <Route path="/verification-pending" element={<VerificationPending />} />
+          <Route path="/verification-pending" element={<PageTransition><VerificationPending /></PageTransition>} />
         </Route>
 
         {/* Auth Pages - No Layout */}

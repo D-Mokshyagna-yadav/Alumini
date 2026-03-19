@@ -321,14 +321,14 @@ const Profile = () => {
         const reqId = connectionRequestId;
         if (!reqId || connectionActionLoading) return;
         setConnectionActionLoading(true);
-        try {
+            try {
             await api.put(`/connections/accept/${reqId}`);
             setConnectionStatus('accepted');
             setConnectionRequestId(null);
             // Refresh authenticated user data so their stats (connections) update
             try { await checkAuth(); } catch (e) { /* ignore */ }
             // also refresh profile stats
-            setStats(prev => ({ ...prev, connections: prev.connections + 1 }));
+                setStats((prev: { connections: number; posts: number; achievements: number; profileViews: number }) => ({ ...prev, connections: prev.connections + 1 }));
             toast.show('Connection accepted', 'success');
         } catch (error: any) {
             console.error('Failed to accept connection', error);
@@ -349,7 +349,7 @@ const Profile = () => {
             setConnectionRequestId(null);
             // refresh stats
             try { await checkAuth(); } catch (e) { /* ignore */ }
-            setStats(prev => ({ ...prev, connections: Math.max(0, prev.connections - 1) }));
+            setStats((prev: { connections: number; posts: number; achievements: number; profileViews: number }) => ({ ...prev, connections: Math.max(0, prev.connections - 1) }));
             toast.show('Connection removed', 'success');
         } catch (error: any) {
             console.error('Failed to remove connection', error);
@@ -409,13 +409,26 @@ const Profile = () => {
             if (avatarFile) {
                 const fd = new FormData();
                 fd.append('avatar', avatarFile);
-                await api.post('/upload/profile-pic', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+                try {
+                    const upRes = await api.post('/upload/profile-pic', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+                    if (upRes.data && upRes.data.avatar) {
+                        // update local viewUser/user so avatar appears immediately
+                        if (viewUser) setViewUser((prev: any) => ({ ...prev, avatar: upRes.data.avatar }));
+                        await checkAuth();
+                    }
+                } catch (e) { console.error('Avatar upload failed', e); }
             }
 
             if (coverFile) {
                 const fd2 = new FormData();
                 fd2.append('cover', coverFile);
-                await api.post('/upload/cover-photo', fd2, { headers: { 'Content-Type': 'multipart/form-data' } });
+                try {
+                    const upRes2 = await api.post('/upload/cover-photo', fd2, { headers: { 'Content-Type': 'multipart/form-data' } });
+                    if (upRes2.data && upRes2.data.cover) {
+                        if (viewUser) setViewUser((prev: any) => ({ ...prev, coverImage: upRes2.data.cover }));
+                        await checkAuth();
+                    }
+                } catch (e) { console.error('Cover upload failed', e); }
             }
 
             if (resumeFile) {
@@ -500,7 +513,7 @@ const Profile = () => {
                                 />
                             ) : null}
                             {/* Gradient overlay for text readability */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none z-0" />
                             {isOwnProfile && (
                                 <label className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-[var(--bg-primary)]/90 backdrop-blur-sm hover:bg-[var(--bg-primary)] transition-colors cursor-pointer shadow-md flex items-center justify-center z-10">
                                     <input type="file" accept="image/*" className="hidden" onChange={(e) => {
@@ -520,7 +533,7 @@ const Profile = () => {
                         <div className="px-4 sm:px-6 pb-4 sm:pb-6">
                             <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4 -mt-12 sm:-mt-16 relative z-10">
                                 <motion.div whileHover={{ scale: 1.02 }} className="relative flex-shrink-0">
-                                    <div className="w-[100px] h-[100px] sm:w-[140px] sm:h-[140px] rounded-full overflow-hidden bg-[var(--accent)] border-4 border-[var(--bg-primary)] flex items-center justify-center shadow-md shadow-[var(--accent)]/20">
+                                    <div className="w-[100px] h-[100px] sm:w-[140px] sm:h-[140px] rounded-full overflow-hidden bg-[var(--bg-primary)] border-4 border-[var(--bg-primary)] flex items-center justify-center shadow-md shadow-[var(--accent)]/20">
                                         <Avatar src={avatarPreview || profileUser?.avatar} iconSize={56} />
                                     </div>
                                     {isOwnProfile && (
@@ -1835,8 +1848,8 @@ const EducationModal = ({ education, onClose, onSave }: { education: Education |
     const [school, setSchool] = useState(education?.school || '');
     const [degree, setDegree] = useState(education?.degree || '');
     const [field, setField] = useState(education?.field || '');
-    const [startYear, setStartYear] = useState(education?.startYear || new Date().getFullYear() - 4);
-    const [endYear, setEndYear] = useState(education?.endYear || new Date().getFullYear());
+    const [startYear, setStartYear] = useState<number>(education?.startYear || new Date().getFullYear() - 4);
+    const [endYear, setEndYear] = useState<number | undefined>(education?.endYear ?? new Date().getFullYear());
     const [description, setDescription] = useState(education?.description || '');
 
     const handleSave = () => {

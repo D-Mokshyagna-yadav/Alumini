@@ -61,6 +61,15 @@
     transform: scale(0.98);
   }
 
+  /* Motion system variables */
+  :root {
+    --motion-duration-fast: 160ms;
+    --motion-duration-medium: 260ms;
+    --motion-duration-slow: 420ms;
+    --motion-ease: cubic-bezier(0.22, 0.9, 0.36, 1);
+    --motion-ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
   :root,
   .light {
     --bg-primary: #ffffff;
@@ -134,7 +143,18 @@
 
   /* Global subtle interactive transitions */
   a, button {
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all var(--motion-duration-medium) var(--motion-ease);
+    will-change: transform, opacity;
+  }
+
+  /* Respect user's motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   /* Universal rounded corners for interactive elements */

@@ -318,7 +318,7 @@ const JobDetail = () => {
                     >
                         {job.hasApplied ? 'Unapply' : 'Apply'}
                     </button>
-                    {job.isCreator && (
+                    {(job.isCreator || user?.role === 'admin') && (
                         <button onClick={openEditModal} className="px-4 py-2 border border-[var(--border-color)] text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] flex items-center gap-1.5" title="Edit job">
                             <Edit2 size={16} /> Edit
                         </button>
@@ -411,9 +411,13 @@ const JobDetail = () => {
                                     </div>
                                 </div>
                             </div>
+                            {/* Chat disabled: Send Message removed while messaging is turned off
+                                Preserved original button below (commented out):
+                            
                             <button className="px-4 py-2 border border-[var(--border-color)] text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]">
                                 Send Message
                             </button>
+                            */}
                         </div>
                     </div>
                 </div>

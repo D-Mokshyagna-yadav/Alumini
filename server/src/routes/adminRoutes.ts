@@ -623,11 +623,12 @@ router.get('/settings', requireAdmin, cacheMiddleware(TTL.STATIC), async (_req, 
 // PUT /api/admin/settings - Update site settings
 router.put('/settings', requireAdmin, async (req, res) => {
     try {
-        const { autoApproveUsers, autoApprovePosts, autoApproveJobs } = req.body;
+        const { autoApproveUsers, autoApprovePosts, autoApproveJobs, autoApproveEvents } = req.body;
         const settings = await getSettings();
         if (typeof autoApproveUsers === 'boolean') settings.autoApproveUsers = autoApproveUsers;
         if (typeof autoApprovePosts === 'boolean') settings.autoApprovePosts = autoApprovePosts;
         if (typeof autoApproveJobs === 'boolean') settings.autoApproveJobs = autoApproveJobs;
+        if (typeof autoApproveEvents === 'boolean') settings.autoApproveEvents = autoApproveEvents;
         await settings.save();
         res.json({ message: 'Settings updated', settings });
     } catch (error) {

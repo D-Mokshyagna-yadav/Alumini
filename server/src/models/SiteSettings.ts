@@ -4,12 +4,16 @@ export interface ISiteSettings extends Document {
     autoApproveUsers: boolean;
     autoApprovePosts: boolean;
     autoApproveJobs: boolean;
+    autoApproveEvents: boolean;
+    chatKey?: string;
 }
 
 const SiteSettingsSchema = new Schema<ISiteSettings>({
     autoApproveUsers: { type: Boolean, default: false },
     autoApprovePosts: { type: Boolean, default: false },
     autoApproveJobs: { type: Boolean, default: false },
+    autoApproveEvents: { type: Boolean, default: false },
+    chatKey: { type: String, select: false },
 }, { timestamps: true });
 
 // Singleton pattern – only one settings document should ever exist

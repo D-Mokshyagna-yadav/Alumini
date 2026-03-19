@@ -151,7 +151,8 @@ app.use('/api', (req, _res, next) => {
     next();
 });
 
-import { chatRouter } from './routes/chatRoutes';
+// Chat feature temporarily disabled — comment out chat router import
+// import { chatRouter } from './routes/chatRoutes';
 import { userRouter } from './routes/userRoutes';
 import { postRouter } from './routes/postRoutes';
 import { uploadRouter } from './routes/uploadRoutes';
@@ -299,7 +300,8 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
-app.use('/api/chat', chatRouter);
+// Chat API disabled while chat feature is turned off
+// app.use('/api/chat', chatRouter);
 app.use('/api/users', userRouter);
 app.use('/api/posts', postRouter);
 app.use('/api/upload', uploadRouter);
@@ -428,6 +430,16 @@ process.on('uncaughtException', (err) => {
 
 // Connect to Database FIRST so MongoStore is ready, then start server
 connectDB().then(() => {
+    // Migrate legacy chat key (if any) from filesystem into SiteSettings in MongoDB
+    // Chat migration disabled while chat feature is turned off
+    // try {
+    //     // import dynamically to avoid circular/early-init issues
+    //     const { migrateChatKeyToDB } = require('./config/chatKey');
+    //     if (typeof migrateChatKeyToDB === 'function') {
+    //         migrateChatKeyToDB().catch(e => console.error('Chat key migration error:', e));
+    //     }
+    // } catch (e) { /* ignore migration errors */ }
+
     // Run GC on startup and schedule periodic runs every 6 hours
     runGC().catch((e) => console.error('Initial GC error', e));
     setInterval(() => {

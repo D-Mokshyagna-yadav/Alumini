@@ -7,6 +7,7 @@ import { useConfirm } from '../../context/ConfirmContext';
 import { Button } from '../../components/ui/Button';
 import api from '../../lib/api';
 import Avatar from '../../components/ui/Avatar';
+import SimpleImageCropper from '../../components/ui/SimpleImageCropper';
 
 interface User {
     _id: string;
@@ -139,9 +140,23 @@ const AdminDashboard = () => {
     const [editingAlumniId, setEditingAlumniId] = useState<string | null>(null);
     const [alumniForm, setAlumniForm] = useState({ name: '', role: '', batch: '', profileId: '', order: 0 });
     const [alumniImage, setAlumniImage] = useState<File | null>(null);
+    const [alumniImageUrl, setAlumniImageUrl] = useState<string | null>(null);
+    const [alumniImageTemp, setAlumniImageTemp] = useState<File | null>(null);
+    const [showAlumniCropper, setShowAlumniCropper] = useState(false);
     const [alumniUserSearch, setAlumniUserSearch] = useState('');
     const [alumniUserResults, setAlumniUserResults] = useState<any[]>([]);
     const [savingAlumni, setSavingAlumni] = useState(false);
+
+    // Memoize object URL for alumniImage to avoid recreating blob URLs every render
+    useEffect(() => {
+        if (!alumniImage) {
+            setAlumniImageUrl(null);
+            return;
+        }
+        const u = URL.createObjectURL(alumniImage);
+        setAlumniImageUrl(u);
+        return () => { URL.revokeObjectURL(u); };
+    }, [alumniImage]);
 
     // Administration
     const [allAdminMembers, setAllAdminMembers] = useState<any[]>([]);
@@ -176,7 +191,7 @@ const AdminDashboard = () => {
 
     const [showEditJobModal, setShowEditJobModal] = useState(false);
     const [editJobId, setEditJobId] = useState<string | null>(null);
-    const [editJobForm, setEditJobForm] = useState({ title: '', company: '', location: '', type: 'Full-time', mode: 'Remote', description: '', salary: '' });
+    const [editJobForm, setEditJobForm] = useState({ title: '', company: '', location: '', type: 'Full-time', mode: 'Remote', description: '', salary: '', industry: '', workExperience: '', experienceRange: '', deadline: '', companyDescription: '' });
     const [editJobRequirements, setEditJobRequirements] = useState('');
     const [editJobImage, setEditJobImage] = useState<File | null>(null);
 
@@ -193,6 +208,7 @@ const AdminDashboard = () => {
     const [autoApproveUsers, setAutoApproveUsers] = useState(false);
     const [autoApprovePosts, setAutoApprovePosts] = useState(false);
     const [autoApproveJobs, setAutoApproveJobs] = useState(false);
+    const [autoApproveEvents, setAutoApproveEvents] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -241,6 +257,7 @@ const AdminDashboard = () => {
                 setAutoApproveUsers(settingsRes.data.settings.autoApproveUsers);
                 setAutoApprovePosts(settingsRes.data.settings.autoApprovePosts);
                 setAutoApproveJobs(settingsRes.data.settings.autoApproveJobs ?? false);
+                setAutoApproveEvents(settingsRes.data.settings.autoApproveEvents ?? false);
             }
             // Companies from home content
             const hData = homeContentRes.data.home || {};
@@ -685,6 +702,11 @@ const AdminDashboard = () => {
             mode: job.mode || 'Remote',
             description: job.description || '',
             salary: job.salary || '',
+            industry: job.industry || '',
+            workExperience: job.workExperience || '',
+            experienceRange: job.experienceRange || '',
+            deadline: job.deadline || '',
+            companyDescription: job.companyDescription || '',
         });
         setEditJobRequirements((job.requirements || []).join(', '));
         setEditJobImage(null);
@@ -703,12 +725,12 @@ const AdminDashboard = () => {
                 imageUrl = up.data.relative || up.data.url;
             }
             const requirementsArr = editJobRequirements.split(',').map(s => s.trim()).filter(Boolean);
-            const payload: any = { ...editJobForm, requirements: requirementsArr };
+            const payload: any = { ...editJobForm, requirements: requirementsArr, industry: editJobForm.industry, workExperience: editJobForm.workExperience, experienceRange: editJobForm.experienceRange, deadline: editJobForm.deadline, companyDescription: editJobForm.companyDescription };
             if (imageUrl) payload.image = imageUrl;
             if (editJobForm.salary) payload.salary = editJobForm.salary;
             const res = await api.put(`/jobs/${editJobId}`, payload);
             if (res.data.jobId) {
-                setAllJobs(prev => prev.map(j => j._id === editJobId ? { ...j, ...editJobForm, requirements: requirementsArr, ...(imageUrl ? { image: imageUrl } : {}) } : j));
+                setAllJobs(prev => prev.map(j => j._id === editJobId ? { ...j, ...editJobForm, requirements: requirementsArr, industry: editJobForm.industry, workExperience: editJobForm.workExperience, experienceRange: editJobForm.experienceRange, deadline: editJobForm.deadline, companyDescription: editJobForm.companyDescription, ...(imageUrl ? { image: imageUrl } : {}) } : j));
             }
             setShowEditJobModal(false);
             setToast('Job updated');
@@ -899,23 +921,25 @@ const AdminDashboard = () => {
     };
 
     // ==================== AUTO-APPROVAL TOGGLE ====================
-    const handleToggleAutoApprove = async (field: 'autoApproveUsers' | 'autoApprovePosts' | 'autoApproveJobs') => {
+    const handleToggleAutoApprove = async (field: 'autoApproveUsers' | 'autoApprovePosts' | 'autoApproveJobs' | 'autoApproveEvents') => {
         if (!lock('handleToggleAutoApprove')) return;
-        const currentValue = field === 'autoApproveUsers' ? autoApproveUsers : field === 'autoApprovePosts' ? autoApprovePosts : autoApproveJobs;
+        const currentValue = field === 'autoApproveUsers' ? autoApproveUsers : field === 'autoApprovePosts' ? autoApprovePosts : field === 'autoApproveJobs' ? autoApproveJobs : autoApproveEvents;
         const newValue = !currentValue;
         // Optimistic update
         if (field === 'autoApproveUsers') setAutoApproveUsers(newValue);
         else if (field === 'autoApprovePosts') setAutoApprovePosts(newValue);
-        else setAutoApproveJobs(newValue);
+        else if (field === 'autoApproveJobs') setAutoApproveJobs(newValue);
+        else setAutoApproveEvents(newValue);
         try {
             await api.put('/admin/settings', { [field]: newValue });
-            const label = field === 'autoApproveUsers' ? 'User' : field === 'autoApprovePosts' ? 'Post' : 'Job';
+            const label = field === 'autoApproveUsers' ? 'User' : field === 'autoApprovePosts' ? 'Post' : field === 'autoApproveJobs' ? 'Job' : 'Event';
             setToast(`${label} auto-approval ${newValue ? 'enabled' : 'disabled'}`);
         } catch (err) {
             // Revert on failure
             if (field === 'autoApproveUsers') setAutoApproveUsers(!newValue);
             else if (field === 'autoApprovePosts') setAutoApprovePosts(!newValue);
-            else setAutoApproveJobs(!newValue);
+            else if (field === 'autoApproveJobs') setAutoApproveJobs(!newValue);
+            else setAutoApproveEvents(!newValue);
             setToast('Failed to update setting');
         } finally {
             unlock('handleToggleAutoApprove');
@@ -1442,6 +1466,15 @@ const AdminDashboard = () => {
                             ? <ToggleRight size={22} className="text-green-500" />
                             : <ToggleLeft size={22} className="text-[var(--text-muted)]" />}
                         <span>Jobs</span>
+                    </button>
+                    <button
+                        onClick={() => handleToggleAutoApprove('autoApproveEvents')}
+                        className="flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                    >
+                        {autoApproveEvents
+                            ? <ToggleRight size={22} className="text-green-500" />
+                            : <ToggleLeft size={22} className="text-[var(--text-muted)]" />}
+                        <span>Events</span>
                     </button>
                 </div>
 
@@ -2095,6 +2128,7 @@ const AdminDashboard = () => {
                                     <label className="block text-sm text-[var(--text-muted)] mb-1">Event Title *</label>
                                     <input value={newEvent.title} onChange={e => setNewEvent({ ...newEvent, title: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" placeholder="Alumni Meetup 2026" />
                                 </div>
+                                
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm text-[var(--text-muted)] mb-1">Date *</label>
@@ -2468,9 +2502,12 @@ const AdminDashboard = () => {
                                 </div>
                                 <div>
                                     <label className="block text-sm text-[var(--text-muted)] mb-1">Photo {alumniModalMode === 'create' ? '*' : '(optional, leave empty to keep current)'}</label>
-                                    <input type="file" accept="image/*" onChange={e => setAlumniImage(e.target.files?.[0] || null)} className="text-sm text-[var(--text-primary)]" />
-                                    {alumniImage && (
-                                        <img src={URL.createObjectURL(alumniImage)} alt="preview" className="mt-2 w-full h-36 object-contain bg-[var(--bg-tertiary)] rounded" />
+                                    <input type="file" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) { setAlumniImageTemp(f); setShowAlumniCropper(true); } else { setAlumniImage(null); } }} className="text-sm text-[var(--text-primary)]" />
+                                    {alumniImage && alumniImageUrl && (
+                                        <img src={alumniImageUrl} alt="preview" className="mt-2 w-full h-36 object-contain bg-[var(--bg-tertiary)] rounded" />
+                                    )}
+                                    {showAlumniCropper && alumniImageTemp && (
+                                        <SimpleImageCropper file={alumniImageTemp} shape="rounded" onCancel={() => { setShowAlumniCropper(false); setAlumniImageTemp(null); }} onCrop={(f: File) => { setAlumniImage(f); setShowAlumniCropper(false); setAlumniImageTemp(null); }} />
                                     )}
                                 </div>
                                 <div>
@@ -2684,6 +2721,30 @@ const AdminDashboard = () => {
                                 <div>
                                     <label className="block text-sm text-[var(--text-muted)] mb-1">Requirements (comma separated)</label>
                                     <input value={editJobRequirements} onChange={e => setEditJobRequirements(e.target.value)} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm text-[var(--text-muted)] mb-1">Industry</label>
+                                        <input value={editJobForm.industry} onChange={e => setEditJobForm(p => ({ ...p, industry: e.target.value }))} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-[var(--text-muted)] mb-1">Work Experience</label>
+                                        <input value={editJobForm.workExperience} onChange={e => setEditJobForm(p => ({ ...p, workExperience: e.target.value }))} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" placeholder="e.g. 3+ years" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm text-[var(--text-muted)] mb-1">Experience Range</label>
+                                        <input value={editJobForm.experienceRange} onChange={e => setEditJobForm(p => ({ ...p, experienceRange: e.target.value }))} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" placeholder="e.g. 2-5 years" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-[var(--text-muted)] mb-1">Application Deadline</label>
+                                        <input value={editJobForm.deadline} onChange={e => setEditJobForm(p => ({ ...p, deadline: e.target.value }))} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" placeholder="YYYY-MM-DD or text" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Company Description</label>
+                                    <textarea value={editJobForm.companyDescription} onChange={e => setEditJobForm(p => ({ ...p, companyDescription: e.target.value }))} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] h-20 resize-none" />
                                 </div>
                                 <div>
                                     <label className="block text-sm text-[var(--text-muted)] mb-1">Image (optional)</label>

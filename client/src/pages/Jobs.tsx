@@ -38,6 +38,8 @@ const Jobs = () => {
     const toast = useToast();
     const { user, isAuthenticated } = useAuth();
     const { on: onSocket } = useSocket();
+    const roleString = (user?.role || '')?.toString().toLowerCase();
+    const canPostOpportunity = roleString === 'admin' || roleString === 'alumni' || roleString.includes('alum');
     
     const [jobs, setJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
@@ -322,7 +324,7 @@ const Jobs = () => {
                     <div className="flex items-center gap-2 sm:gap-3">
                         <button onClick={async () => { await loadPreferences(); setShowPreferencesModal(true); }} className="px-3 sm:px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] text-xs sm:text-sm">Preferences</button>
 
-                        {(user?.role === 'alumni' || user?.role === 'admin') && (
+                        {canPostOpportunity && (
                         <button onClick={() => navigate('/jobs/post')} className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 bg-[var(--accent)] text-[var(--bg-primary)] font-semibold hover:bg-[var(--accent-hover)] transition-colors text-xs sm:text-sm">
                             <Plus size={16} className="sm:w-[18px] sm:h-[18px]" />
                             <span className="hidden sm:inline">Post Opportunity</span>

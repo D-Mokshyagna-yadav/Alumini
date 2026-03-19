@@ -4,24 +4,44 @@ import User from '../models/User';
 import Notification from '../models/Notification';
 import { cacheMiddleware, TTL } from '../config/cache';
 import { requireAuth, requireAdmin } from '../middleware/auth';
+import { getSettings } from '../models/SiteSettings';
 
 const router = express.Router();
 
-// POST /api/events - Create event (Admin only)
-router.post('/', requireAdmin, async (req, res) => {
+// POST /api/events - Create event (admins auto-published; authenticated users may submit for approval)
+router.post('/', requireAuth, async (req, res) => {
     try {
         const user = await User.findById(req.session!.userId);
         if (!user) return res.status(404).json({ message: 'User not found' });
         const { title, description, date, time, venue, bannerImage } = req.body;
 
-        // Only admins can create events - auto-approved
-        const event = new Event({ title, description, date, time, venue, bannerImage, createdBy: user._id, status: EventStatus.APPROVED });
+        // Determine auto-approval based on admin role or site settings
+        const settings = await getSettings();
+        const isAdmin = user.role === 'admin';
+        const autoApprove = isAdmin || !!settings.autoApproveEvents;
+
+        const status = autoApprove ? EventStatus.APPROVED : EventStatus.PENDING;
+
+        const event = new Event({ title, description, date, time, venue, bannerImage, createdBy: user._id, status });
         await event.save();
 
-        // Broadcast new event
-        try { const io = (req as any).io; if (io) io.emit('event_created', { eventId: event._id }); } catch (e) { /* ignore */ }
+        // If auto-approved, broadcast to clients
+        if (status === EventStatus.APPROVED) {
+            try { const io = (req as any).io; if (io) io.emit('event_created', { eventId: event._id }); } catch (e) { /* ignore */ }
+            // Notify creator of publication
+            try { await Notification.create({ recipient: user._id, type: 'event_published', message: `Your event "${event.title}" was published`, data: { event: event._id } }); } catch (e) { /* ignore */ }
+            return res.status(201).json({ message: 'Event created and published', event });
+        }
 
-        return res.json({ message: 'Event created and published', event });
+        // If pending, notify admins (best-effort)
+        try {
+            const admins = await User.find({ role: 'admin' }).select('_id');
+            for (const a of admins) {
+                await Notification.create({ recipient: a._id, actor: user._id, type: 'event_pending', message: `${user.name} submitted an event for approval: ${event.title}`, data: { event: event._id } });
+            }
+        } catch (e) { /* ignore notification errors */ }
+
+        return res.status(200).json({ message: 'Event submitted for admin approval', event });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });

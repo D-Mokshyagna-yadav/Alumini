@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { feedListVariant, feedItemVariant } from '../components/animation/motionVariants';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -214,7 +215,7 @@ const Feed = () => {
                 if ('requestIdleCallback' in window) {
                     (window as Window & { requestIdleCallback: (cb: IdleRequestCallback) => number }).requestIdleCallback(() => runWarmup());
                 } else {
-                    window.setTimeout(runWarmup, 120);
+                    setTimeout(runWarmup, 120);
                 }
             }
         } catch { /* silent */ } finally { setLoading(false); }
@@ -626,8 +627,8 @@ const Feed = () => {
                             <div className="flex gap-1 mt-3 pt-3 border-t border-[var(--border-color)]/20">
                                 {[
                                     { icon: ImageIcon, label: 'Media', color: 'text-[var(--accent)]' },
-                                    { icon: Calendar, label: 'Event', color: 'text-[var(--text-secondary)]' },
-                                    { icon: FileText, label: 'Article', color: 'text-[var(--text-secondary)]' },
+                                    // { icon: Calendar, label: 'Event', color: 'text-[var(--text-secondary)]' },
+                                    // { icon: FileText, label: 'Article', color: 'text-[var(--text-secondary)]' },
                                 ].map(({ icon: Icon, label, color }) => (
                                     <button key={label} onClick={() => setShowPostModal(true)}
                                         className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl hover:bg-[var(--bg-tertiary)]/60 transition-colors"
@@ -636,6 +637,11 @@ const Feed = () => {
                                         <span className="text-xs font-medium text-[var(--text-muted)]">{label}</span>
                                     </button>
                                 ))}
+
+                                {/* The Event and Article quick-actions are intentionally hidden. Preserved originals:
+                                    <button key="Event" onClick={() => setShowPostModal(true)} className="..."> <Calendar size={16} /> <span>Event</span> </button>
+                                    <button key="Article" onClick={() => setShowPostModal(true)} className="..."> <FileText size={16} /> <span>Article</span> </button>
+                                */}
                             </div>
                         </motion.div>
                     ) : (
@@ -659,16 +665,17 @@ const Feed = () => {
                     )}
 
                     {/* Posts */}
-                    <AnimatePresence mode="popLayout">
+                    <motion.div variants={feedListVariant} initial="hidden" animate="visible">
+                        <AnimatePresence mode="popLayout">
                         {displayPosts.map((post, index) => {
                             const liked = isPostLiked(post);
                             return (
                                 <motion.article
                                     key={post._id}
-                                    initial={{ opacity: 0, y: 16 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.95 }}
-                                    transition={{ delay: index * 0.03 }}
+                                    variants={feedItemVariant}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="exit"
                                     className={glass + ' overflow-hidden'}
                                 >
                                     {/* Post Header */}
@@ -877,6 +884,7 @@ const Feed = () => {
                             );
                         })}
                     </AnimatePresence>
+                        </motion.div>
 
                     {/* Empty State */}
                     {displayPosts.length === 0 && (

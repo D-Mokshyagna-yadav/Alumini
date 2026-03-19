@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { modalVariant } from './animation/motionVariants';
 import { useNavigate } from 'react-router-dom';
 import { X, Users, Lock, Search } from 'lucide-react';
 import api from '../lib/api';
@@ -82,11 +84,17 @@ export default function ConnectionsModal({ open, onClose, userId, userName, defa
     if (!open) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={handleClose}>
-            <div
-                className="bg-[var(--bg-secondary)] w-full max-w-md max-h-[70vh] flex flex-col rounded-xl overflow-hidden"
-                onClick={e => e.stopPropagation()}
-            >
+        <AnimatePresence>
+            {open && (
+                <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={handleClose}>
+                    <motion.div
+                        className="bg-[var(--bg-secondary)] w-full max-w-md max-h-[70vh] flex flex-col rounded-xl overflow-hidden"
+                        onClick={e => e.stopPropagation()}
+                        variants={modalVariant}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                    >
                 {/* Header */}
                 <div className="px-5 py-4 border-b border-[var(--border-color)]/30 shrink-0">
                     <div className="flex items-center justify-between">
@@ -216,7 +224,9 @@ export default function ConnectionsModal({ open, onClose, userId, userName, defa
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
     );
 }

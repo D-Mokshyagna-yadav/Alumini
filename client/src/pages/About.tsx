@@ -243,65 +243,70 @@ const About = () => {
                     </div>
 
                     {/* Administration / Governing Body */}
-                    <div id="leadership" className="max-w-6xl mx-auto">
-                        <h2 className="text-2xl sm:text-3xl font-heading font-bold text-[var(--text-primary)] text-center mb-12">Administration</h2>
-                        <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl shadow-sm border-none rounded-2xl overflow-hidden">
-                            <div className="grid md:grid-cols-2 md:gap-4">
-                                <div className="p-6 sm:p-10">
-                                    <h3 className="text-2xl font-bold text-[var(--accent)] mb-8">Governing Body</h3>
-                                    <table className="w-full" style={{ borderSpacing: '0 8px', borderCollapse: 'separate' }}>
-                                        <thead>
-                                            <tr>
-                                                <th className="text-left text-xs uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3 px-3">Name</th>
-                                                <th className="text-right text-xs uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3 px-3">Role</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr className="rounded-lg">
-                                                <td className="py-4 px-3 font-medium text-base text-[var(--text-primary)] rounded-l-lg">Dr. M.V. Ramana Rao</td>
-                                                <td className="py-4 px-3 text-sm text-[var(--text-secondary)] text-right rounded-r-lg">Chairman</td>
-                                            </tr>
-                                            <tr className="rounded-lg">
-                                                <td className="py-4 px-3 font-medium text-base text-[var(--text-primary)] rounded-l-lg">Sri N. Srinivasa Rao</td>
-                                                <td className="py-4 px-3 text-sm text-[var(--text-secondary)] text-right rounded-r-lg">Vice Chairman</td>
-                                            </tr>
-                                            <tr className="rounded-lg">
-                                                <td className="py-4 px-3 font-medium text-base text-[var(--text-primary)] rounded-l-lg">Sri M. Srinivasa Rao</td>
-                                                <td className="py-4 px-3 text-sm text-[var(--text-secondary)] text-right rounded-r-lg">Director (P&D)</td>
-                                            </tr>
-                                            <tr className="rounded-lg">
-                                                <td className="py-4 px-3 font-medium text-base text-[var(--text-primary)] rounded-l-lg">Sri D. Panduranga Rao</td>
-                                                <td className="py-4 px-3 text-sm text-[var(--text-secondary)] text-right rounded-r-lg">CEO</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div className="p-6 sm:p-10">
-                                    <h3 className="text-2xl font-bold text-[var(--accent)] mb-8">Key Officials</h3>
-                                    <table className="w-full" style={{ borderSpacing: '0 8px', borderCollapse: 'separate' }}>
-                                        <thead>
-                                            <tr>
-                                                <th className="text-left text-xs uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3 px-3">Name</th>
-                                                <th className="text-right text-xs uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3 px-3">Role</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr className="rounded-lg">
-                                                <td className="py-4 px-3 font-medium text-base text-[var(--text-primary)] rounded-l-lg">Dr. T. Vamsee Kiran</td>
-                                                <td className="py-4 px-3 text-sm text-[var(--text-secondary)] text-right rounded-r-lg">Principal</td>
-                                            </tr>
-                                            <tr className="rounded-lg">
-                                                <td className="py-4 px-3 font-medium text-base text-[var(--text-primary)] rounded-l-lg">Dr. G. Rajesh</td>
-                                                <td className="py-4 px-3 text-sm text-[var(--text-secondary)] text-right rounded-r-lg">Dean (Academics)</td>
-                                            </tr>
-                                            <tr className="rounded-lg">
-                                                <td className="py-4 px-3 font-medium text-base text-[var(--text-primary)] rounded-l-lg">Dr. A. Guravaiah</td>
-                                                <td className="py-4 px-3 text-sm text-[var(--text-secondary)] text-right rounded-r-lg">Dean (R&D)</td>
-                                            </tr>
-
-                                        </tbody>
-                                    </table>
-                                </div>
+                    <div id="leadership" className="w-full flex flex-col items-center py-8" style={{ maxWidth: '1600px', margin: '0 auto', paddingLeft: '48px', paddingRight: '48px' }}>
+                        <h2 className="text-2xl sm:text-3xl font-heading font-bold text-[var(--text-primary)] text-center mb-8">Administration</h2>
+                        <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl shadow-sm border-none rounded-2xl overflow-hidden w-full grid grid-cols-2 divide-x divide-transparent">
+                            <div className="p-10 flex flex-col justify-center">
+                                <h3 className="text-2xl font-bold text-[var(--accent)] mb-8">Governing Body</h3>
+                                <table className="w-full text-lg table-fixed" style={{ borderCollapse: 'separate' }}>
+                                    <colgroup>
+                                        <col style={{ width: '50%' }} />
+                                        <col style={{ width: '50%' }} />
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th className="text-left text-base uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3 px-8">Name</th>
+                                            <th className="text-right text-base uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3 px-8">Role</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-[var(--border-color)]">
+                                        <tr className="rounded-lg">
+                                            <td className="py-8 px-8 font-medium text-xl text-[var(--text-primary)] rounded-l-lg text-left">Dr. M.V. Ramana Rao</td>
+                                            <td className="py-8 px-8 text-sm text-[var(--text-secondary)] rounded-r-lg text-right whitespace-normal break-words">Chairman</td>
+                                        </tr>
+                                        <tr className="rounded-lg">
+                                            <td className="py-8 px-8 font-medium text-xl text-[var(--text-primary)] rounded-l-lg text-left">Sri N. Srinivasa Rao</td>
+                                            <td className="py-8 px-8 text-sm text-[var(--text-secondary)] rounded-r-lg text-right whitespace-normal break-words">Vice Chairman</td>
+                                        </tr>
+                                        <tr className="rounded-lg">
+                                            <td className="py-8 px-8 font-medium text-xl text-[var(--text-primary)] rounded-l-lg text-left">Sri M. Srinivasa Rao</td>
+                                            <td className="py-8 px-8 text-sm text-[var(--text-secondary)] rounded-r-lg text-right whitespace-normal break-words">Director (P&D)</td>
+                                        </tr>
+                                        <tr className="rounded-lg">
+                                            <td className="py-8 px-8 font-medium text-xl text-[var(--text-primary)] rounded-l-lg text-left">Sri D. Panduranga Rao</td>
+                                            <td className="py-8 px-8 text-sm text-[var(--text-secondary)] rounded-r-lg text-right whitespace-normal break-words">CEO</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="flex-1 p-10 flex flex-col justify-center">
+                                <h3 className="text-2xl font-bold text-[var(--accent)] mb-8">Key Officials</h3>
+                                <table className="w-full text-lg table-fixed" style={{ borderCollapse: 'separate' }}>
+                                    <colgroup>
+                                        <col style={{ width: '50%' }} />
+                                        <col style={{ width: '50%' }} />
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th className="text-left text-base uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3 px-8">Name</th>
+                                            <th className="text-right text-base uppercase tracking-wider text-[var(--text-secondary)] font-semibold pb-3 px-8">Role</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-[var(--border-color)]">
+                                        <tr className="rounded-lg">
+                                            <td className="py-8 px-8 font-medium text-xl text-[var(--text-primary)] rounded-l-lg text-left">Dr. T. Vamsee Kiran</td>
+                                            <td className="py-8 px-8 text-sm text-[var(--text-secondary)] rounded-r-lg text-right whitespace-normal break-words">Principal</td>
+                                        </tr>
+                                        <tr className="rounded-lg">
+                                            <td className="py-8 px-8 font-medium text-xl text-[var(--text-primary)] rounded-l-lg text-left">Dr. G. Rajesh</td>
+                                            <td className="py-8 px-8 text-sm text-[var(--text-secondary)] rounded-r-lg text-right whitespace-normal break-words">Dean (Academics)</td>
+                                        </tr>
+                                        <tr className="rounded-lg">
+                                            <td className="py-8 px-8 font-medium text-xl text-[var(--text-primary)] rounded-l-lg text-left">Dr. A. Guravaiah</td>
+                                            <td className="py-8 px-8 text-sm text-[var(--text-secondary)] rounded-r-lg text-right whitespace-normal break-words">Dean (R&D)</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>

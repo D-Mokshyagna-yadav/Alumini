@@ -61,7 +61,6 @@ const Directory = () => {
     const [mutualPopup, setMutualPopup] = useState<string | null>(null);
     const mutualPopupRef = useRef<HTMLDivElement>(null);
 
-    // Close mutual popup on click outside
     useEffect(() => {
         const handler = (e: MouseEvent) => {
             if (mutualPopupRef.current && !mutualPopupRef.current.contains(e.target as Node)) {
@@ -74,7 +73,6 @@ const Directory = () => {
 
     useEffect(() => {
         fetchAlumni();
-        // Fetch pending requests count on mount so badge shows on Explore tab
         api.get('/connections/pending-received').then(res => setPendingReceived(res.data)).catch(() => {});
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -86,7 +84,6 @@ const Directory = () => {
             const users = res.data.users as Alumni[];
             if (users.length > 0) {
                 const userIds = users.map(u => u._id);
-                // Fetch connection statuses and mutual connections in batch
                 const [statusRes, mutualRes] = await Promise.allSettled([
                     api.post('/connections/status-batch', { userIds }),
                     api.post('/connections/mutual-batch', { userIds }),
@@ -124,9 +121,7 @@ const Directory = () => {
     }, []);
 
     useEffect(() => {
-        if (mainTab === 'network') {
-            fetchNetworkData();
-        }
+        if (mainTab === 'network') fetchNetworkData();
     }, [mainTab, fetchNetworkData]);
 
     const checkConnectionStatus = async (userId: string) => {
@@ -167,7 +162,6 @@ const Directory = () => {
             setConnectionStatuses(prev => ({ ...prev, [userId]: { status: 'accepted' } }));
             try { await checkAuth(); } catch { /* ignore */ }
             toast.show('Connection accepted', 'success');
-            // Refresh network data if on network tab
             if (mainTab === 'network') fetchNetworkData();
         } catch (error: unknown) {
             const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to accept request';
@@ -280,7 +274,6 @@ const Directory = () => {
     }
 
     const ConnectionButton = ({ person }: { person: Alumni }) => {
-        // Don't show connection button for own profile
         if (person._id === currentUser?.id || person._id === (currentUser as { _id?: string })?._id) return null;
         const status = connectionStatuses[person._id]?.status;
         if (status === 'accepted') {

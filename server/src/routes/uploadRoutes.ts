@@ -101,10 +101,14 @@ router.post('/profile-pic', requireAuth, profileUpload.single('avatar'), async (
         if (!user) return res.status(401).json({ message: 'Unauthorized' });
         const username = sanitizeUsername(user.name);
 
-        // Delete old avatar from GridFS
+        // Delete old avatar from GridFS (support full URLs and relative paths)
         if (user.avatar) {
-            const oldGrid = user.avatar.replace(/^\/?(?:api\/)?uploads\//, '');
-            deleteGridFSFile(oldGrid).catch(e => console.error('Failed to delete old avatar from GridFS:', e));
+            try {
+                const oldGrid = (user.avatar as string).replace(/^(?:https?:\/\/[^\/]+)?\/?(?:api\/)?uploads\//, '');
+                await deleteGridFSFile(oldGrid);
+            } catch (e) {
+                console.error('Failed to delete old avatar from GridFS:', e);
+            }
         }
 
         const avatarRel = await processImageAndStore(file, username, 'profile');
@@ -129,10 +133,14 @@ router.post('/cover-photo', requireAuth, profileUpload.single('cover'), async (r
         if (!user) return res.status(401).json({ message: 'Unauthorized' });
         const username = sanitizeUsername(user.name);
 
-        // Delete old cover from GridFS
+        // Delete old cover from GridFS (support full URLs and relative paths)
         if ((user as any).coverImage) {
-            const oldGrid = ((user as any).coverImage as string).replace(/^\/?(?:api\/)?uploads\//, '');
-            deleteGridFSFile(oldGrid).catch(e => console.error('Failed to delete old cover from GridFS:', e));
+            try {
+                const oldGrid = ((user as any).coverImage as string).replace(/^(?:https?:\/\/[^\/]+)?\/?(?:api\/)?uploads\//, '');
+                await deleteGridFSFile(oldGrid);
+            } catch (e) {
+                console.error('Failed to delete old cover from GridFS:', e);
+            }
         }
 
         const coverRel = await processImageAndStore(file, username, 'profile');
