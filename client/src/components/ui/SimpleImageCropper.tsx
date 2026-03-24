@@ -83,18 +83,28 @@ export default function SimpleImageCropper({ file, size = 600, shape = 'rounded'
     const imgRect = img.getBoundingClientRect();
     const scaleFactor = img.naturalWidth / imgRect.width;
 
-    const sx = Math.max(0, (rect.left - imgRect.left) * scaleFactor * -1);
-    const sy = Math.max(0, (rect.top - imgRect.top) * scaleFactor * -1);
-    const sWidth = Math.min(img.naturalWidth, rect.width * scaleFactor);
-    const sHeight = Math.min(img.naturalHeight, rect.height * scaleFactor);
+    // Calculate source coordinates - how much of the image is outside the crop area
+    const sx = Math.max(0, (rect.left - imgRect.left) * scaleFactor);
+    const sy = Math.max(0, (rect.top - imgRect.top) * scaleFactor);
+    const sWidth = Math.max(1, Math.min(img.naturalWidth - sx, rect.width * scaleFactor));
+    const sHeight = Math.max(1, Math.min(img.naturalHeight - sy, rect.height * scaleFactor));
+
+    // Validate values before drawing
+    if (!isFinite(sx) || !isFinite(sy) || !isFinite(sWidth) || !isFinite(sHeight) || sWidth <= 0 || sHeight <= 0) {
+      return;
+    }
 
     // clear & draw
     ctx.clearRect(0, 0, cv.width, cv.height);
-      // fill white background first to avoid black canvas
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, cv.width, cv.height);
+    // fill white background first to avoid black canvas
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, cv.width, cv.height);
     // draw the same area we would crop, scaled to preview size
-    ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, cv.width, cv.height);
+    try {
+      ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, cssW, cssH);
+    } catch {
+      // fallback if draw fails
+    }
 
     // apply mask for rounded/circle preview
     if (shape === 'rounded' || shape === 'circle') {
@@ -164,12 +174,13 @@ export default function SimpleImageCropper({ file, size = 600, shape = 'rounded'
     const imgRect = img.getBoundingClientRect();
     const scaleFactor = img.naturalWidth / imgRect.width || 1;
 
-    let sx = Math.max(0, (rect.left - imgRect.left) * scaleFactor * -1);
-    let sy = Math.max(0, (rect.top - imgRect.top) * scaleFactor * -1);
-    let sWidth = Math.min(img.naturalWidth, rect.width * scaleFactor);
-    let sHeight = Math.min(img.naturalHeight, rect.height * scaleFactor);
+    // Calculate source coordinates - how much of the image is outside the crop area
+    let sx = Math.max(0, (rect.left - imgRect.left) * scaleFactor);
+    let sy = Math.max(0, (rect.top - imgRect.top) * scaleFactor);
+    let sWidth = Math.max(1, Math.min(img.naturalWidth - sx, rect.width * scaleFactor));
+    let sHeight = Math.max(1, Math.min(img.naturalHeight - sy, rect.height * scaleFactor));
 
-    if (!isFinite(sx) || !isFinite(sy) || !isFinite(sWidth) || !isFinite(sHeight)) {
+    if (!isFinite(sx) || !isFinite(sy) || !isFinite(sWidth) || !isFinite(sHeight) || sWidth <= 0 || sHeight <= 0) {
       sx = 0; sy = 0; sWidth = img.naturalWidth; sHeight = img.naturalHeight;
     }
 

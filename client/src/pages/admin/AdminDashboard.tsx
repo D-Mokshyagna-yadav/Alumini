@@ -143,6 +143,7 @@ const AdminDashboard = () => {
     const [alumniImageUrl, setAlumniImageUrl] = useState<string | null>(null);
     const [alumniImageTemp, setAlumniImageTemp] = useState<File | null>(null);
     const [showAlumniCropper, setShowAlumniCropper] = useState(false);
+    const [alumniExistingImage, setAlumniExistingImage] = useState<string | null>(null);
     const [alumniUserSearch, setAlumniUserSearch] = useState('');
     const [alumniUserResults, setAlumniUserResults] = useState<any[]>([]);
     const [savingAlumni, setSavingAlumni] = useState(false);
@@ -1050,6 +1051,7 @@ const AdminDashboard = () => {
     const resetAlumniForm = () => {
         setAlumniForm({ name: '', role: '', batch: '', profileId: '', order: 0 });
         setAlumniImage(null);
+        setAlumniExistingImage(null);
         setEditingAlumniId(null);
         setAlumniModalMode('create');
         setAlumniUserSearch('');
@@ -1070,6 +1072,7 @@ const AdminDashboard = () => {
             profileId: item.profileId || '',
             order: item.order || 0,
         });
+        setAlumniExistingImage(item.image || null);
         setEditingAlumniId(item._id);
         setAlumniModalMode('edit');
         setShowAlumniModal(true);
@@ -1804,23 +1807,23 @@ const AdminDashboard = () => {
                                 <EmptyState icon={Star} text="No notable alumni added yet" />
                             ) : (
                                 filteredNotableAlumni.map(item => (
-                                    <div key={item._id} className="p-4 hover:bg-[var(--bg-tertiary)] transition-colors">
-                                        <div className="flex items-start justify-between gap-4">
+                                    <div key={item._id} className="p-3 sm:p-4 hover:bg-[var(--bg-tertiary)] transition-colors">
+                                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                                             <div className="flex items-start gap-3 flex-1 min-w-0">
                                                 {item.image && (
-                                                    <CachedImage src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg flex-shrink-0" wrapperClassName="w-16 h-16 flex-shrink-0" compact />
+                                                    <CachedImage src={item.image} alt={item.name} className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg flex-shrink-0" wrapperClassName="w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0 rounded-lg" compact />
                                                 )}
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="font-semibold text-[var(--text-primary)]">{item.name}</p>
-                                                    <p className="text-sm text-[var(--text-secondary)]">{item.role}</p>
-                                                    <div className="flex items-center gap-3 mt-1 text-xs text-[var(--text-muted)]">
+                                                    <p className="font-semibold text-[var(--text-primary)] truncate">{item.name}</p>
+                                                    <p className="text-sm text-[var(--text-secondary)] truncate">{item.role}</p>
+                                                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 text-xs text-[var(--text-muted)]">
                                                         <span>Class of {item.batch}</span>
                                                         {item.profileId && <span className="text-[var(--accent)]">Profile linked</span>}
                                                         <span>Order: {item.order}</span>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                            <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-start">
                                                 <Button size="sm" variant="outline" onClick={() => openEditAlumniModal(item)}>
                                                     <Edit2 size={14} />
                                                 </Button>
@@ -1846,16 +1849,16 @@ const AdminDashboard = () => {
                                 <>
                                     {/* Governing Body */}
                                     {filteredAdminMembers.filter(m => m.category === 'governing').length > 0 && (
-                                        <div className="p-4">
+                                        <div className="p-3 sm:p-4">
                                             <h4 className="text-sm font-semibold text-[var(--accent)] uppercase tracking-wide mb-3">Governing Body</h4>
                                             <div className="space-y-2">
                                                 {filteredAdminMembers.filter(m => m.category === 'governing').map(item => (
-                                                    <div key={item._id} className="flex items-center justify-between gap-4 p-3 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors">
+                                                    <div key={item._id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 p-3 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors">
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="font-medium text-[var(--text-primary)]">{item.name}</p>
-                                                            <p className="text-sm text-[var(--text-secondary)]">{item.designation}</p>
+                                                            <p className="font-medium text-[var(--text-primary)] truncate">{item.name}</p>
+                                                            <p className="text-sm text-[var(--text-secondary)] truncate">{item.designation}</p>
                                                         </div>
-                                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                                        <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
                                                             <span className="text-xs text-[var(--text-muted)]">#{item.order}</span>
                                                             <Button size="sm" variant="outline" onClick={() => openEditAdminMemberModal(item)}>
                                                                 <Edit2 size={14} />
@@ -1871,16 +1874,16 @@ const AdminDashboard = () => {
                                     )}
                                     {/* Key Officials */}
                                     {filteredAdminMembers.filter(m => m.category === 'officials').length > 0 && (
-                                        <div className="p-4">
+                                        <div className="p-3 sm:p-4">
                                             <h4 className="text-sm font-semibold text-[var(--accent)] uppercase tracking-wide mb-3">Key Officials</h4>
                                             <div className="space-y-2">
                                                 {filteredAdminMembers.filter(m => m.category === 'officials').map(item => (
-                                                    <div key={item._id} className="flex items-center justify-between gap-4 p-3 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors">
+                                                    <div key={item._id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 p-3 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors">
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="font-medium text-[var(--text-primary)]">{item.name}</p>
-                                                            <p className="text-sm text-[var(--text-secondary)]">{item.designation}</p>
+                                                            <p className="font-medium text-[var(--text-primary)] truncate">{item.name}</p>
+                                                            <p className="text-sm text-[var(--text-secondary)] truncate">{item.designation}</p>
                                                         </div>
-                                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                                        <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
                                                             <span className="text-xs text-[var(--text-muted)]">#{item.order}</span>
                                                             <Button size="sm" variant="outline" onClick={() => openEditAdminMemberModal(item)}>
                                                                 <Edit2 size={14} />
@@ -2503,9 +2506,17 @@ const AdminDashboard = () => {
                                 <div>
                                     <label className="block text-sm text-[var(--text-muted)] mb-1">Photo {alumniModalMode === 'create' ? '*' : '(optional, leave empty to keep current)'}</label>
                                     <input type="file" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) { setAlumniImageTemp(f); setShowAlumniCropper(true); } else { setAlumniImage(null); } }} className="text-sm text-[var(--text-primary)]" />
-                                    {alumniImage && alumniImageUrl && (
-                                        <img src={alumniImageUrl} alt="preview" className="mt-2 w-full h-36 object-contain bg-[var(--bg-tertiary)] rounded" />
-                                    )}
+                                    {alumniImage && alumniImageUrl ? (
+                                        <div className="mt-2 relative">
+                                            <img src={alumniImageUrl} alt="New preview" className="w-full h-36 object-contain bg-[var(--bg-tertiary)] rounded" />
+                                            <span className="absolute top-2 left-2 text-xs bg-green-500/80 text-white px-2 py-0.5 rounded">New</span>
+                                        </div>
+                                    ) : alumniExistingImage && !alumniImage ? (
+                                        <div className="mt-2 relative">
+                                            <CachedImage src={alumniExistingImage} alt="Current" className="w-full h-36 object-contain" wrapperClassName="w-full h-36 bg-[var(--bg-tertiary)] rounded" />
+                                            <span className="absolute top-2 left-2 text-xs bg-[var(--accent)]/80 text-white px-2 py-0.5 rounded">Current</span>
+                                        </div>
+                                    ) : null}
                                     {showAlumniCropper && alumniImageTemp && (
                                         <SimpleImageCropper file={alumniImageTemp} shape="rounded" onCancel={() => { setShowAlumniCropper(false); setAlumniImageTemp(null); }} onCrop={(f: File) => { setAlumniImage(f); setShowAlumniCropper(false); setAlumniImageTemp(null); }} />
                                     )}
