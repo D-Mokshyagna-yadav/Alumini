@@ -147,6 +147,7 @@ const AdminDashboard = () => {
     const [alumniUserSearch, setAlumniUserSearch] = useState('');
     const [alumniUserResults, setAlumniUserResults] = useState<any[]>([]);
     const [savingAlumni, setSavingAlumni] = useState(false);
+    const [alumniUploadProgress, setAlumniUploadProgress] = useState(0);
 
     // Memoize object URL for alumniImage to avoid recreating blob URLs every render
     useEffect(() => {
@@ -1086,12 +1087,21 @@ const AdminDashboard = () => {
         }
         createLocksRef.current.alumni = true;
         setSavingAlumni(true);
+        setAlumniUploadProgress(0);
         try {
             let imageUrl: string | undefined;
             if (alumniImage) {
                 const fd = new FormData();
                 fd.append('image', alumniImage);
-                const up = await api.post('/upload/notable-alumni-image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+                const up = await api.post('/upload/notable-alumni-image', fd, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                    onUploadProgress: (progressEvent) => {
+                        const progress = progressEvent.total
+                            ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                            : 0;
+                        setAlumniUploadProgress(progress);
+                    }
+                });
                 imageUrl = up.data.relative || up.data.url;
             }
 
@@ -1120,6 +1130,7 @@ const AdminDashboard = () => {
         } finally {
             createLocksRef.current.alumni = false;
             setSavingAlumni(false);
+            setAlumniUploadProgress(0);
         }
     };
 
@@ -2561,11 +2572,27 @@ const AdminDashboard = () => {
                                     )}
                                 </div>
                             </div>
-                            <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
-                                <button onClick={() => { setShowAlumniModal(false); resetAlumniForm(); }} className="px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]">Cancel</button>
-                                <Button onClick={handleSaveAlumni} disabled={savingAlumni || !alumniForm.name.trim() || !alumniForm.role.trim() || !alumniForm.batch.trim()} isLoading={savingAlumni}>
-                                    {alumniModalMode === 'edit' ? 'Save Changes' : 'Add Alumni'}
-                                </Button>
+                            <div className="p-4 border-t border-[var(--border-color)]">
+                                {savingAlumni && alumniImage && alumniUploadProgress > 0 && (
+                                    <div className="mb-3">
+                                        <div className="flex items-center justify-between text-xs text-[var(--text-muted)] mb-1">
+                                            <span>Uploading image...</span>
+                                            <span>{alumniUploadProgress}%</span>
+                                        </div>
+                                        <div className="w-full h-2 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-[var(--accent)] transition-all duration-300 ease-out"
+                                                style={{ width: `${alumniUploadProgress}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                                <div className="flex justify-end gap-2">
+                                    <button onClick={() => { setShowAlumniModal(false); resetAlumniForm(); }} className="px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]" disabled={savingAlumni}>Cancel</button>
+                                    <Button onClick={handleSaveAlumni} disabled={savingAlumni || !alumniForm.name.trim() || !alumniForm.role.trim() || !alumniForm.batch.trim()} isLoading={savingAlumni}>
+                                        {alumniModalMode === 'edit' ? 'Save Changes' : 'Add Alumni'}
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </div>
