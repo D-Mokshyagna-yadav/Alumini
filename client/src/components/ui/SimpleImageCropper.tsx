@@ -9,7 +9,7 @@ type Props = {
 };
 
 export default function SimpleImageCropper({ file, size = 600, shape = 'rounded', onCancel, onCrop }: Props) {
-  const url = URL.createObjectURL(file);
+  const [url, setUrl] = useState('');
   const imgRef = useRef<HTMLImageElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const previewRef = useRef<HTMLCanvasElement | null>(null);
@@ -17,11 +17,19 @@ export default function SimpleImageCropper({ file, size = 600, shape = 'rounded'
   const [scale, setScale] = useState(1);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [loaded, setLoaded] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const natural = useRef({ w: 0, h: 0 });
   const dragging = useRef(false);
   const last = useRef({ x: 0, y: 0 });
 
-  useEffect(() => () => { URL.revokeObjectURL(url); }, [url]);
+  useEffect(() => {
+    const objectUrl = URL.createObjectURL(file);
+    setUrl(objectUrl);
+    setLoaded(false);
+    setScale(1);
+    setPos({ x: 0, y: 0 });
+    return () => { URL.revokeObjectURL(objectUrl); };
+  }, [file]);
 
   // mark loaded when the DOM <img> finishes loading (we set src immediately)
   useEffect(() => {
@@ -136,9 +144,11 @@ export default function SimpleImageCropper({ file, size = 600, shape = 'rounded'
   };
   // Pointer event based dragging (works for touch + mouse)
   const onPointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
     const el = e.currentTarget as Element;
     (el as Element).setPointerCapture?.(e.pointerId);
     dragging.current = true;
+    setIsDragging(true);
     last.current = { x: e.clientX, y: e.clientY };
   };
   const onPointerMove = (e: React.PointerEvent) => {
@@ -153,6 +163,7 @@ export default function SimpleImageCropper({ file, size = 600, shape = 'rounded'
     const el = e.currentTarget as Element;
     (el as Element).releasePointerCapture?.(e.pointerId);
     dragging.current = false;
+    setIsDragging(false);
   };
 
   const doCrop = async () => {
@@ -244,7 +255,7 @@ export default function SimpleImageCropper({ file, size = 600, shape = 'rounded'
 
   // styles extracted to reduce JSX complexity
   const containerStyle: React.CSSProperties = { width: 360, height: 360, position: 'relative', overflow: 'hidden', borderRadius: shape === 'circle' ? '50%' : '12px', background: '#f3f4f6', touchAction: 'none' };
-  const imgStyle: React.CSSProperties = { position: 'absolute', left: '50%', top: '50%', transform: `translate(-50%, -50%) translate(${pos.x}px, ${pos.y}px) scale(${scale})`, cursor: dragging.current ? 'grabbing' : 'grab', touchAction: 'none', userSelect: 'none', maxWidth: 'none', maxHeight: 'none', opacity: loaded ? 1 : 0, transition: 'opacity 180ms ease' };
+  const imgStyle: React.CSSProperties = { position: 'absolute', left: '50%', top: '50%', transform: `translate(-50%, -50%) translate(${pos.x}px, ${pos.y}px) scale(${scale})`, cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none', userSelect: 'none', maxWidth: 'none', maxHeight: 'none', opacity: loaded ? 1 : 0, transition: 'opacity 180ms ease' };
   const overlayStyle: React.CSSProperties = { position: 'absolute', inset: 0, boxShadow: 'inset 0 0 0 9999px rgba(0,0,0,0.35)', pointerEvents: 'none', borderRadius: shape === 'circle' ? '50%' : '12px' };
 
   return (

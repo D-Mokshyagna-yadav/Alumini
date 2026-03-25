@@ -143,11 +143,13 @@ const AdminDashboard = () => {
     const [alumniImageUrl, setAlumniImageUrl] = useState<string | null>(null);
     const [alumniImageTemp, setAlumniImageTemp] = useState<File | null>(null);
     const [showAlumniCropper, setShowAlumniCropper] = useState(false);
+    const [isAlumniDragActive, setIsAlumniDragActive] = useState(false);
     const [alumniExistingImage, setAlumniExistingImage] = useState<string | null>(null);
     const [alumniUserSearch, setAlumniUserSearch] = useState('');
     const [alumniUserResults, setAlumniUserResults] = useState<any[]>([]);
     const [savingAlumni, setSavingAlumni] = useState(false);
     const [alumniUploadProgress, setAlumniUploadProgress] = useState(0);
+    const alumniImageInputRef = useRef<HTMLInputElement | null>(null);
 
     // Memoize object URL for alumniImage to avoid recreating blob URLs every render
     useEffect(() => {
@@ -1052,11 +1054,30 @@ const AdminDashboard = () => {
     const resetAlumniForm = () => {
         setAlumniForm({ name: '', role: '', batch: '', profileId: '', order: 0 });
         setAlumniImage(null);
+        setAlumniImageTemp(null);
+        setShowAlumniCropper(false);
+        setIsAlumniDragActive(false);
+        setAlumniUploadProgress(0);
         setAlumniExistingImage(null);
         setEditingAlumniId(null);
         setAlumniModalMode('create');
         setAlumniUserSearch('');
         setAlumniUserResults([]);
+    };
+
+    const handleAlumniFileSelect = (file?: File | null) => {
+        if (!file) {
+            setAlumniImage(null);
+            setAlumniImageTemp(null);
+            setShowAlumniCropper(false);
+            return;
+        }
+        if (!file.type.startsWith('image/')) {
+            setToast('Please select a valid image file');
+            return;
+        }
+        setAlumniImageTemp(file);
+        setShowAlumniCropper(true);
     };
 
     const openCreateAlumniModal = () => {
@@ -1073,6 +1094,10 @@ const AdminDashboard = () => {
             profileId: item.profileId || '',
             order: item.order || 0,
         });
+        setAlumniImage(null);
+        setAlumniImageTemp(null);
+        setShowAlumniCropper(false);
+        setIsAlumniDragActive(false);
         setAlumniExistingImage(item.image || null);
         setEditingAlumniId(item._id);
         setAlumniModalMode('edit');
@@ -2516,7 +2541,41 @@ const AdminDashboard = () => {
                                 </div>
                                 <div>
                                     <label className="block text-sm text-[var(--text-muted)] mb-1">Photo {alumniModalMode === 'create' ? '*' : '(optional, leave empty to keep current)'}</label>
-                                    <input type="file" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) { setAlumniImageTemp(f); setShowAlumniCropper(true); } else { setAlumniImage(null); } }} className="text-sm text-[var(--text-primary)]" />
+                                    <div
+                                        className={`rounded-lg border border-dashed p-4 transition-colors ${isAlumniDragActive ? 'border-[var(--accent)] bg-[var(--accent)]/8' : 'border-[var(--border-color)] bg-[var(--bg-tertiary)]/40'}`}
+                                        onDragEnter={(e) => { e.preventDefault(); setIsAlumniDragActive(true); }}
+                                        onDragOver={(e) => { e.preventDefault(); setIsAlumniDragActive(true); }}
+                                        onDragLeave={(e) => {
+                                            e.preventDefault();
+                                            const next = e.relatedTarget as Node | null;
+                                            if (!next || !e.currentTarget.contains(next)) setIsAlumniDragActive(false);
+                                        }}
+                                        onDrop={(e) => {
+                                            e.preventDefault();
+                                            setIsAlumniDragActive(false);
+                                            const f = e.dataTransfer.files?.[0];
+                                            handleAlumniFileSelect(f);
+                                        }}
+                                    >
+                                        <input
+                                            ref={alumniImageInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={e => handleAlumniFileSelect(e.target.files?.[0])}
+                                        />
+                                        <div className="flex flex-col items-center justify-center text-center gap-2">
+                                            <Upload size={18} className="text-[var(--text-muted)]" />
+                                            <p className="text-sm text-[var(--text-secondary)]">Drag and drop an image here, or click to browse.</p>
+                                            <button
+                                                type="button"
+                                                onClick={() => alumniImageInputRef.current?.click()}
+                                                className="px-3 py-1.5 text-xs rounded bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)]"
+                                            >
+                                                Choose Image
+                                            </button>
+                                        </div>
+                                    </div>
                                     {alumniImage && alumniImageUrl ? (
                                         <div className="mt-2 relative">
                                             <img src={alumniImageUrl} alt="New preview" className="w-full h-36 object-contain bg-[var(--bg-tertiary)] rounded" />
