@@ -1065,7 +1065,7 @@ const AdminDashboard = () => {
         setAlumniUserResults([]);
     };
 
-    const handleAlumniFileSelect = (file?: File | null) => {
+    const handleAlumniFileSelect = async (file?: File | null) => {
         if (!file) {
             setAlumniImage(null);
             setAlumniImageTemp(null);
@@ -1076,8 +1076,66 @@ const AdminDashboard = () => {
             setToast('Please select a valid image file');
             return;
         }
-        setAlumniImageTemp(file);
-        setShowAlumniCropper(true);
+
+        const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+        const MAX_DIM = 4000; // max width/height in px before downscaling
+
+        if (file.size > MAX_SIZE) {
+            setToast('Image too large (max 10MB)');
+            return;
+        }
+
+        // Check image dimensions and downscale if too large to avoid memory/UX issues
+        const obj = URL.createObjectURL(file);
+        try {
+            const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+                const i = new Image();
+                i.onload = () => resolve(i);
+                i.onerror = () => reject(new Error('Image load failed'));
+                i.src = obj;
+            });
+            const w = img.naturalWidth || 0;
+            const h = img.naturalHeight || 0;
+            if (!w || !h) {
+                setToast('Unable to read image dimensions');
+                URL.revokeObjectURL(obj);
+                return;
+            }
+
+            if (Math.max(w, h) > MAX_DIM) {
+                // downscale to MAX_DIM
+                const scale = MAX_DIM / Math.max(w, h);
+                const cw = Math.round(w * scale);
+                const ch = Math.round(h * scale);
+                const canvas = document.createElement('canvas');
+                canvas.width = cw;
+                canvas.height = ch;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0, cw, ch);
+                    try {
+                        const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, file.type || 'image/jpeg', 0.92));
+                        if (blob) {
+                            const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, '') + '-resized.jpg', { type: blob.type });
+                            setAlumniImageTemp(newFile);
+                            setShowAlumniCropper(true);
+                            URL.revokeObjectURL(obj);
+                            return;
+                        }
+                    } catch (e) {
+                        console.error('Downscale failed', e);
+                    }
+                }
+            }
+            // else: use original file
+            setAlumniImageTemp(file);
+            setShowAlumniCropper(true);
+        } catch (e) {
+            console.error('Image validation failed', e);
+            setToast('Failed to load image');
+        } finally {
+            URL.revokeObjectURL(obj);
+        }
     };
 
     const openCreateAlumniModal = () => {

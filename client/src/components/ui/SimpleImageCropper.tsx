@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
+import { useToast } from '../../context/ToastContext';
 
 type Props = {
   file: File;
@@ -9,6 +10,7 @@ type Props = {
 };
 
 export default function SimpleImageCropper({ file, size = 600, shape = 'rounded', onCancel, onCrop }: Props) {
+  const toast = useToast();
   const [url, setUrl] = useState('');
   const imgRef = useRef<HTMLImageElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -39,7 +41,10 @@ export default function SimpleImageCropper({ file, size = 600, shape = 'rounded'
       natural.current = { w: img.naturalWidth, h: img.naturalHeight };
       setLoaded(true);
     };
-    const onError = () => setLoaded(true);
+    const onError = () => {
+      setLoaded(true);
+      try { toast.show('Failed to load image', 'error'); } catch { /* ignore */ }
+    };
     img.addEventListener('load', onLoad);
     img.addEventListener('error', onError);
     // if already complete
@@ -52,21 +57,43 @@ export default function SimpleImageCropper({ file, size = 600, shape = 'rounded'
 
   // compute initial scale to cover the crop box and center the image
   useLayoutEffect(() => {
-    if (!loaded) return;
+    const recompute = () => {
+      if (!loaded) return;
+      const c = containerRef.current;
+      if (!c) return;
+      const cw = c.clientWidth;
+      const ch = c.clientHeight;
+      const iw = natural.current.w || 1;
+      const ih = natural.current.h || 1;
+      const fitScale = Math.max(cw / iw, ch / ih);
+      setScale(prev => {
+        // if user already zoomed, don't overwrite large custom zoom
+        if (prev && prev !== 1) return prev;
+        return +(fitScale).toFixed(3);
+      });
+      // center
+      setPos({ x: 0, y: 0 });
+    };
+
+    recompute();
+    // watch for container resizes (orientation change / layout shifts)
     const c = containerRef.current;
-    if (!c) return;
-    const cw = c.clientWidth;
-    const ch = c.clientHeight;
-    const iw = natural.current.w || 1;
-    const ih = natural.current.h || 1;
-    const fitScale = Math.max(cw / iw, ch / ih);
-    setScale(prev => {
-      // if user already zoomed, don't overwrite large custom zoom
-      if (prev && prev !== 1) return prev;
-      return +(fitScale).toFixed(3);
-    });
-    // center
-    setPos({ x: 0, y: 0 });
+    let ro: ResizeObserver | null = null;
+    try {
+      if (c && (window as any).ResizeObserver) {
+        ro = new (window as any).ResizeObserver(() => recompute());
+        ro.observe(c);
+      }
+    } catch { ro = null; }
+
+    // also recompute on window resize as fallback
+    const onWin = () => recompute();
+    window.addEventListener('resize', onWin);
+
+    return () => {
+      window.removeEventListener('resize', onWin);
+      if (ro && c) ro.unobserve(c);
+    };
   }, [loaded]);
 
   // draw preview canvas to match crop box
@@ -99,6 +126,7 @@ export default function SimpleImageCropper({ file, size = 600, shape = 'rounded'
 
     // Validate values before drawing
     if (!isFinite(sx) || !isFinite(sy) || !isFinite(sWidth) || !isFinite(sHeight) || sWidth <= 0 || sHeight <= 0) {
+      try { toast.show('Preview rendering failed (invalid crop coordinates)', 'error'); } catch { /* ignore */ }
       return;
     }
 
@@ -110,8 +138,9 @@ export default function SimpleImageCropper({ file, size = 600, shape = 'rounded'
     // draw the same area we would crop, scaled to preview size
     try {
       ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, cssW, cssH);
-    } catch {
-      // fallback if draw fails
+    } catch (e) {
+      try { toast.show('Preview rendering failed', 'error'); } catch { /* ignore */ }
+      console.error('Preview drawImage failed', e);
     }
 
     // apply mask for rounded/circle preview
@@ -171,15 +200,20 @@ export default function SimpleImageCropper({ file, size = 600, shape = 'rounded'
     const container = containerRef.current;
     if (!img || !container) return;
 
+    const dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1;
     const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
+    // backing store sized by DPR for sharp output; keep CSS size = `size`
+    canvas.width = Math.round(size * dpr);
+    canvas.height = Math.round(size * dpr);
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     // white background for formats without alpha
     ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, size, size);
 
     const rect = container.getBoundingClientRect();
     const imgRect = img.getBoundingClientRect();
@@ -192,18 +226,26 @@ export default function SimpleImageCropper({ file, size = 600, shape = 'rounded'
     let sHeight = Math.max(1, Math.min(img.naturalHeight - sy, rect.height * scaleFactor));
 
     if (!isFinite(sx) || !isFinite(sy) || !isFinite(sWidth) || !isFinite(sHeight) || sWidth <= 0 || sHeight <= 0) {
+      try { toast.show('Crop failed — using full image', 'error'); } catch { /* ignore */ }
       sx = 0; sy = 0; sWidth = img.naturalWidth; sHeight = img.naturalHeight;
     }
 
-    // draw the selected area into the output canvas (scaled to `size`)
+    // draw the selected area into the output canvas (scaled to `size` CSS pixels)
     try {
-      ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, size, size);
     } catch (err) {
+      try { toast.show('Crop failed — using full image', 'error'); } catch { /* ignore */ }
+      console.error('Crop drawImage failed', err);
       // fallback: draw entire image scaled to canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, size, size);
+      try {
+        ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, size, size);
+      } catch (err2) {
+        try { toast.show('Failed to create cropped image', 'error'); } catch { /* ignore */ }
+        console.error('Fallback crop drawImage failed', err2);
+      }
     }
 
     // apply mask for rounded/circle shapes
@@ -213,15 +255,17 @@ export default function SimpleImageCropper({ file, size = 600, shape = 'rounded'
       maskCanvas.height = canvas.height;
       const mctx = maskCanvas.getContext('2d');
       if (mctx) {
+        try { mctx.setTransform(dpr, 0, 0, dpr, 0, 0); } catch { /* ignore */ }
         mctx.fillStyle = '#000';
         mctx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
         mctx.globalCompositeOperation = 'destination-out';
         mctx.beginPath();
         if (shape === 'circle') {
-          mctx.arc(maskCanvas.width / 2, maskCanvas.height / 2, maskCanvas.width / 2, 0, Math.PI * 2);
+          // draw in CSS pixels; maskCanvas is DPR-scaled
+          mctx.arc((maskCanvas.width / dpr) / 2, (maskCanvas.height / dpr) / 2, (maskCanvas.width / dpr) / 2, 0, Math.PI * 2);
         } else {
-          const r = Math.min(28, maskCanvas.width / 12);
-          const w = maskCanvas.width, h = maskCanvas.height;
+          const r = Math.min(28, (maskCanvas.width / dpr) / 12);
+          const w = maskCanvas.width / dpr, h = maskCanvas.height / dpr;
           mctx.moveTo(r, 0);
           mctx.lineTo(w - r, 0);
           mctx.quadraticCurveTo(w, 0, w, r);
@@ -233,9 +277,9 @@ export default function SimpleImageCropper({ file, size = 600, shape = 'rounded'
           mctx.quadraticCurveTo(0, 0, r, 0);
         }
         mctx.fill();
-        // apply mask to main canvas
+        // apply mask to main canvas (draw mask scaled to CSS size)
         ctx.globalCompositeOperation = 'destination-in';
-        ctx.drawImage(maskCanvas, 0, 0);
+        ctx.drawImage(maskCanvas, 0, 0, maskCanvas.width, maskCanvas.height, 0, 0, size, size);
         ctx.globalCompositeOperation = 'source-over';
       }
     }
@@ -244,8 +288,22 @@ export default function SimpleImageCropper({ file, size = 600, shape = 'rounded'
       const preferWebp = file.type === 'image/webp' || file.name.toLowerCase().endsWith('.webp');
       const outType = preferWebp ? 'image/webp' : 'image/jpeg';
       const outName = file.name.replace(/\.[^/.]+$/, '') + (preferWebp ? '-cropped.webp' : '-cropped.jpg');
-      canvas.toBlob((blob) => {
-        if (!blob) { resolve(); return; }
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          try { toast.show('Failed to generate cropped image, trying fallback', 'error'); } catch { /* ignore */ }
+          try {
+            const data = canvas.toDataURL(outType, 0.9);
+            const res = await fetch(data);
+            const blob2 = await res.blob();
+            const outFile2 = new File([blob2], outName, { type: outType });
+            onCrop(outFile2);
+          } catch (e) {
+            try { toast.show('Failed to generate cropped image', 'error'); } catch { /* ignore */ }
+            console.error('toDataURL fallback failed', e);
+          }
+          resolve();
+          return;
+        }
         const outFile = new File([blob], outName, { type: outType });
         onCrop(outFile);
         resolve();
