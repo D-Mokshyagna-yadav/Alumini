@@ -11,7 +11,9 @@ COPY client/package.json client/package-lock.json* client/
 COPY server/package.json server/package-lock.json* server/
 
 # Install all dependencies (root postinstall will install client + server)
-RUN npm install --legacy-peer-deps
+RUN apk add --no-cache --virtual .build-deps python3 make g++ && \
+    npm install --legacy-peer-deps && \
+    apk del .build-deps
 
 # Copy source code
 COPY client/ client/
@@ -34,7 +36,9 @@ COPY package.json ./
 
 # Copy server package files and install production deps only
 COPY server/package.json server/package-lock.json* server/
-RUN cd server && npm install --omit=dev --legacy-peer-deps
+RUN apk add --no-cache --virtual .build-deps python3 make g++ && \
+    cd server && npm install --omit=dev --legacy-peer-deps && \
+    apk del .build-deps
 
 # Copy built server
 COPY --from=builder /app/server/dist server/dist
