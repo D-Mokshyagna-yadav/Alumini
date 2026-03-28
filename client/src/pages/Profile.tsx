@@ -74,7 +74,8 @@ const Profile = () => {
     const cropContainerRef = useRef<HTMLDivElement>(null);
     const [saving, setSaving] = useState(false);
     const [viewUser, setViewUser] = useState<any>(null);
-    const [resumeFile, setResumeFile] = useState<File | null>(null);
+    // Resume upload temporarily disabled
+    // const [resumeFile, setResumeFile] = useState<File | null>(null);
     
     const [experiences, setExperiences] = useState<Experience[]>([]);
     const [education, setEducation] = useState<Education[]>([]);
@@ -431,11 +432,13 @@ const Profile = () => {
                 } catch (e) { console.error('Cover upload failed', e); }
             }
 
+            /* Resume upload disabled - begin
             if (resumeFile) {
                 const fd3 = new FormData();
                 fd3.append('resume', resumeFile);
                 await api.post('/upload/resume', fd3, { headers: { 'Content-Type': 'multipart/form-data' } });
             }
+            Resume upload disabled - end */
 
             const payload = { 
                 headline, currentCompany, currentLocation, bio, phone,
@@ -448,7 +451,8 @@ const Profile = () => {
             
             setAvatarFile(null);
             setCoverFile(null);
-            setResumeFile(null);
+            // resume handling disabled
+            // setResumeFile(null);
             if (avatarPreview) URL.revokeObjectURL(avatarPreview);
             if (coverPreview) URL.revokeObjectURL(coverPreview);
             setAvatarPreview(null);
@@ -704,13 +708,7 @@ const Profile = () => {
                                                 )}
                                     </>
                                 )}
-                                {isOwnProfile && (
-                                    <label className="px-6 py-2.5 border border-[var(--border-color)] text-[var(--text-secondary)] font-semibold hover:bg-[var(--bg-tertiary)] transition-colors flex items-center gap-2 cursor-pointer">
-                                        <Upload size={18} />
-                                        {resumeFile ? 'Resume Selected' : 'Upload Resume'}
-                                        <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={(e) => setResumeFile(e.target.files?.[0] || null)} />
-                                    </label>
-                                )}
+                                {isOwnProfile && (/* Resume upload UI disabled */ null)}
                             </div>
                         </div>
                     </motion.div>
