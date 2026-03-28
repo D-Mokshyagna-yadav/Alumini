@@ -33,7 +33,6 @@ import Feed from './pages/Feed';
 import Notifications from './pages/Notifications';
 import Gallery from './pages/Gallery';
 import Saved from './pages/Saved';
-import Developers from './pages/Developers';
 import ForgotPassword from './pages/ForgotPassword';
 import UploadProgressToast from './components/UploadProgressToast';
 import About from './pages/About';
@@ -150,7 +149,7 @@ function App() {
         <Route path="/settings/change-password" element={<ProfessionalRoute><ChangePassword /></ProfessionalRoute>} />
         <Route path="/settings/notifications" element={<ProfessionalRoute><NotificationPreferences /></ProfessionalRoute>} />
         <Route path="/saved" element={<ProfessionalRoute><Saved /></ProfessionalRoute>} />
-        <Route path="/developers" element={<PublicProfessionalRoute><Developers /></PublicProfessionalRoute>} />
+        {/* Developers page removed */}
         <Route path="/contact" element={<PublicProfessionalRoute><Contact /></PublicProfessionalRoute>} />
 
         {/* Admin Route */}

@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
     Menu, X, Sun, Moon, LogOut, Bell,
     Home, Rss, Users, Briefcase, Calendar, Image,
-    Settings, Shield, ChevronDown, Bookmark, Code2, Mail
+    Settings, Shield, ChevronDown, Bookmark, Mail
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Avatar from '../ui/Avatar';
@@ -410,13 +410,6 @@ const Navbar = () => {
                                 <div className="border-t border-[var(--border-color)] my-2 pt-2">
                                     {isAuthenticated ? (
                                         <>
-                                            <Link to="/developers" onClick={() => setMobileOpen(false)}
-                                                className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60"
-                                            >
-                                                <Code2 size={20} className="text-[var(--text-secondary)]" />
-                                                <span className="font-medium">Developers</span>
-                                            </Link>
-
                                             <Link to="/contact" onClick={() => setMobileOpen(false)}
                                                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60"
                                             >

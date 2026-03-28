@@ -743,7 +743,8 @@ const Feed = () => {
 
                                     {/* Post Media */}
                                     {post.media?.length > 0 && (
-                                        <div className="group">
+                                        // make media visually full-bleed and rounded to match card
+                                        <div className="group w-full overflow-hidden rounded-t-2xl">
                                             <ImageCarousel media={post.media} normalizeMediaUrl={normalizeMediaUrl} priorityFirstImage={index < 2} />
                                         </div>
                                     )}
