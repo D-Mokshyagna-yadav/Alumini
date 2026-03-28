@@ -126,8 +126,8 @@ export async function sendOtpEmail(to: string, otp: string, type: 'register' | '
     <td style="background:linear-gradient(135deg,${BRAND.accent},${BRAND.accentDark});padding:28px 32px;text-align:center;">
       <!-- College logo (CID inline – hidden from attachment list via X-Attachment-Id) -->
       ${logoBuf ? `<img src="cid:collegeLogo" alt="${BRAND.collegeName}" width="52" height="52" style="display:block;margin:0 auto 10px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);" />` : ''}
-      <h1 style="margin:0;font-size:20px;font-weight:700;color:#ffffff;letter-spacing:0.3px;">${BRAND.platformName}</h1>
-      <p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,0.75);">${BRAND.collegeName}</p>
+      <h1 style="margin:0;font-size:20px;font-weight:700;color:#ffffff;letter-spacing:0.3px;">${BRAND.collegeName}</h1>
+      <p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,0.75);font-weight:600;">${BRAND.platformName}</p>
     </td>
   </tr>
 
@@ -252,8 +252,8 @@ function emailShell(body: string): string {
   <tr>
     <td style="background:linear-gradient(135deg,${BRAND.accent},${BRAND.accentDark});padding:28px 32px;text-align:center;">
       ${logoImg()}
-      <h1 style="margin:0;font-size:20px;font-weight:700;color:#ffffff;letter-spacing:0.3px;">${BRAND.platformName}</h1>
-      <p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,0.75);">${BRAND.collegeName}</p>
+      <h1 style="margin:0;font-size:20px;font-weight:700;color:#ffffff;letter-spacing:0.3px;">${BRAND.collegeName}</h1>
+      <p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,0.75);font-weight:600;">${BRAND.platformName}</p>
     </td>
   </tr>
   <tr><td style="padding:36px 32px 24px;">${body}</td></tr>
