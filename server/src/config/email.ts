@@ -181,11 +181,13 @@ export async function sendOtpEmail(to: string, otp: string, type: 'register' | '
 </table>
 <!-- /Main card -->
 
-<!-- Anti-phishing note -->
-<p style="margin:20px 0 0;text-align:center;font-size:11px;color:${BRAND.textMuted};max-width:520px;">
-  This is an automated message from ${BRAND.platformName}. Please do not reply to this email.
-  If you did not request this code, you can safely ignore this message.
-</p>
+/*
+  <!-- Anti-phishing note -->
+  <p style="margin:20px 0 0;text-align:center;font-size:11px;color:${BRAND.textMuted};max-width:520px;">
+    This is an automated message from ${BRAND.platformName}. Please do not reply to this email.
+    If you did not request this code, you can safely ignore this message.
+  </p>
+*/
 
 </td></tr>
 </table>
