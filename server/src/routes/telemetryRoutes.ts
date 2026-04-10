@@ -15,6 +15,15 @@ const telemetryWriteLimiter = rateLimit({
     message: { message: 'Too many telemetry requests.' },
 });
 
+// Rate limiter for telemetry reads (admin dashboard)
+const telemetryReadLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many requests.' },
+});
+
 // POST /api/telemetry/share
 router.post('/share', requireAuth, telemetryWriteLimiter, async (req, res) => {
     try {
@@ -41,7 +50,7 @@ router.post('/share', requireAuth, telemetryWriteLimiter, async (req, res) => {
 });
 
 // GET /api/telemetry/list - admin only, paginated
-router.get('/list', requireAdmin, cacheMiddleware(TTL.MEDIUM), async (req, res) => {
+router.get('/list', requireAdmin, telemetryReadLimiter, cacheMiddleware(TTL.MEDIUM), async (req, res) => {
     try {
         const page = parseInt((req.query.page as string) || '1', 10);
         const limit = Math.min(200, parseInt((req.query.limit as string) || '50', 10));
