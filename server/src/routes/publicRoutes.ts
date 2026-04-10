@@ -1,4 +1,5 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import PublicContent from '../models/PublicContent';
 import NewsItem from '../models/NewsItem';
 import Post from '../models/Post';
@@ -7,6 +8,15 @@ import { cacheMiddleware, invalidatePrefix, TTL } from '../config/cache';
 import { requireAdmin } from '../middleware/auth';
 
 const router = express.Router();
+
+// Rate limiter for the public contact form to prevent email flooding
+const contactLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many contact form submissions. Please try again later.' },
+});
 
 // GET /api/public/branding
 router.get('/branding', cacheMiddleware(TTL.STATIC), async (req, res) => {
@@ -224,7 +234,7 @@ router.get('/administration', cacheMiddleware(TTL.STATIC), async (req, res) => {
 
 // POST /api/public/contact - submit contact form message
 import { sendContactEmail } from '../config/email';
-router.post('/contact', async (req, res) => {
+router.post('/contact', contactLimiter, async (req, res) => {
     try {
         const { name, email, subject, message } = req.body;
 

@@ -1,4 +1,5 @@
 import express from 'express';
+import bcrypt from 'bcryptjs';
 import User, { UserStatus } from '../models/User';
 import { deleteGridFSFile } from '../config/gridfs';
 import { cacheMiddleware, TTL } from '../config/cache';
@@ -204,7 +205,6 @@ router.post('/settings/email', requireAuth, async (req, res) => {
         }
 
         // Verify current password
-        const bcrypt = require('bcrypt');
         const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
         if (!isPasswordValid) {
             return res.status(401).json({ error: 'Invalid password' });
@@ -242,7 +242,6 @@ router.post('/settings/password', requireAuth, async (req, res) => {
         }
 
         // Verify current password
-        const bcrypt = require('bcrypt');
         const isPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
         if (!isPasswordValid) {
             return res.status(401).json({ error: 'Current password is incorrect' });

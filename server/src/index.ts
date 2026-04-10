@@ -115,7 +115,7 @@ app.use(helmet({
 }));
 app.use(cors(corsOptions));
 app.use(compression()); // Enable gzip/brotli compression for faster responses
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 
 // Session Middleware
 
@@ -128,9 +128,14 @@ sessionStore.on('error', (err: Error) => {
     logger.error('MongoStore session error:', err);
 });
 
+if (isProduction && !process.env.SESSION_SECRET) {
+    logger.error('FATAL: SESSION_SECRET environment variable is not set in production. Exiting.');
+    process.exit(1);
+}
+
 app.use(session({
     name: 'alumni.sid',
-    secret: process.env.SESSION_SECRET || 'alumni_association_secret_key',
+    secret: process.env.SESSION_SECRET || 'alumni_association_secret_key_dev_only',
     proxy: true, // Trust Traefik / Coolify reverse proxy for secure cookies
     resave: false,
     saveUninitialized: false, // Don't save empty sessions

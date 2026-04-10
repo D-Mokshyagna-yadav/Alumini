@@ -1,12 +1,23 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import Telemetry from '../models/Telemetry';
 import User from '../models/User';
 import { cacheMiddleware, TTL } from '../config/cache';
+import { requireAuth } from '../middleware/auth';
 
 const router = express.Router();
 
+// Rate limiter for telemetry writes to prevent database flooding
+const telemetryWriteLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many telemetry requests.' },
+});
+
 // POST /api/telemetry/share
-router.post('/share', async (req, res) => {
+router.post('/share', requireAuth, telemetryWriteLimiter, async (req, res) => {
     try {
         const { resourceType, resourceId, action, channel, url } = req.body;
         const userId = (req as any).session?.userId || null;

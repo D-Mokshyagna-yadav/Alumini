@@ -123,6 +123,10 @@ export const register = async (req: Request, res: Response) => {
         const settings = await getSettings();
         const userStatus = settings.autoApproveUsers ? UserStatus.ACTIVE : UserStatus.PENDING;
 
+        // Only allow non-admin roles during self-registration
+        const allowedRoles: UserRole[] = [UserRole.ALUMNI, UserRole.STUDENT, UserRole.TEACHER];
+        const safeRole = allowedRoles.includes(role as UserRole) ? (role as UserRole) : UserRole.ALUMNI;
+
         const newUser = new User({
             name,
             email,
@@ -131,7 +135,7 @@ export const register = async (req: Request, res: Response) => {
             degree,
             department,
             rollNumber,
-            role: role || UserRole.ALUMNI,
+            role: safeRole,
             status: userStatus,
             isVerified: settings.autoApproveUsers,
             emailVerified: true, // already verified via OTP
@@ -476,7 +480,8 @@ export const requestOtpLogin = async (req: Request, res: Response) => {
 
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(400).json({ message: 'No account found with this email.' });
+            // Don't reveal whether the account exists
+            return res.status(200).json({ message: 'If this email is registered, you will receive a login OTP.' });
         }
 
         // Block users who haven't verified their email
