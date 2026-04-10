@@ -9,6 +9,21 @@ const api = axios.create({
     withCredentials: true,
 });
 
+// ─── CSRF Token management ──────────────────────────────────
+// The server requires an X-CSRF-Token header on all state-changing requests.
+// We fetch the token lazily on the first mutation and cache it in memory.
+let _csrfToken: string | null = null;
+
+const getCsrfToken = async (): Promise<string> => {
+    if (_csrfToken) return _csrfToken;
+    const response = await axios.get(
+        `${import.meta.env.VITE_API_URL || '/api'}/csrf-token`,
+        { withCredentials: true },
+    );
+    _csrfToken = response.data.csrfToken as string;
+    return _csrfToken;
+};
+
 // ─── Client-side GET cache ──────────────────────────────────
 // Caches GET responses in memory so repeat fetches (e.g. navigating back
 // to a page, re-mounting a component) are instant.  Mutations auto-invalidate.
@@ -29,7 +44,7 @@ const cacheKey = (config: AxiosRequestConfig): string => {
 };
 
 // ── Request interceptor: return cached data if available ──────
-api.interceptors.request.use((config) => {
+api.interceptors.request.use(async (config) => {
     const method = (config.method || 'get').toLowerCase();
     const isUpload = typeof FormData !== 'undefined' && config.data instanceof FormData;
     if (isUpload && method !== 'get') {
@@ -46,6 +61,17 @@ api.interceptors.request.use((config) => {
                 existingProgress(event);
             }
         };
+    }
+
+    // Attach CSRF token to all state-changing requests
+    if (method !== 'get' && method !== 'head' && method !== 'options') {
+        try {
+            const token = await getCsrfToken();
+            config.headers = config.headers || {};
+            config.headers['X-CSRF-Token'] = token;
+        } catch {
+            // If CSRF token fetch fails, let the request proceed; the server will reject it if needed
+        }
     }
 
     if (config.method === 'get' || !config.method) {
@@ -105,6 +131,10 @@ api.interceptors.response.use(
             if (path !== '/login' && path !== '/register' && path !== '/' && !path.startsWith('/forgot')) {
                 window.location.href = '/login';
             }
+        }
+        // Clear cached CSRF token on 403 so it gets re-fetched on the next mutation
+        if (error.response?.status === 403) {
+            _csrfToken = null;
         }
         return Promise.reject(error);
     },
@@ -175,6 +205,8 @@ export const invalidateCache = (...prefixes: string[]) => {
 /** Flush the entire client cache (e.g. on logout) */
 export const flushClientCache = () => {
     _cache.clear();
+    // Also clear the CSRF token so it gets re-fetched after login
+    _csrfToken = null;
 };
 
 export default api;

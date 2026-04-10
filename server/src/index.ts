@@ -9,6 +9,7 @@ import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 import session from 'express-session';
 import MongoStore from 'connect-mongo';
+import { doubleCsrf } from 'csrf-csrf';
 import connectDB from './config/db';
 import logger from './config/logger';
 import { authRouter } from './routes/authRoutes';
@@ -155,6 +156,36 @@ app.use('/api', (req, _res, next) => {
     }
     next();
 });
+
+// ─── CSRF Protection (Double Submit Cookie) ───────────────────
+// Protects all state-changing API endpoints (POST/PUT/DELETE/PATCH).
+// The client must first fetch GET /api/csrf-token to obtain a token, then
+// include it in the X-CSRF-Token request header for every mutation.
+const csrfSecret = process.env.SESSION_SECRET || 'alumni_association_secret_key_dev_only';
+const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
+    getSecret: () => csrfSecret,
+    // Tie the CSRF token to the session ID so it's unique per user session
+    getSessionIdentifier: (req) => (req.session as any)?.id ?? req.ip ?? '',
+    cookieName: isProduction ? '__Host-csrf' : 'csrf',
+    cookieOptions: {
+        sameSite: 'lax',
+        path: '/',
+        secure: isProduction,
+        httpOnly: true,
+    },
+    getCsrfTokenFromRequest: (req) => req.headers['x-csrf-token'] as string,
+    size: 64,
+    ignoredMethods: ['GET', 'HEAD', 'OPTIONS'],
+});
+
+// Endpoint to retrieve the CSRF token (must be called before any mutation)
+app.get('/api/csrf-token', (req, res) => {
+    const token = generateCsrfToken(req, res);
+    res.json({ csrfToken: token });
+});
+
+// Apply CSRF protection to all API mutation routes
+app.use('/api', doubleCsrfProtection);
 
 // Chat feature temporarily disabled — comment out chat router import
 // import { chatRouter } from './routes/chatRoutes';
@@ -343,6 +374,10 @@ io.on('connection', (socket) => {
 // ─── Global Express error handler ───
 // Catches any error thrown/next(err)'d by route handlers or middleware
 app.use((err: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    // Handle CSRF validation errors with a 403
+    if (err.code === 'INVALID_CSRF_TOKEN' || err.message === 'invalid csrf token') {
+        return res.status(403).json({ message: 'Invalid or missing CSRF token.' });
+    }
     logger.error(`[ERROR] ${req.method} ${req.originalUrl}`, err?.message || err);
     if (!res.headersSent) {
         res.status(err.status || 500).json({ message: err.message || 'Internal server error' });

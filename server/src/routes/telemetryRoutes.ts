@@ -1,9 +1,8 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import Telemetry from '../models/Telemetry';
-import User from '../models/User';
 import { cacheMiddleware, TTL } from '../config/cache';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, requireAdmin } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -42,13 +41,8 @@ router.post('/share', requireAuth, telemetryWriteLimiter, async (req, res) => {
 });
 
 // GET /api/telemetry/list - admin only, paginated
-router.get('/list', cacheMiddleware(TTL.MEDIUM), async (req, res) => {
+router.get('/list', requireAdmin, cacheMiddleware(TTL.MEDIUM), async (req, res) => {
     try {
-        const userId = (req as any).session?.userId;
-        if (!userId) return res.status(401).json({ message: 'Unauthorized' });
-        const user = await User.findById(userId);
-        if (!user || user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
-
         const page = parseInt((req.query.page as string) || '1', 10);
         const limit = Math.min(200, parseInt((req.query.limit as string) || '50', 10));
         const q = (req.query.q as string) || '';
