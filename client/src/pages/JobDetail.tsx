@@ -371,7 +371,7 @@ const JobDetail = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {applicants.map((applicant) => (
                                         <div key={applicant.id} className="flex items-center gap-3 p-3 bg-[var(--bg-primary)] border border-[var(--border-color)] hover:bg-[var(--bg-tertiary)] transition-colors">
-                                            <Link to={`/profile/${applicant.id}`} className="w-12 h-12 bg-[var(--accent)] flex items-center justify-center text-[var(--bg-primary)] font-semibold flex-shrink-0 overflow-hidden">
+                                            <Link to={`/profile/${applicant.id}`} className="w-12 h-12 rounded-full bg-[var(--accent)] flex items-center justify-center text-[var(--bg-primary)] font-semibold flex-shrink-0 overflow-hidden">
                                                 <Avatar src={applicant.avatar} iconSize={18} />
                                             </Link>
                                             <div className="flex-1 min-w-0">
@@ -399,7 +399,7 @@ const JobDetail = () => {
                         <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Posted by</h3>
                         <div className="flex items-center justify-between p-4 bg-[var(--bg-primary)] border border-[var(--border-color)]">
                             <div className="flex items-center gap-3">
-                                <div className="w-14 h-14 bg-[var(--accent)] flex items-center justify-center text-[var(--bg-primary)] font-bold text-xl overflow-hidden">
+                                <div className="w-14 h-14 rounded-full bg-[var(--accent)] flex items-center justify-center text-[var(--bg-primary)] font-bold text-xl overflow-hidden">
                                     <Avatar src={job.postedBy?.avatar} iconSize={24} />
                                 </div>
                                 <div>

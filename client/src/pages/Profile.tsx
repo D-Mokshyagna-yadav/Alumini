@@ -506,12 +506,12 @@ const Profile = () => {
                         className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 overflow-visible shadow-md shadow-black/5"
                     >
                         {/* Cover Photo */}
-                        <div className="h-[180px] sm:h-[230px] md:h-[270px] relative bg-[var(--accent)] overflow-hidden">
+                        <div className={`h-[180px] sm:h-[230px] md:h-[270px] relative overflow-hidden ${coverPreview || profileUser?.coverImage ? 'bg-[var(--bg-tertiary)]' : 'bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)]'}`}>
                             {coverPreview || profileUser?.coverImage ? (
                                 <CachedImage
                                     src={coverPreview || resolveMediaUrl(profileUser?.coverImage)}
                                     alt="cover"
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-cover block"
                                     wrapperClassName="w-full h-full"
                                     priority
                                 />
