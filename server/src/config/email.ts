@@ -39,6 +39,20 @@ const BRAND = {
   location: 'Kanchikacherla, N.T.R District, Andhra Pradesh – 521180',
 };
 
+type AnnouncementTemplate = 'celebration' | 'festival' | 'event' | 'regards' | 'general' | 'custom';
+
+interface AnnouncementEmailData {
+  title: string;
+  subtitle?: string;
+  template?: AnnouncementTemplate;
+  message?: string;
+  image?: string;
+  link?: string;
+  ctaLabel?: string;
+  ctaLink?: string;
+  publishedAt?: Date | string;
+}
+
 /* Pre-read the logo once at startup as a Buffer for CID inline embedding.
    Gmail requires X-Attachment-Id matching the CID to treat images as truly
    inline — they won't appear in the attachment list. */
@@ -272,6 +286,86 @@ function emailShell(body: string): string {
 </table>
 </body>
 </html>`;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function toAbsoluteUploadsUrl(pathValue?: string | null): string {
+  if (!pathValue) return '';
+  if (pathValue.startsWith('http://') || pathValue.startsWith('https://')) return pathValue;
+  const base = (process.env.WEBSITE_URL || process.env.APP_URL || '').replace(/\/$/, '');
+  if (!base) return pathValue;
+  if (pathValue.startsWith('/api/uploads/')) return `${base}${pathValue}`;
+  if (pathValue.startsWith('/uploads/')) return `${base}/api/uploads/${pathValue.substring('/uploads/'.length)}`;
+  return `${base}${pathValue.startsWith('/') ? pathValue : `/${pathValue}`}`;
+}
+
+function announcementTheme(template: AnnouncementTemplate = 'general') {
+  const themes: Record<AnnouncementTemplate, { icon: string; accent: string; soft: string; subject: string; label: string }> = {
+    celebration: { icon: '🎉', accent: '#a21caf', soft: '#fdf2f8', subject: 'Celebration', label: 'Celebration' },
+    festival: { icon: '🌟', accent: '#d97706', soft: '#fffbeb', subject: 'Festival', label: 'Festival' },
+    event: { icon: '📅', accent: '#2563eb', soft: '#eff6ff', subject: 'Event', label: 'Event' },
+    regards: { icon: '💐', accent: '#e11d48', soft: '#fff1f2', subject: 'Warm Regards', label: 'Regards' },
+    general: { icon: '📣', accent: '#0a4174', soft: '#f0f7fb', subject: 'Official Update', label: 'Announcement' },
+    custom: { icon: '✦', accent: '#0a4174', soft: '#f0f7fb', subject: 'Update', label: 'Update' },
+  };
+
+  return themes[template] || themes.general;
+}
+
+function announcementBody(data: AnnouncementEmailData, recipientName: string): string {
+  const theme = announcementTheme(data.template || 'general');
+  const title = escapeHtml(data.title);
+  const subtitle = data.subtitle ? escapeHtml(data.subtitle) : '';
+  const message = escapeHtml(data.message || '');
+  const publishedAt = data.publishedAt ? new Date(data.publishedAt).toLocaleDateString() : '';
+  const imageUrl = data.image ? toAbsoluteUploadsUrl(data.image) : '';
+  const ctaHref = data.ctaLink || data.link || '';
+  const ctaLabel = data.ctaLabel || 'View details';
+
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 14px;">
+      <tr>
+        <td style="width:64px;height:64px;border-radius:50%;background:${theme.soft};text-align:center;vertical-align:middle;font-size:28px;line-height:64px;">${theme.icon}</td>
+      </tr>
+    </table>
+    <h2 style="margin:0 0 8px;text-align:center;font-size:24px;font-weight:700;color:${BRAND.textPrimary};">${title}</h2>
+    <p style="margin:0 0 24px;text-align:center;font-size:14px;line-height:1.6;color:${BRAND.textSecondary};">Hello <strong>${escapeHtml(recipientName)}</strong>, here is an update from the college administration.</p>
+    ${imageUrl ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;border-radius:14px;overflow:hidden;"><tr><td><img src="${imageUrl}" alt="${title}" width="100%" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:14px;object-fit:cover;" /></td></tr></table>` : ''}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;background:${theme.soft};border:1px solid ${theme.accent}22;border-radius:14px;">
+      <tr>
+        <td style="padding:18px 18px 16px;">
+          <p style="margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:${theme.accent};">${theme.label}</p>
+          ${subtitle ? `<p style="margin:0 0 10px;font-size:15px;font-weight:700;color:${BRAND.textPrimary};">${subtitle}</p>` : ''}
+          <p style="margin:0;font-size:14px;line-height:1.7;color:${BRAND.textSecondary};white-space:pre-wrap;">${message}</p>
+        </td>
+      </tr>
+    </table>
+    ${ctaHref ? `<p style="margin:0 0 22px;text-align:center;"><a href="${ctaHref}" style="display:inline-block;padding:12px 28px;background:${theme.accent};color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;border-radius:12px;">${escapeHtml(ctaLabel)}</a></p>` : ''}
+    ${publishedAt ? `<p style="margin:0 0 10px;text-align:center;font-size:12px;color:${BRAND.textMuted};">Published ${escapeHtml(publishedAt)}</p>` : ''}
+    <hr style="border:none;border-top:1px solid ${BRAND.border};margin:0 0 18px;" />
+    <p style="margin:0;text-align:center;font-size:12px;line-height:1.6;color:${BRAND.textMuted};">This message is part of the ${BRAND.platformName} announcement system.</p>
+  `;
+}
+
+export async function sendAnnouncementEmail(to: string, recipientName: string, announcement: AnnouncementEmailData) {
+  const theme = announcementTheme(announcement.template || 'general');
+  const subject = `${BRAND.platformName} – ${theme.subject}: ${announcement.title}`;
+
+  await transporter.sendMail({
+    from: `"${BRAND.platformName}" <${process.env.GMAIL_USER}>`,
+    to,
+    subject,
+    html: emailShell(announcementBody(announcement, recipientName)),
+    attachments: logoAttachments(),
+  });
 }
 
 /**

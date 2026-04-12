@@ -103,15 +103,22 @@ router.post('/reject-user/:id', requireAdmin, async (req, res) => {
 // GET /api/admin/all-users - Get all users with filters
 router.get('/all-users', requireAdmin, cacheMiddleware(TTL.SHORT), async (req, res) => {
     try {
-        const { status, role } = req.query;
+        const { status, role, q, limit } = req.query;
         const filter: any = {};
 
         if (status) filter.status = status;
         if (role) filter.role = role;
 
+        if (typeof q === 'string' && q.trim()) {
+            filter.$text = { $search: q.trim() };
+        }
+
+        const max = Math.min(Math.max(Number(limit) || 200, 1), 1000);
+
         const users = await User.find(filter)
             .select('-passwordHash')
-            .sort({ createdAt: -1 });
+            .sort(typeof q === 'string' && q.trim() ? { name: 1 } : { createdAt: -1 })
+            .limit(max);
 
         res.json({ users });
     } catch (error) {

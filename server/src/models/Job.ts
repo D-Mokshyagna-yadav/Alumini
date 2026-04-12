@@ -48,4 +48,15 @@ const jobSchema = new Schema<IJob>({
     views: { type: Number, default: 0 }
 }, { timestamps: true });
 
+jobSchema.index({ status: 1, createdAt: -1 });
+jobSchema.index({ status: 1, isOpen: 1, createdAt: -1 });
+jobSchema.index({ postedBy: 1, createdAt: -1 });
+jobSchema.index(
+    { title: 'text', company: 'text', location: 'text', description: 'text', industry: 'text' },
+    {
+        name: 'job_text_search_idx',
+        weights: { title: 10, company: 8, location: 5, industry: 4, description: 2 },
+    }
+);
+
 export default mongoose.model<IJob>('Job', jobSchema);

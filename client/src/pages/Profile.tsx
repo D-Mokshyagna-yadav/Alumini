@@ -11,9 +11,10 @@ import { useConfirm } from '../context/ConfirmContext';
 import { 
     User as UserIcon, GraduationCap, Briefcase, Edit3, Camera, Award, Users, UserPlus,
     MessageCircle, Plus, MapPin, Mail, Phone, Calendar, ExternalLink, Clock,
-    Linkedin, Github, Globe, X, Check, Upload, FileText, Star, Building2,
-    Link as LinkIcon, Trash2, Edit2, Save, ThumbsUp, Twitter, Instagram, Youtube
+    Code, Globe, X, Check, Upload, FileText, Star, Building2,
+    Link as LinkIcon, Trash2, Edit2, Save, ThumbsUp, Share2, Video
 } from 'lucide-react';
+import { FaLinkedin, FaTwitter, FaInstagram, FaYoutube } from 'react-icons/fa';
 import Avatar from '../components/ui/Avatar';
 import ConnectionsModal from '../components/ConnectionsModal';
 
@@ -860,7 +861,7 @@ const Profile = () => {
                                             {editMode ? (
                                                 <div className="w-full space-y-2">
                                                     <div className="flex items-center gap-2">
-                                                        <Linkedin size={16} className="text-[#0A66C2]" />
+                                                        <FaLinkedin size={14} className="text-[#0A66C2]" />
                                                         <input
                                                             value={linkedinUrl}
                                                             onChange={(e) => setLinkedinUrl(e.target.value)}
@@ -869,7 +870,7 @@ const Profile = () => {
                                                         />
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <Github size={16} className="text-[var(--text-primary)]" />
+                                                        <Code size={16} className="text-[var(--text-primary)]" />
                                                         <input
                                                             value={githubUrl}
                                                             onChange={(e) => setGithubUrl(e.target.value)}
@@ -878,7 +879,7 @@ const Profile = () => {
                                                         />
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <Twitter size={16} className="text-[#1DA1F2]" />
+                                                        <FaTwitter size={14} className="text-[#1DA1F2]" />
                                                         <input
                                                             value={twitterUrl}
                                                             onChange={(e) => setTwitterUrl(e.target.value)}
@@ -887,7 +888,7 @@ const Profile = () => {
                                                         />
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <Instagram size={16} className="text-[#E4405F]" />
+                                                        <FaInstagram size={14} className="text-[#E4405F]" />
                                                         <input
                                                             value={instagramUrl}
                                                             onChange={(e) => setInstagramUrl(e.target.value)}
@@ -896,7 +897,7 @@ const Profile = () => {
                                                         />
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <Youtube size={16} className="text-[#FF0000]" />
+                                                        <FaYoutube size={14} className="text-[#FF0000]" />
                                                         <input
                                                             value={youtubeUrl}
                                                             onChange={(e) => setYoutubeUrl(e.target.value)}
@@ -918,27 +919,27 @@ const Profile = () => {
                                                 <>
                                                     {profileUser?.linkedinUrl && (
                                                         <a href={profileUser.linkedinUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-[#0A66C2]/10 text-[#0A66C2] text-sm font-medium hover:bg-[#0A66C2]/20 transition-colors rounded-lg">
-                                                            <Linkedin size={16} /> LinkedIn
+                                                            <FaLinkedin size={14} /> LinkedIn
                                                         </a>
                                                     )}
                                                     {profileUser?.githubUrl && (
                                                         <a href={profileUser.githubUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-tertiary)] text-[var(--text-primary)] text-sm font-medium hover:bg-[var(--bg-tertiary)]/80 transition-colors rounded-lg">
-                                                            <Github size={16} /> GitHub
+                                                            <Code size={16} /> GitHub
                                                         </a>
                                                     )}
                                                     {profileUser?.twitterUrl && (
                                                         <a href={profileUser.twitterUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-[#1DA1F2]/10 text-[#1DA1F2] text-sm font-medium hover:bg-[#1DA1F2]/20 transition-colors rounded-lg">
-                                                            <Twitter size={16} /> X / Twitter
+                                                            <FaTwitter size={14} /> X / Twitter
                                                         </a>
                                                     )}
                                                     {profileUser?.instagramUrl && (
                                                         <a href={profileUser.instagramUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-[#E4405F]/10 text-[#E4405F] text-sm font-medium hover:bg-[#E4405F]/20 transition-colors rounded-lg">
-                                                            <Instagram size={16} /> Instagram
+                                                            <FaInstagram size={14} /> Instagram
                                                         </a>
                                                     )}
                                                     {profileUser?.youtubeUrl && (
                                                         <a href={profileUser.youtubeUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-4 py-2 bg-[#FF0000]/10 text-[#FF0000] text-sm font-medium hover:bg-[#FF0000]/20 transition-colors rounded-lg">
-                                                            <Youtube size={16} /> YouTube
+                                                            <Video size={16} /> YouTube
                                                         </a>
                                                     )}
                                                     {profileUser?.websiteUrl && (

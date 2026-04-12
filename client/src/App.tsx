@@ -24,8 +24,10 @@ import Contact from './pages/Contact';
 import VerificationPending from './pages/VerificationPending';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import NewsAdmin from './pages/admin/NewsAdmin';
+import AnnouncementsAdmin from './pages/admin/AnnouncementsAdmin';
 import TelemetryAdmin from './pages/admin/TelemetryAdmin';
 import NewsList from './pages/NewsList';
+import Announcements from './pages/Announcements';
 import NewsDetail from './pages/NewsDetail';
 import EventDetail from './pages/EventDetail';
 import Profile from './pages/Profile';
@@ -163,11 +165,17 @@ function App() {
             <ProfessionalChatLayout><NewsAdmin /></ProfessionalChatLayout>
           </ProtectedRoute>
         } />
+        <Route path="/admin/announcements" element={
+          <ProtectedRoute requireAdmin>
+            <ProfessionalChatLayout><AnnouncementsAdmin /></ProfessionalChatLayout>
+          </ProtectedRoute>
+        } />
         <Route path="/admin/telemetry" element={
           <ProtectedRoute requireAdmin>
             <ProfessionalChatLayout><TelemetryAdmin /></ProfessionalChatLayout>
           </ProtectedRoute>
         } />
+        <Route path="/announcements" element={<PublicProfessionalRoute><Announcements /></PublicProfessionalRoute>} />
         <Route path="/news" element={<PublicProfessionalRoute><NewsList /></PublicProfessionalRoute>} />
         <Route path="/news/:id" element={<PublicProfessionalRoute><NewsDetail /></PublicProfessionalRoute>} />
       </Routes>

@@ -17,22 +17,17 @@ router.get('/directory', requireAuth, cacheMiddleware(TTL.MEDIUM), async (req, r
             filter.graduationYear = parseInt(batch as string);
         }
 
-        let users = await User.find(filter)
+        if (mentorOnly === 'true') {
+            filter.isMentor = true;
+        }
+
+        if (typeof search === 'string' && search.trim()) {
+            filter.$text = { $search: search.trim() };
+        }
+
+        const users = await User.find(filter)
             .select('name email headline currentLocation currentCompany graduationYear degree department avatar coverImage isMentor')
             .sort({ name: 1 });
-
-        if (search) {
-            const searchLower = (search as string).toLowerCase();
-            users = users.filter(u =>
-                u.name.toLowerCase().includes(searchLower) ||
-                u.headline?.toLowerCase().includes(searchLower) ||
-                u.currentCompany?.toLowerCase().includes(searchLower)
-            );
-        }
-
-        if (mentorOnly === 'true') {
-            users = users.filter(u => (u as any).isMentor);
-        }
 
         res.json({ users });
     } catch (error) {
@@ -52,18 +47,14 @@ router.get('/search/all', requireAuth, cacheMiddleware(TTL.SHORT), async (req, r
             _id: { $ne: currentUserId }
         };
 
-        let users = await User.find(filter)
+        if (typeof q === 'string' && q.trim()) {
+            filter.$text = { $search: q.trim() };
+        }
+
+        const users = await User.find(filter)
             .select('name headline avatar')
             .sort({ name: 1 })
             .limit(50);
-
-        if (q && typeof q === 'string' && q.trim()) {
-            const searchLower = q.toLowerCase();
-            users = users.filter(u =>
-                u.name.toLowerCase().includes(searchLower) ||
-                u.headline?.toLowerCase().includes(searchLower)
-            );
-        }
 
         res.json({ users });
     } catch (error) {

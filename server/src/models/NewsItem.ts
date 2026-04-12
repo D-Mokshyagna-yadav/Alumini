@@ -26,4 +26,13 @@ const newsItemSchema = new Schema<INewsItem>({
     draft: { type: Boolean, default: false },
 }, { timestamps: true });
 
+newsItemSchema.index({ draft: 1, priority: -1, publishedAt: -1, createdAt: -1 });
+newsItemSchema.index(
+    { title: 'text', body: 'text' },
+    {
+        name: 'news_text_search_idx',
+        weights: { title: 10, body: 3 },
+    }
+);
+
 export default mongoose.model<INewsItem>('NewsItem', newsItemSchema);

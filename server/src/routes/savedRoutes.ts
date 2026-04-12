@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import SavedCollection from '../models/SavedCollection';
 import Post from '../models/Post';
 import User, { UserStatus } from '../models/User';
@@ -275,10 +276,10 @@ router.get('/all', requireAuth, cacheMiddleware(TTL.USER, true), async (req, res
 
 router.get('/check/:postId', requireAuth, cacheMiddleware(TTL.USER, true), async (req, res) => {
     try {
-        const userId = req.session!.userId;
-        const postId = req.params.postId;
+        const userId = req.session!.userId as string;
+        const postId = req.params.postId as string;
         
-        const collections = await SavedCollection.find({ user: userId, posts: postId }).select('_id name');
+        const collections = await SavedCollection.find({ user: new mongoose.Types.ObjectId(userId), posts: new mongoose.Types.ObjectId(postId) }).select('_id name');
         const isSaved = collections.length > 0;
         
         res.json({ isSaved, collections });

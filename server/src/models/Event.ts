@@ -52,6 +52,10 @@ const EventSchema = new mongoose.Schema<IEvent>({
     rejectedAt: { type: Date, index: { expireAfterSeconds: 259200 } } // auto-delete 3 days after rejection
 }, { timestamps: true });
 
+EventSchema.index({ status: 1, date: 1 });
+EventSchema.index({ status: 1, isCompleted: 1, date: 1 });
+EventSchema.index({ createdBy: 1, createdAt: -1 });
+
 const Event = mongoose.model<IEvent>('Event', EventSchema);
 
 export default Event;

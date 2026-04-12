@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import api from '../../lib/api';
-import { Mail, Phone, MapPin, Facebook, Linkedin, Instagram, Youtube } from 'lucide-react';
+import { Mail, Phone, MapPin } from 'lucide-react';
+import { FaFacebook, FaLinkedin, FaInstagram, FaYoutube } from 'react-icons/fa';
 
 const Footer = () => {
     const location = useLocation();
@@ -23,10 +24,10 @@ const Footer = () => {
         };
 
     const socialLinks = [
-        { icon: Facebook, href: 'https://www.facebook.com/share/1FW4X3wiyG/', label: 'Facebook' },
-        { icon: Linkedin, href: 'https://in.linkedin.com/school/dvr-dr-hs-mic-college-of-technology/', label: 'LinkedIn' },
-        { icon: Instagram, href: 'https://www.instagram.com/miccollegeoftechnology?igsh=MWxobjd4czN1bXY2bg==', label: 'Instagram' },
-        { icon: Youtube, href: 'https://www.youtube.com/@dvrdr.hsmiccollegeoftechno8260', label: 'YouTube' },
+        { icon: FaFacebook, href: 'https://www.facebook.com/share/1FW4X3wiyG/', label: 'Facebook' },
+        { icon: FaLinkedin, href: 'https://in.linkedin.com/school/dvr-dr-hs-mic-college-of-technology/', label: 'LinkedIn' },
+        { icon: FaInstagram, href: 'https://www.instagram.com/miccollegeoftechnology?igsh=MWxobjd4czN1bXY2bg==', label: 'Instagram' },
+        { icon: FaYoutube, href: 'https://www.youtube.com/@dvrdr.hsmiccollegeoftechno8260', label: 'YouTube' },
     ];
 
     const [branding, setBranding] = useState<any>({});

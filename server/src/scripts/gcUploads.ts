@@ -5,6 +5,7 @@ import { Message } from '../models/Message';
 import GalleryAlbum from '../models/GalleryAlbum';
 import NotableAlumni from '../models/NotableAlumni';
 import NewsItem from '../models/NewsItem';
+import Announcement from '../models/Announcement';
 import Job from '../models/Job';
 import { getGridFSBucket } from '../config/gridfs';
 import logger from '../config/logger';
@@ -83,6 +84,11 @@ export const runGC = async () => {
         const newsItems = await NewsItem.find().select('image').lean();
         for (const ni of newsItems) {
             addRef((ni as any).image);
+        }
+
+        const announcements = await Announcement.find().select('image').lean();
+        for (const announcement of announcements) {
+            addRef((announcement as any).image);
         }
 
         const jobs = await Job.find().select('image').lean();

@@ -19,6 +19,7 @@ const authLinks = [
     { name: 'Home', href: '/feed', icon: Home },
     { name: 'Network', href: '/directory', icon: Users },
     { name: 'Events', href: '/events', icon: Calendar },
+    { name: 'Announcements', href: '/announcements', icon: Rss },
     { name: 'Gallery', href: '/gallery', icon: Image },
     { name: 'Jobs', href: '/jobs', icon: Briefcase },
 ];
@@ -26,6 +27,7 @@ const authLinks = [
 const mobileAuthLinks = [
     { name: 'Home', href: '/feed', icon: Home },
     { name: 'Network', href: '/directory', icon: Users },
+    { name: 'Announcements', href: '/announcements', icon: Rss },
     { name: 'Jobs', href: '/jobs', icon: Briefcase },
     { name: 'Alerts', href: '/notifications', icon: Bell },
 ];

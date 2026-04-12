@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Connection, { ConnectionStatus } from '../models/Connection';
 import User, { UserStatus } from '../models/User';
 import Post from '../models/Post';
@@ -394,7 +395,7 @@ router.get('/status/:otherId', requireAuth, cacheMiddleware(TTL.SHORT, true), as
 router.post('/request/:recipientId', requireAuth, async (req, res) => {
     try {
         const requesterId = req.session?.userId as string | undefined;
-        const { recipientId } = req.params;
+        const { recipientId } = req.params as { recipientId: string };
 
         if (requesterId === recipientId) {
             return res.status(400).json({ message: 'Cannot connect with yourself' });
@@ -412,8 +413,8 @@ router.post('/request/:recipientId', requireAuth, async (req, res) => {
         }
 
         const newConnection = await Connection.create({
-            requester: requesterId,
-            recipient: recipientId,
+            requester: new mongoose.Types.ObjectId(requesterId),
+            recipient: new mongoose.Types.ObjectId(recipientId),
             status: ConnectionStatus.PENDING
         });
 
@@ -421,8 +422,8 @@ router.post('/request/:recipientId', requireAuth, async (req, res) => {
         try {
             const requester = await User.findById(requesterId);
             await Notification.create({
-                recipient: recipientId,
-                actor: requesterId,
+                recipient: new mongoose.Types.ObjectId(recipientId),
+                actor: new mongoose.Types.ObjectId(requesterId),
                 type: 'connection_request',
                 message: `${requester?.name || 'Someone'} sent you a connection request`,
                 data: { connectionId: newConnection._id }

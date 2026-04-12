@@ -167,6 +167,7 @@ import { publicRouter } from './routes/publicRoutes';
 import galleryRouter from './routes/gallery';
 import savedRouter from './routes/savedRoutes';
 import runGC from './scripts/gcUploads';
+import { syncAllIndexes } from './scripts/syncIndexes';
 import { autoInvalidate } from './config/cache';
 
 // ... (other imports)
@@ -250,7 +251,7 @@ app.use('/api/uploads', (req, res) => {
                 return res.status(304).end();
             }
 
-            const contentType = file.contentType || 'application/octet-stream';
+            const contentType = (file as any).contentType || 'application/octet-stream';
             const fileLength = file.length || 0;
 
             res.set('Content-Type', contentType);
@@ -462,6 +463,14 @@ process.on('uncaughtException', (err) => {
 
 // Connect to Database FIRST so MongoStore is ready, then start server
 connectDB().then(() => {
+    if (String(process.env.AUTO_SYNC_INDEXES || '').toLowerCase() === 'true') {
+        setImmediate(() => {
+            void syncAllIndexes({ continueOnError: true, logPrefix: '[startup-index-sync]' }).catch((e) => {
+                logger.error('[startup-index-sync] failed', e);
+            });
+        });
+    }
+
     // Migrate legacy chat key (if any) from filesystem into SiteSettings in MongoDB
     // Chat migration disabled while chat feature is turned off
     // try {

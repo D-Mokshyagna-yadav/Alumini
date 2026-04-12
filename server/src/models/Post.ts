@@ -37,4 +37,7 @@ const postSchema = new Schema<IPost>({
     shares: { type: Number, default: 0 }
 }, { timestamps: true });
 
+postSchema.index({ visibility: 1, status: 1, createdAt: -1 });
+postSchema.index({ author: 1, createdAt: -1 });
+
 export default mongoose.model<IPost>('Post', postSchema);

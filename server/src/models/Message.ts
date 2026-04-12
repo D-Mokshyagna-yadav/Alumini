@@ -31,4 +31,8 @@ const messageSchema = new Schema<IMessage>({
     editedAt: { type: Date },
 }, { timestamps: true });
 
+messageSchema.index({ conversationId: 1, createdAt: -1 });
+messageSchema.index({ groupId: 1, createdAt: -1 });
+messageSchema.index({ sender: 1, createdAt: -1 });
+
 export const Message = mongoose.model<IMessage>('Message', messageSchema);

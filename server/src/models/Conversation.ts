@@ -17,4 +17,7 @@ const conversationSchema = new Schema<IConversation>({
     requestAcceptedAt: { type: Date }
 }, { timestamps: true });
 
+conversationSchema.index({ participants: 1, updatedAt: -1 });
+conversationSchema.index({ isRequest: 1, updatedAt: -1 });
+
 export const Conversation = mongoose.model<IConversation>('Conversation', conversationSchema);

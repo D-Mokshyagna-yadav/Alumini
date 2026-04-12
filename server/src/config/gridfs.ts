@@ -27,12 +27,11 @@ export const getGridFSBucket = (): InstanceType<typeof mongoose.mongo.GridFSBuck
 export const storeBufferInGridFS = (
     buffer: Buffer,
     gridName: string,
-    contentType: string,
+    _contentType: string,
 ): Promise<mongoose.Types.ObjectId> => {
     return new Promise((resolve, reject) => {
         const bucket = getGridFSBucket();
         const uploadStream = bucket.openUploadStream(gridName, {
-            contentType,
             metadata: { size: buffer.length, uploadedAt: new Date() },
         });
 
@@ -54,12 +53,12 @@ export const storeBufferInGridFS = (
 export const storeFileInGridFS = (
     localPath: string,
     gridName: string,
-    contentType: string,
+    _contentType: string,
 ): Promise<mongoose.Types.ObjectId> => {
     return new Promise((resolve, reject) => {
         const bucket = getGridFSBucket();
         const readStream = fs.createReadStream(localPath);
-        const uploadStream = bucket.openUploadStream(gridName, { contentType });
+        const uploadStream = bucket.openUploadStream(gridName);
 
         readStream.pipe(uploadStream);
         uploadStream.on('finish', () => resolve(uploadStream.id as mongoose.Types.ObjectId));

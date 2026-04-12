@@ -50,6 +50,7 @@ const postUpload = multer({ storage: memStorage, fileFilter: mediaFilter, limits
 const profileUpload = multer({ storage: memStorage, fileFilter: imageFilter, limits: { fileSize: 50 * 1024 * 1024 } });
 const eventUpload = multer({ storage: memStorage, fileFilter: imageFilter, limits: { fileSize: 50 * 1024 * 1024 } });
 const newsUpload = multer({ storage: memStorage, fileFilter: imageFilter, limits: { fileSize: 50 * 1024 * 1024 } });
+const announcementUpload = multer({ storage: memStorage, fileFilter: imageFilter, limits: { fileSize: 50 * 1024 * 1024 } });
 const jobUpload = multer({ storage: memStorage, fileFilter: imageFilter, limits: { fileSize: 50 * 1024 * 1024 } });
 
 // ── Shared: compress image buffer & store in GridFS ───────
@@ -183,6 +184,24 @@ router.post('/news-image', requireAuth, newsUpload.single('image'), async (req, 
         const username = sanitizeUsername(user.name);
 
         const fileRel = await processImageAndStore(file, username, 'news');
+        res.json({ url: fileRel, relative: fileRel });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Upload failed' });
+    }
+});
+
+// POST /api/upload/announcement-image (admin only)
+router.post('/announcement-image', requireAuth, announcementUpload.single('image'), async (req, res) => {
+    try {
+        const user = await User.findById(req.session!.userId);
+        if (!user || user.role !== 'admin') return res.status(403).json({ message: 'Admin access required' });
+
+        const file = req.file;
+        if (!file) return res.status(400).json({ message: 'No file uploaded' });
+        const username = sanitizeUsername(user.name);
+
+        const fileRel = await processImageAndStore(file, username, 'announcements');
         res.json({ url: fileRel, relative: fileRel });
     } catch (err) {
         console.error(err);

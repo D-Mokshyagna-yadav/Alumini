@@ -1,5 +1,6 @@
 import React from 'react';
-import { Facebook, Linkedin, MessageSquare, Copy, MoreHorizontal } from 'lucide-react';
+import { MessageSquare, Copy, MoreHorizontal } from 'lucide-react';
+import { FaFacebook, FaLinkedin } from 'react-icons/fa';
 
 export default function JobShareFloating({ url }: { url: string }) {
     if (!url) return null;

@@ -198,4 +198,19 @@ const userSchema = new Schema<IUser>({
     },
 }, { timestamps: true });
 
+// Directory and admin listing performance
+userSchema.index({ status: 1, name: 1 });
+userSchema.index({ status: 1, graduationYear: 1, name: 1 });
+userSchema.index({ status: 1, isMentor: 1, name: 1 });
+userSchema.index({ role: 1, status: 1, createdAt: -1 });
+
+// Full-text search for directory, recipient picker, and admin search
+userSchema.index(
+    { name: 'text', headline: 'text', currentCompany: 'text', email: 'text' },
+    {
+        name: 'user_text_search_idx',
+        weights: { name: 10, headline: 6, currentCompany: 4, email: 3 },
+    }
+);
+
 export default mongoose.model<IUser>('User', userSchema);
