@@ -439,7 +439,10 @@ export async function sendAnnouncementEmail(to: string, recipientName: string, a
         {
           filename: 'announcement-image.jpg',
           content: imageBuffer,
+          contentType: 'image/jpeg',
           cid: 'announcement-image',
+          contentDisposition: 'inline' as const,
+          headers: { 'X-Attachment-Id': 'announcement-image' },
         }
       ];
       useImageCid = true;
