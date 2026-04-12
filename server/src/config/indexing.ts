@@ -154,7 +154,7 @@ export const rebuildAllIndexes = async () => {
         const collections = [User, Post, Event, Job, Connection, Notification, GalleryAlbum, SavedCollection, NewsItem, Message, Conversation];
         
         for (const Collection of collections) {
-            await Collection.collection.dropAllIndexes();
+            await Collection.collection.dropIndexes();
         }
         
         await createAllIndexes();
