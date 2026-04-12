@@ -66,10 +66,5 @@ COPY --from=builder /app/client/public client/public
 ENV NODE_ENV=production
 EXPOSE 5000
 
-# Health check (requires curl, installed above)
-# Coolify and orchestrators use this to verify the app is healthy
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:5000/api/health || exit 1
-
 # Start the server
 CMD ["node", "server/dist/index.js"]

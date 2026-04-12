@@ -19,8 +19,8 @@ import Notification from '../models/Notification';
 import GalleryAlbum from '../models/GalleryAlbum';
 import SavedCollection from '../models/SavedCollection';
 import NewsItem from '../models/NewsItem';
-import Message from '../models/Message';
-import Conversation from '../models/Conversation';
+import { Message } from '../models/Message';
+import { Conversation } from '../models/Conversation';
 import logger from '../config/logger';
 
 /**
@@ -137,8 +137,8 @@ export const analyzeIndexes = async () => {
         const collections = [User, Post, Event, Job, Connection, Notification];
         
         for (const Collection of collections) {
-            const stats = await Collection.collection.stats();
-            logger.info(`${Collection.collection.name}: ${stats.count} docs, ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
+            const count = await Collection.countDocuments();
+            logger.info(`${Collection.collection.name}: ${count} documents`);
         }
     } catch (err) {
         logger.error('Error analyzing indexes:', err);

@@ -466,7 +466,7 @@ process.on('uncaughtException', (err) => {
 });
 
 // Connect to Database FIRST so MongoStore is ready, then start server
-connectDB().then(() => {
+connectDB().then(async () => {
     if (String(process.env.AUTO_SYNC_INDEXES || '').toLowerCase() === 'true') {
         setImmediate(() => {
             void syncAllIndexes({ continueOnError: true, logPrefix: '[startup-index-sync]' }).catch((e) => {
