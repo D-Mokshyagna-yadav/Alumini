@@ -413,7 +413,7 @@ app.get('/index.html', (_req, res) => {
 });
 
 // SPA catch-all: any non-API route serves index.html for client-side routing
-app.get('/*', (req, res) => {
+app.get(/.*/, (req, res) => {
     // Skip API routes (they should 404 normally)
     if (req.path.startsWith('/api/') || req.path.startsWith('/socket.io')) {
         return res.status(404).json({ message: 'Not found' });
