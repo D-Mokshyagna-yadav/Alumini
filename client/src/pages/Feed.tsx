@@ -15,6 +15,7 @@ import { useConfirm } from '../context/ConfirmContext';
 import api from '../lib/api';
 import Avatar from '../components/ui/Avatar';
 import ImageCarousel from '../components/ImageCarousel';
+import SimpleImageCropper from '../components/ui/SimpleImageCropper';
 
 interface Comment {
     _id: string;
@@ -89,6 +90,11 @@ const Feed = () => {
     const [detailedPost, setDetailedPost] = useState<DetailedPost | null>(null);
     const [detailLoading, setDetailLoading] = useState(false);
     const [detailCommentText, setDetailCommentText] = useState('');
+    
+    // Image Cropper state
+    const [showImageCropper, setShowImageCropper] = useState(false);
+    const [currentImageIndexToCrop, setCurrentImageIndexToCrop] = useState<number | null>(null);
+    const [showImageOptions, setShowImageOptions] = useState(false);
 
     // Inline edit state
     const [editingFeedPostId, setEditingFeedPostId] = useState<string | null>(null);
@@ -226,6 +232,31 @@ const Feed = () => {
             const res = await api.get('/saved/all');
             setSavedPosts(new Set(res.data.savedPostIds || []));
         } catch { /* silent */ }
+    };
+
+    const handleImageCropComplete = (croppedFile: File | null) => {
+        if (currentImageIndexToCrop === null) return;
+        
+        if (croppedFile) {
+            // Replace with cropped version
+            const newAttachments = [...postAttachments];
+            newAttachments[currentImageIndexToCrop] = croppedFile;
+            setPostAttachments(newAttachments);
+            
+            // Update preview
+            const newPreviews = [...postAttachmentPreviews];
+            newPreviews[currentImageIndexToCrop] = { 
+                url: URL.createObjectURL(croppedFile), 
+                name: croppedFile.name, 
+                type: croppedFile.type 
+            };
+            setPostAttachmentPreviews(newPreviews);
+        }
+        // If croppedFile is null, we keep the original full image
+        
+        setShowImageCropper(false);
+        setShowImageOptions(false);
+        setCurrentImageIndexToCrop(null);
     };
 
     const myPosts = posts.filter(p => p.author._id === user?.id);
@@ -471,7 +502,16 @@ const Feed = () => {
         setFileErrors(errors);
         if (valid.length) {
             setPostAttachments(prev => [...prev, ...valid]);
-            setPostAttachmentPreviews(prev => [...prev, ...valid.map(f => ({ url: URL.createObjectURL(f), name: f.name, type: f.type }))]);
+            const previews = valid.map(f => ({ url: URL.createObjectURL(f), name: f.name, type: f.type }));
+            setPostAttachmentPreviews(prev => [...prev, ...previews]);
+            
+            // Show image options for first image if it's an image type
+            const firstImageFile = valid.find(f => f.type.startsWith('image'));
+            if (firstImageFile) {
+                const imageIndex = postAttachments.length;
+                setCurrentImageIndexToCrop(imageIndex);
+                setShowImageOptions(true);
+            }
         }
         if (postFileInputRef.current) postFileInputRef.current.value = '';
     };
@@ -1295,6 +1335,56 @@ const Feed = () => {
                             </div>
                         </motion.div>
                     </motion.div>
+                )}
+
+                {/* Image Options Modal */}
+                {showImageOptions && currentImageIndexToCrop !== null && postAttachmentPreviews[currentImageIndexToCrop]?.type.startsWith('image') && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[59] flex items-center justify-center p-4"
+                        onClick={() => { setShowImageOptions(false); setCurrentImageIndexToCrop(null); }}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0, y: 16 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 16 }}
+                            transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-[var(--bg-secondary)] rounded-2xl overflow-hidden shadow-2xl border border-[var(--border-color)]/30"
+                        >
+                            <div className="p-6 max-w-sm">
+                                <h3 className="font-bold text-[var(--text-primary)] mb-4">How would you like to use this image?</h3>
+                                <div className="space-y-2">
+                                    <button onClick={() => { setShowImageOptions(false); setShowImageCropper(true); }}
+                                        className="w-full px-4 py-3 bg-[var(--accent)] text-[var(--bg-primary)] font-semibold rounded-lg hover:shadow-md hover:shadow-[var(--accent)]/25 transition-all"
+                                    >
+                                        Crop Image
+                                    </button>
+                                    <button onClick={() => handleImageCropComplete(null)}
+                                        className="w-full px-4 py-3 bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-semibold rounded-lg hover:bg-[var(--bg-tertiary)]/80 transition-all"
+                                    >
+                                        Use Full Image
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+
+                {/* Image Cropper Modal */}
+                {showImageCropper && currentImageIndexToCrop !== null && postAttachments[currentImageIndexToCrop]?.type.startsWith('image') && (
+                    <SimpleImageCropper 
+                        file={postAttachments[currentImageIndexToCrop]}
+                        size={600}
+                        shape="rounded"
+                        onCancel={() => { 
+                            setShowImageCropper(false);
+                            setShowImageOptions(true);
+                            setCurrentImageIndexToCrop(currentImageIndexToCrop);
+                        }}
+                        onCrop={(croppedFile) => {
+                            handleImageCropComplete(croppedFile);
+                        }}
+                    />
                 )}
             </AnimatePresence>
         </div>

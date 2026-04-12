@@ -3108,8 +3108,8 @@ const AdminDashboard = () => {
                             </div>
                             <div className="p-6 space-y-6">
                                 {selectedAnnouncement.image && (
-                                    <div className="w-full rounded-xl overflow-hidden border border-[var(--border-color)] bg-[var(--bg-tertiary)]">
-                                        <CachedImage src={selectedAnnouncement.image} alt="" className="w-full h-auto max-h-96 sm:max-h-[500px] object-contain" wrapperClassName="w-full flex items-center justify-center" compact />
+                                    <div className="w-full rounded-xl overflow-hidden border border-[var(--border-color)] bg-[var(--bg-tertiary)] flex items-center justify-center">
+                                        <CachedImage src={selectedAnnouncement.image} alt="" className="w-full h-auto object-contain" wrapperClassName="w-full flex items-center justify-center max-h-[70vh]" compact />
                                     </div>
                                 )}
                                 <div className="space-y-3">

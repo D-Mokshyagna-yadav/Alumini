@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
+import https from 'https';
 import logger from './logger';
 
 dotenv.config();
@@ -320,13 +321,14 @@ function announcementTheme(template: AnnouncementTemplate = 'general') {
   return themes[template] || themes.general;
 }
 
-function announcementBody(data: AnnouncementEmailData, recipientName: string): string {
+function announcementBody(data: AnnouncementEmailData, recipientName: string, useImageCid: boolean = false): string {
   const theme = announcementTheme(data.template || 'general');
   const title = escapeHtml(data.title);
   const subtitle = data.subtitle ? escapeHtml(data.subtitle) : '';
   const message = escapeHtml(data.message || '');
   const publishedAt = data.publishedAt ? new Date(data.publishedAt).toLocaleDateString() : '';
-  const imageUrl = data.image ? toAbsoluteUploadsUrl(data.image) : '';
+  // Use cid reference if image is embedded, otherwise use URL
+  const imageUrl = useImageCid && data.image ? 'cid:announcement-image' : (data.image ? toAbsoluteUploadsUrl(data.image) : '');
   const ctaHref = data.link || ''; // Use link field only, removed ctaLink fallback
   const ctaLabel = 'Learn More';
 
@@ -363,7 +365,7 @@ function announcementBody(data: AnnouncementEmailData, recipientName: string): s
     <h2 style="margin:0 0 8px;text-align:center;font-size:24px;font-weight:700;color:${BRAND.textPrimary};">${title}</h2>
     ${subtitle ? `<p style="margin:0 0 24px;text-align:center;font-size:15px;line-height:1.6;color:${BRAND.textSecondary};">${subtitle}</p>` : ''}
     <p style="margin:0 0 24px;font-size:14px;line-height:1.8;color:${BRAND.textSecondary};white-space:pre-wrap;">${greeting}</p>
-    ${imageUrl ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;border-radius:14px;overflow:hidden;"><tr><td><img src="${imageUrl}" alt="${title}" width="100%" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:14px;object-fit:cover;" /></td></tr></table>` : ''}
+    ${imageUrl ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;border-radius:14px;overflow:hidden;"><tr><td><img src="${imageUrl}" alt="${title}" width="100%" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:14px;object-fit:contain;" /></td></tr></table>` : ''}
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;background:${theme.soft};border:1px solid ${theme.accent}22;border-radius:14px;">
       <tr>
         <td style="padding:18px 18px 16px;">
@@ -379,16 +381,77 @@ function announcementBody(data: AnnouncementEmailData, recipientName: string): s
   `;
 }
 
+/**
+ * Download image from URL and return as buffer
+ */
+async function downloadImageAsBuffer(imageUrl: string): Promise<Buffer | null> {
+  return new Promise((resolve) => {
+    try {
+      if (!imageUrl || (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://'))) {
+        resolve(null);
+        return;
+      }
+
+      const chunks: Buffer[] = [];
+      const req = https.get(imageUrl, (res) => {
+        // Only process successful responses
+        if (res.statusCode !== 200) {
+          resolve(null);
+          return;
+        }
+
+        res.on('data', (chunk: Buffer) => chunks.push(chunk));
+        res.on('end', () => {
+          try {
+            resolve(Buffer.concat(chunks));
+          } catch {
+            resolve(null);
+          }
+        });
+      });
+
+      req.on('error', () => resolve(null));
+      req.setTimeout(5000, () => {
+        req.destroy();
+        resolve(null);
+      });
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
 export async function sendAnnouncementEmail(to: string, recipientName: string, announcement: AnnouncementEmailData) {
   const theme = announcementTheme(announcement.template || 'general');
   const subject = `${BRAND.platformName} – ${theme.subject}: ${announcement.title}`;
+
+  // Try to download and embed the image
+  let attachments = logoAttachments();
+  let useImageCid = false;
+  
+  if (announcement.image) {
+    const imageUrl = toAbsoluteUploadsUrl(announcement.image);
+    const imageBuffer = await downloadImageAsBuffer(imageUrl);
+    
+    if (imageBuffer) {
+      attachments = [
+        ...attachments,
+        {
+          filename: 'announcement-image.jpg',
+          content: imageBuffer,
+          cid: 'announcement-image',
+        }
+      ];
+      useImageCid = true;
+    }
+  }
 
   await transporter.sendMail({
     from: `"${BRAND.platformName}" <${process.env.GMAIL_USER}>`,
     to,
     subject,
-    html: emailShell(announcementBody(announcement, recipientName)),
-    attachments: logoAttachments(),
+    html: emailShell(announcementBody(announcement, recipientName, useImageCid)),
+    attachments,
   });
 }
 
