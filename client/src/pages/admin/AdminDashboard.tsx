@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { CheckCircle, XCircle, Clock, Users, UserCheck, UserX, Search, ChevronDown, ChevronUp, Eye, EyeOff, Plus, Edit2, Trash2, X, Lock, FileText, Briefcase, Calendar, Shield, ShieldOff, Image as ImageIcon, Upload, FolderPlus, ThumbsUp, MessageCircle, MapPin, Phone, Mail, GraduationCap, Building2, BadgeCheck, Heart, ToggleLeft, ToggleRight, Newspaper, Star, Landmark } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Users, UserCheck, UserX, Search, ChevronDown, ChevronUp, Eye, EyeOff, Plus, Edit2, Trash2, X, Lock, FileText, Briefcase, Calendar, Shield, ShieldOff, Image as ImageIcon, Upload, FolderPlus, ThumbsUp, MessageCircle, MapPin, Phone, Mail, GraduationCap, Building2, BadgeCheck, Heart, ToggleLeft, ToggleRight, Newspaper, Star, Landmark, Megaphone } from 'lucide-react';
 import { resolveMediaUrl } from '../../lib/media';
 import CachedImage from '../../components/CachedImage';
 import ImageCarousel from '../../components/ImageCarousel';
@@ -68,7 +68,7 @@ const emptyUserForm = {
     bio: ''
 };
 
-type TabKey = 'pending' | 'registered' | 'posts' | 'jobs' | 'events' | 'gallery' | 'news' | 'notable-alumni' | 'administration' | 'companies';
+type TabKey = 'pending' | 'registered' | 'posts' | 'jobs' | 'events' | 'gallery' | 'news' | 'announcements' | 'announcements' | 'notable-alumni' | 'administration' | 'companies';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState<TabKey>('pending');
@@ -128,6 +128,11 @@ const AdminDashboard = () => {
     // News
     const [allNews, setAllNews] = useState<any[]>([]);
     const [showNewsModal, setShowNewsModal] = useState(false);
+    
+    // Announcements
+    const [allAnnouncements, setAllAnnouncements] = useState<any[]>([]);
+    const [selectedAnnouncement, setSelectedAnnouncement] = useState<any | null>(null);
+    const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
     const [newsModalMode, setNewsModalMode] = useState<'create' | 'edit'>('create');
     const [editingNewsId, setEditingNewsId] = useState<string | null>(null);
     const [newsForm, setNewsForm] = useState({ title: '', body: '', link: '', priority: 0, draft: false });
@@ -226,7 +231,7 @@ const AdminDashboard = () => {
 
     const fetchData = async () => {
         try {
-            const [pendingRes, registeredRes, analyticsRes, postsRes, jobsRes, eventsRes, galleryRes, settingsRes, newsRes, notableRes, adminMembersRes, homeContentRes] = await Promise.all([
+            const [pendingRes, registeredRes, analyticsRes, postsRes, jobsRes, eventsRes, galleryRes, settingsRes, newsRes, announcementsRes, notableRes, adminMembersRes, homeContentRes] = await Promise.all([
                 api.get('/admin/pending-users'),
                 api.get('/admin/all-users?status=active'),
                 api.get('/admin/analytics-full').catch(() => api.get('/admin/analytics').then(r => ({ data: { ...r.data, totalPosts: 0, totalJobs: 0, totalEvents: 0, pendingEvents: 0 } }))),
@@ -236,6 +241,7 @@ const AdminDashboard = () => {
                 api.get('/gallery').catch(() => ({ data: { albums: [] } })),
                 api.get('/admin/settings').catch(() => ({ data: { settings: { autoApproveUsers: false, autoApprovePosts: false, autoApproveJobs: false } } })),
                 api.get('/public/news').catch(() => ({ data: { news: [] } })),
+                api.get('/admin/announcements').catch(() => ({ data: { announcements: [] } })),
                 api.get('/admin/notable-alumni').catch(() => ({ data: { alumni: [] } })),
                 api.get('/admin/administration').catch(() => ({ data: { members: [] } })),
                 api.get('/public/home').catch(() => ({ data: { home: {} } })),
@@ -248,6 +254,7 @@ const AdminDashboard = () => {
             setAllEvents(eventsRes.data.events || []);
             setAllAlbums(galleryRes.data.albums || []);
             setAllNews(newsRes.data.news || []);
+            setAllAnnouncements(announcementsRes.data.announcements || []);
             setAllNotableAlumni(notableRes.data.alumni || []);
             const adminMembers = adminMembersRes.data.members || [];
             setAllAdminMembers(adminMembers);
@@ -1344,6 +1351,12 @@ const AdminDashboard = () => {
         (n.body || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const filteredAnnouncements = allAnnouncements.filter(a =>
+        (a.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (a.message || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (a.subtitle || '').toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     const filteredNotableAlumni = allNotableAlumni.filter(a =>
         (a.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (a.role || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -1452,6 +1465,7 @@ const AdminDashboard = () => {
         { key: 'events', label: 'Events', count: allEvents.length, icon: Calendar },
         { key: 'gallery', label: 'Gallery', count: allAlbums.length, icon: ImageIcon },
         { key: 'news', label: 'News', count: allNews.length, icon: Newspaper },
+        { key: 'announcements', label: 'Announcements', count: allAnnouncements.length, icon: Megaphone },
         { key: 'notable-alumni', label: 'Notable Alumni', count: allNotableAlumni.length, icon: Star },
         { key: 'administration', label: 'Administration', count: allAdminMembers.length, icon: Landmark },
         { key: 'companies', label: 'Alumni Work At', count: companies.length, icon: Building2 },
@@ -1476,6 +1490,11 @@ const AdminDashboard = () => {
                         {activeTab === 'jobs' && (
                             <Button onClick={() => setShowCreateJobModal(true)} className="flex items-center gap-2">
                                 <Plus size={18} /> Create Job
+                            </Button>
+                        )}
+                        {activeTab === 'announcements' && (
+                            <Button onClick={() => window.location.href = '/admin/announcements'} className="flex items-center gap-2">
+                                <Megaphone size={18} /> Send Announcement
                             </Button>
                         )}
                         {activeTab === 'gallery' && (
@@ -1886,6 +1905,48 @@ const AdminDashboard = () => {
                                                 <Button size="sm" variant="destructive" onClick={() => handleDeleteNews(item._id)}>
                                                     <Trash2 size={14} />
                                                 </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
+
+                    {/* =============== ANNOUNCEMENTS TAB =============== */}
+                    {activeTab === 'announcements' && (
+                        <div className="divide-y divide-[var(--border-color)]">
+                            {filteredAnnouncements.length === 0 ? (
+                                <EmptyState icon={Megaphone} text="No announcements created yet" />
+                            ) : (
+                                filteredAnnouncements.map(item => (
+                                    <div key={item._id} className="p-4 hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer" onClick={() => { setSelectedAnnouncement(item); setShowAnnouncementModal(true); }}>
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="flex items-start gap-3 flex-1 min-w-0">
+                                                {item.image && (
+                                                    <CachedImage src={item.image} alt="" className="w-16 h-16 object-cover rounded-lg flex-shrink-0" wrapperClassName="w-16 h-16 flex-shrink-0" compact />
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <p className="font-semibold text-[var(--text-primary)]">{item.title}</p>
+                                                        <span className={`text-xs px-2 py-0.5 rounded ${item.draft ? 'bg-yellow-500/10 text-yellow-400' : 'bg-green-500/10 text-green-400'}`}>
+                                                            {item.draft ? 'DRAFT' : 'PUBLISHED'}
+                                                        </span>
+                                                        <span className="text-xs px-2 py-0.5 bg-[var(--accent)]/10 text-[var(--accent)]">
+                                                            {item.template || 'general'} - {item.audienceMode === 'specific' ? `${item.recipientIds?.length || 0} users` : 'All users'}
+                                                        </span>
+                                                    </div>
+                                                    {item.subtitle && (
+                                                        <p className="text-sm text-[var(--text-secondary)] mt-1">{item.subtitle}</p>
+                                                    )}
+                                                    {item.message && (
+                                                        <p className="text-sm text-[var(--text-secondary)] mt-1 line-clamp-2">{item.message}</p>
+                                                    )}
+                                                    <div className="flex items-center gap-4 mt-1 text-xs text-[var(--text-muted)]">
+                                                        <span>{item.readers || 0} readers</span>
+                                                        <span>{new Date(item.publishedAt || item.createdAt).toLocaleDateString()}</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -2912,6 +2973,69 @@ const AdminDashboard = () => {
                             <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
                                 <button onClick={() => setShowEditJobModal(false)} className="px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]">Cancel</button>
                                 <Button onClick={handleEditJob} disabled={!editJobForm.title || !editJobForm.company}>Save Changes</Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Announcement Detail Modal */}
+                {showAnnouncementModal && selectedAnnouncement && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 modal-overlay">
+                        <div className="bg-[var(--bg-secondary)] w-full max-w-2xl modal-content">
+                            <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between sticky top-0 bg-[var(--bg-secondary)] z-10">
+                                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Announcement Details</h3>
+                                <button onClick={() => { setShowAnnouncementModal(false); setSelectedAnnouncement(null); }} className="p-1 text-[var(--text-muted)]"><X size={18} /></button>
+                            </div>
+                            <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+                                {selectedAnnouncement.image && (
+                                    <CachedImage src={selectedAnnouncement.image} alt="" className="w-full h-64 object-cover rounded-lg" wrapperClassName="w-full" compact />
+                                )}
+                                <div>
+                                    <div className="flex items-center gap-2 flex-wrap mb-2">
+                                        <h2 className="text-2xl font-bold text-[var(--text-primary)]">{selectedAnnouncement.title}</h2>
+                                        <span className={`text-xs px-2 py-0.5 rounded ${selectedAnnouncement.draft ? 'bg-yellow-500/10 text-yellow-400' : 'bg-green-500/10 text-green-400'}`}>
+                                            {selectedAnnouncement.draft ? 'DRAFT' : 'PUBLISHED'}
+                                        </span>
+                                        <span className="text-xs px-2 py-0.5 bg-[var(--accent)]/10 text-[var(--accent)] rounded capitalize">
+                                            {selectedAnnouncement.template || 'general'} template
+                                        </span>
+                                    </div>
+                                    {selectedAnnouncement.subtitle && (
+                                        <p className="text-lg text-[var(--text-secondary)] mb-3">{selectedAnnouncement.subtitle}</p>
+                                    )}
+                                    <div className="flex items-center gap-4 text-sm text-[var(--text-muted)] mb-4">
+                                        <span>📧 {selectedAnnouncement.audienceMode === 'specific' ? `${selectedAnnouncement.recipientIds?.length || 0} specific users` : 'All users'}</span>
+                                        <span>👁️ {selectedAnnouncement.readers || 0} readers</span>
+                                        <span>📅 {new Date(selectedAnnouncement.publishedAt || selectedAnnouncement.createdAt).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                                {selectedAnnouncement.message && (
+                                    <div className="bg-[var(--bg-tertiary)] p-4 rounded-lg">
+                                        <h4 className="text-sm font-semibold text-[var(--text-secondary)] mb-2">Message</h4>
+                                        <p className="text-[var(--text-primary)] whitespace-pre-wrap">{selectedAnnouncement.message}</p>
+                                    </div>
+                                )}
+                                {selectedAnnouncement.ctaLabel && (
+                                    <div className="bg-[var(--bg-tertiary)] p-4 rounded-lg">
+                                        <h4 className="text-sm font-semibold text-[var(--text-secondary)] mb-2">Call to Action</h4>
+                                        <p className="text-[var(--text-primary)] mb-2">{selectedAnnouncement.ctaLabel}</p>
+                                        {selectedAnnouncement.ctaLink && (
+                                            <p className="text-sm text-[var(--accent)] truncate">{selectedAnnouncement.ctaLink}</p>
+                                        )}
+                                    </div>
+                                )}
+                                {selectedAnnouncement.link && (
+                                    <div className="bg-[var(--bg-tertiary)] p-4 rounded-lg">
+                                        <h4 className="text-sm font-semibold text-[var(--text-secondary)] mb-2">Link</h4>
+                                        <p className="text-sm text-[var(--accent)] truncate">{selectedAnnouncement.link}</p>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="p-4 border-t border-[var(--border-color)] flex justify-between items-center">
+                                <button onClick={() => window.location.href = `/admin/announcements?edit=${selectedAnnouncement._id}`} className="flex items-center gap-2 px-4 py-2 text-[var(--accent)] hover:bg-[var(--bg-tertiary)] rounded">
+                                    <Edit2 size={16} /> Edit
+                                </button>
+                                <button onClick={() => { setShowAnnouncementModal(false); setSelectedAnnouncement(null); }} className="px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]">Close</button>
                             </div>
                         </div>
                     </div>

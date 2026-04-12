@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Sparkles, Upload, Plus, Edit2, Trash2, X } from 'lucide-react';
+import { Sparkles, Upload, Edit2, Trash2, X } from 'lucide-react';
 import api from '../../lib/api';
 import CachedImage from '../../components/CachedImage';
 import resolveMediaUrl from '../../lib/media';
@@ -15,10 +15,6 @@ interface AnnouncementItem {
     message?: string;
     image?: string;
     link?: string;
-    ctaLabel?: string;
-    ctaLink?: string;
-    publishedAt?: string;
-    priority?: number;
     draft?: boolean;
     audienceMode?: 'all' | 'specific';
     recipientIds?: string[];
@@ -35,48 +31,36 @@ interface RecipientUser {
     headline?: string;
 }
 
-const templates: Record<TemplateKey, { title: string; subtitle: string; message: string; ctaLabel: string; ctaLink: string }> = {
+const templates: Record<TemplateKey, { title: string; subtitle: string; message: string }> = {
     celebration: {
         title: 'Celebrating a Special Moment',
         subtitle: 'Joyful greetings from MIC Alumni',
         message: 'Wishing everyone a memorable and joyful celebration. May this special moment bring happiness, togetherness, and lasting memories to the entire community.',
-        ctaLabel: 'Celebrate',
-        ctaLink: '#',
     },
     festival: {
         title: 'Happy Festival Wishes',
         subtitle: 'Warm wishes from MIC Alumni',
         message: 'Wishing every student, alumnus, and family a joyful and prosperous festive season. May this celebration bring happiness, success, and togetherness.',
-        ctaLabel: 'Celebrate',
-        ctaLink: '#',
     },
     event: {
         title: 'Upcoming College Event',
         subtitle: 'Join us for the latest campus event',
         message: 'We are pleased to invite our alumni and students to the upcoming event. Mark your calendars and be part of the celebration.',
-        ctaLabel: 'View Event',
-        ctaLink: '#',
     },
     regards: {
         title: 'Warm Regards',
         subtitle: 'A message from the college community',
         message: 'Sending our heartfelt regards and best wishes to all members of the MIC family. Thank you for being part of our journey.',
-        ctaLabel: 'Learn More',
-        ctaLink: '#',
     },
     general: {
         title: 'Official Announcement',
         subtitle: 'Important update from the administration',
         message: 'Please read this official announcement carefully and share it with the relevant community members.',
-        ctaLabel: 'Open',
-        ctaLink: '#',
     },
     custom: {
         title: '',
         subtitle: '',
         message: '',
-        ctaLabel: '',
-        ctaLink: '',
     },
 };
 
@@ -93,10 +77,6 @@ const AnnouncementAdmin = () => {
     const [subtitle, setSubtitle] = useState('');
     const [message, setMessage] = useState('');
     const [link, setLink] = useState('');
-    const [ctaLabel, setCtaLabel] = useState('');
-    const [ctaLink, setCtaLink] = useState('');
-    const [priority, setPriority] = useState('0');
-    const [publishedAt, setPublishedAt] = useState('');
     const [draft, setDraft] = useState(false);
     const [audienceMode, setAudienceMode] = useState<'all' | 'specific'>('all');
     const [recipientSearch, setRecipientSearch] = useState('');
@@ -173,8 +153,6 @@ const AnnouncementAdmin = () => {
         setTitle(preset.title);
         setSubtitle(preset.subtitle);
         setMessage(preset.message);
-        setCtaLabel(preset.ctaLabel);
-        setCtaLink(preset.ctaLink);
         if (key === 'custom') {
             setLink('');
         }
@@ -187,10 +165,6 @@ const AnnouncementAdmin = () => {
         setSubtitle('');
         setMessage('');
         setLink('');
-        setCtaLabel('');
-        setCtaLink('');
-        setPriority('0');
-        setPublishedAt('');
         setDraft(false);
         setAudienceMode('all');
         setRecipientSearch('');
@@ -221,10 +195,6 @@ const AnnouncementAdmin = () => {
                 template,
                 message: message.trim() || undefined,
                 link: link.trim() || undefined,
-                ctaLabel: ctaLabel.trim() || undefined,
-                ctaLink: ctaLink.trim() || undefined,
-                publishedAt: publishedAt || undefined,
-                priority: parseInt(priority) || 0,
                 draft,
                 audienceMode,
                 recipientIds: audienceMode === 'specific' ? selectedRecipients.map(user => user._id) : [],
@@ -257,10 +227,6 @@ const AnnouncementAdmin = () => {
         setSubtitle(item.subtitle || '');
         setMessage(item.message || '');
         setLink(item.link || '');
-        setCtaLabel(item.ctaLabel || '');
-        setCtaLink(item.ctaLink || '');
-        setPriority(String(item.priority || 0));
-        setPublishedAt(item.publishedAt ? item.publishedAt.slice(0, 16) : '');
         setDraft(Boolean(item.draft));
         setAudienceMode((item.audienceMode as 'all' | 'specific') || 'all');
         setImageUrl(item.image || '');
@@ -304,19 +270,14 @@ const AnnouncementAdmin = () => {
         <div className="min-h-screen py-8">
             <div className="max-w-6xl mx-auto px-4 space-y-6">
                 <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl p-5 sm:p-6 shadow-sm">
-                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                        <div>
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] text-xs font-semibold mb-3">
-                                <Sparkles size={14} /> Announcements Admin
-                            </div>
-                            <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--text-primary)]">Create celebration, festival, event, and regards announcements</h1>
-                            <p className="text-sm sm:text-base text-[var(--text-secondary)] mt-1 max-w-3xl">
-                                Build polished announcements that match the site theme, use a preset when you want a faster workflow, or switch to custom for a fully branded post.
-                            </p>
+                    <div>
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] text-xs font-semibold mb-3">
+                            <Sparkles size={14} /> Announcements Admin
                         </div>
-                        <Button variant="secondary" onClick={() => applyTemplate(template)}>
-                            <Plus size={16} /> Apply Template
-                        </Button>
+                        <h1 className="text-2xl sm:text-3xl font-semibold text-[var(--text-primary)]">Create celebration, festival, event, and regards announcements</h1>
+                        <p className="text-sm sm:text-base text-[var(--text-secondary)] mt-1 max-w-3xl">
+                            Build polished announcements that match the site theme, use a preset for faster workflow, or choose custom for a fully branded post. Select a template to auto-apply it.
+                        </p>
                     </div>
                 </div>
 
@@ -429,22 +390,7 @@ const AnnouncementAdmin = () => {
                                 </div>
                             )}
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">CTA Label</label>
-                            <input value={ctaLabel} onChange={e => setCtaLabel(e.target.value)} className="w-full p-3 rounded-xl border border-[var(--border-color)]/40 bg-[var(--bg-primary)] text-[var(--text-primary)]" placeholder="Button text" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">CTA Link</label>
-                            <input value={ctaLink} onChange={e => setCtaLink(e.target.value)} className="w-full p-3 rounded-xl border border-[var(--border-color)]/40 bg-[var(--bg-primary)] text-[var(--text-primary)]" placeholder="CTA destination" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Priority</label>
-                            <input value={priority} onChange={e => setPriority(e.target.value)} className="w-full p-3 rounded-xl border border-[var(--border-color)]/40 bg-[var(--bg-primary)] text-[var(--text-primary)]" placeholder="0" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Publish time</label>
-                            <input type="datetime-local" value={publishedAt} onChange={e => setPublishedAt(e.target.value)} className="w-full p-3 rounded-xl border border-[var(--border-color)]/40 bg-[var(--bg-primary)] text-[var(--text-primary)]" />
-                        </div>
+
                     </div>
 
                     <div className="rounded-2xl border border-[var(--border-color)]/30 bg-[var(--bg-primary)]/65 p-4 space-y-4">
