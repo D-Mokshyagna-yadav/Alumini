@@ -13,6 +13,8 @@ import connectDB from './config/db';
 import logger from './config/logger';
 import { authRouter } from './routes/authRoutes';
 import { adminRouter } from './routes/adminRoutes';
+import { cacheAdminRouter } from './routes/cacheAdminRoutes';
+import { initializeCache } from './config/cache-enhanced';
 
 dotenv.config();
 
@@ -102,11 +104,11 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://static.cloudflareinsights.com"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             imgSrc: ["'self'", "data:", "blob:", "https:"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            connectSrc: ["'self'", "wss:", "ws:", "https://cloudflareinsights.com"],
+            connectSrc: ["'self'", "wss:", "ws:"],
             mediaSrc: ["'self'", "blob:"],
             frameSrc: ["'none'"],
             objectSrc: ["'none'"],
@@ -169,6 +171,7 @@ import savedRouter from './routes/savedRoutes';
 import runGC from './scripts/gcUploads';
 import { syncAllIndexes } from './scripts/syncIndexes';
 import { autoInvalidate } from './config/cache';
+import { createAllIndexes } from './config/indexing';
 
 // ... (other imports)
 
@@ -301,6 +304,7 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/admin/cache', cacheAdminRouter);
 // Chat API disabled while chat feature is turned off
 // app.use('/api/chat', chatRouter);
 app.use('/api/users', userRouter);
@@ -480,6 +484,19 @@ connectDB().then(() => {
     //         migrateChatKeyToDB().catch(e => console.error('Chat key migration error:', e));
     //     }
     // } catch (e) { /* ignore migration errors */ }
+
+    // Initialize cache system (Redis or memory)
+    logger.info('🚀 Initializing cache system...');
+    await initializeCache();
+
+    // Create database indexes for optimal performance
+    logger.info('📑 Ensuring database indexes...');
+    try {
+        await createAllIndexes();
+        logger.info('✅ Database indexes verified');
+    } catch (err) {
+        logger.warn('⚠️  Index creation warning (non-critical):', err instanceof Error ? err.message : String(err));
+    }
 
     // Run GC on startup and schedule periodic runs every 6 hours
     runGC().catch((e) => console.error('Initial GC error', e));

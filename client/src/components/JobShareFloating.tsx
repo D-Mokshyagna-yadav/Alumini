@@ -18,10 +18,19 @@ export default function JobShareFloating({ url }: { url: string }) {
             default: shareUrl = url;
         }
 
-        if (channel !== 'copy') window.open(shareUrl, '_blank', 'noopener');
+        if (channel !== 'copy') {
+            try {
+                const win = window.open(shareUrl, '_blank', 'noopener');
+                if (!win) {
+                    console.debug(`Share to ${channel} was blocked (likely by ad blocker)`);
+                }
+            } catch (e) {
+                console.debug(`Failed to open ${channel} share:`, e);
+            }
+        }
 
-        // fire telemetry async
-        fetch('/api/telemetry/share', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resourceType: 'job', action: channel, url }) }).catch(() => null);
+        // fire telemetry async - suppress errors
+        fetch('/api/telemetry/share', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resourceType: 'job', action: channel, url }) }).catch(() => {});
     };
 
     return (

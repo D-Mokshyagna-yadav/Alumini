@@ -21,15 +21,19 @@ const Hero = ({ data }: { data?: HeroData }) => {
 
     return (
         <div className="relative min-h-[100dvh] flex flex-col items-center justify-center overflow-hidden bg-[var(--bg-primary)] hero-bg">
-            <img
-                src="/hero_image.jpg"
-                alt=""
-                aria-hidden="true"
-                className="hero-bg-image"
-                loading="eager"
-                decoding="sync"
-                fetchPriority="high"
-            />
+            <picture>
+                <source srcSet="/hero_image.webp" type="image/webp" />
+                <source srcSet="/hero_image.jpg" type="image/jpeg" />
+                <img
+                    src="/hero_image.jpg"
+                    alt=""
+                    aria-hidden="true"
+                    className="hero-bg-image"
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
+                />
+            </picture>
             <div className="hero-overlay" />
             {/* Samsung-style beam drop + impact on load */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none z-20">

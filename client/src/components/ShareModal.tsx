@@ -43,14 +43,22 @@ export default function ShareModal({ open, onClose, url, resourceType, resourceI
             default: shareUrl = url;
         }
 
-        // telemetry
+        // telemetry - fire and forget, suppress errors
         fetch('/api/telemetry/share', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ resourceType, resourceId, action: 'share', channel, url })
-        }).catch(e => console.error('Telemetry error', e));
+        }).catch(() => {}); // Silently ignore telemetry errors
 
-        // open share target
-        window.open(shareUrl, '_blank', 'noopener');
+        // open share target - may be blocked by ad blockers, which is fine
+        try {
+            const win = window.open(shareUrl, '_blank', 'noopener');
+            // If window.open returns null, it was likely blocked by browser extension
+            if (!win) {
+                console.debug(`Share to ${channel} was blocked (likely by ad blocker)`);
+            }
+        } catch (e) {
+            console.debug(`Failed to open ${channel} share:`, e);
+        }
     };
 
     return (

@@ -1,3 +1,16 @@
+# Multi-stage Docker build for Alumni Association platform
+# 
+# ENVIRONMENT VARIABLES (configure in .env or container runtime):
+#   NODE_ENV=production      [already set below]
+#   PORT=5000                [default, change if needed]
+#   REDIS_URL=redis://...    [optional, enables distributed caching]
+#   DATABASE_URL=mongodb://... [required for MongoDB connection]
+#   WEBSITE_URL=https://...  [canonical frontend URL]
+#   ALLOWED_ORIGINS=...      [comma-separated list of allowed origins]
+#   ALLOWED_ORIGINS          [for production, explicitly set this]
+#
+# See .env.example for complete list of environment variables.
+
 # Stage 1: Build
 FROM node:20-alpine AS builder
 
@@ -52,6 +65,11 @@ COPY --from=builder /app/client/public client/public
 # Expose the port the server runs on
 ENV NODE_ENV=production
 EXPOSE 5000
+
+# Health check (requires curl, installed above)
+# Coolify and orchestrators use this to verify the app is healthy
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:5000/api/health || exit 1
 
 # Start the server
 CMD ["node", "server/dist/index.js"]
