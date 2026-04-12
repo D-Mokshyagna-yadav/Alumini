@@ -430,7 +430,7 @@ const AnnouncementAdmin = () => {
                                     <input
                                         value={recipientSearch}
                                         onChange={e => searchRecipients(e.target.value)}
-                                        placeholder="Search by name, email, or headline"
+                                        placeholder="Search by name, email, roll number, or headline"
                                         className="w-full p-3 rounded-xl border border-[var(--border-color)]/40 bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
                                     />
                                 </div>
@@ -446,8 +446,14 @@ const AnnouncementAdmin = () => {
                                                 onClick={() => selectRecipient(user)}
                                                 className="w-full flex items-center gap-3 px-3 py-3 text-left border-b border-[var(--border-color)]/20 last:border-b-0 hover:bg-[var(--bg-tertiary)]/60 transition-colors"
                                             >
-                                                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-[var(--bg-tertiary)]">
-                                                    {user.avatar ? <CachedImage src={resolveMediaUrl(user.avatar)} alt={user.name} className="w-full h-full object-cover block" wrapperClassName="w-full h-full !bg-transparent" compact /> : null}
+                                                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
+                                                    {user.avatar ? (
+                                                        <CachedImage src={resolveMediaUrl(user.avatar)} alt={user.name} className="w-full h-full object-cover block" wrapperClassName="w-full h-full !bg-transparent" compact />
+                                                    ) : (
+                                                        <span className="text-white text-xs font-bold">
+                                                            {user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="min-w-0 flex-1">
                                                     <div className="text-sm font-medium text-[var(--text-primary)] truncate">{user.name}</div>
@@ -474,8 +480,14 @@ const AnnouncementAdmin = () => {
                                         <div className="space-y-2 max-h-64 overflow-y-auto">
                                             {selectedRecipients.map(user => (
                                                 <div key={user._id} className="flex items-center gap-3 p-3 rounded-lg border border-[var(--border-color)]/30 bg-[var(--bg-primary)]/60 hover:bg-[var(--bg-tertiary)]/40 transition-colors">
-                                                    <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-[var(--bg-tertiary)] border border-[var(--border-color)]/40">
-                                                        {user.avatar ? <CachedImage src={resolveMediaUrl(user.avatar)} alt={user.name} className="w-full h-full object-cover block" wrapperClassName="w-full h-full !bg-transparent" compact /> : null}
+                                                    <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-blue-400 to-purple-500 border border-[var(--border-color)]/40 flex items-center justify-center">
+                                                        {user.avatar ? (
+                                                            <CachedImage src={resolveMediaUrl(user.avatar)} alt={user.name} className="w-full h-full object-cover block" wrapperClassName="w-full h-full !bg-transparent" compact />
+                                                        ) : (
+                                                            <span className="text-white text-sm font-bold">
+                                                                {user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     <div className="min-w-0 flex-1">
                                                         <div className="text-sm font-semibold text-[var(--text-primary)]">{user.name}</div>

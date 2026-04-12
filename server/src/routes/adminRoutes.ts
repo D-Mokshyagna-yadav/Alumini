@@ -111,7 +111,13 @@ router.get('/all-users', requireAdmin, cacheMiddleware(TTL.SHORT), async (req, r
         if (role) filter.role = role;
 
         if (typeof q === 'string' && q.trim()) {
-            filter.$text = { $search: q.trim() };
+            const searchQuery = q.trim();
+            // Search by name, email, or roll number
+            filter.$or = [
+                { name: { $regex: searchQuery, $options: 'i' } },
+                { email: { $regex: searchQuery, $options: 'i' } },
+                { rollNumber: { $regex: searchQuery, $options: 'i' } }
+            ];
         }
 
         const max = Math.min(Math.max(Number(limit) || 200, 1), 1000);
