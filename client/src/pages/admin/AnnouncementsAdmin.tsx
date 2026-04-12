@@ -386,7 +386,7 @@ const AnnouncementAdmin = () => {
                                             <X size={12} /> Clear
                                         </button>
                                     </div>
-                                    <CachedImage src={imageUrl || ''} alt="preview" className="w-full h-56 object-cover block" wrapperClassName="w-full h-56 !bg-transparent" compact />
+                                    <CachedImage src={imageUrl || ''} alt="preview" className="w-full h-auto object-contain block" wrapperClassName="w-full flex items-center justify-center !bg-transparent" compact />
                                 </div>
                             )}
                         </div>
