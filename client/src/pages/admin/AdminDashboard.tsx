@@ -133,6 +133,14 @@ const AdminDashboard = () => {
     const [allAnnouncements, setAllAnnouncements] = useState<any[]>([]);
     const [selectedAnnouncement, setSelectedAnnouncement] = useState<any | null>(null);
     const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+    const [showCreateAnnouncementModal, setShowCreateAnnouncementModal] = useState(false);
+    const [announcementTemplate, setAnnouncementTemplate] = useState<'celebration' | 'festival' | 'event' | 'regards' | 'general' | 'custom'>('general');
+    const [announcementTitle, setAnnouncementTitle] = useState('');
+    const [announcementSubtitle, setAnnouncementSubtitle] = useState('');
+    const [announcementMessage, setAnnouncementMessage] = useState('');
+    const [announcementDraft, setAnnouncementDraft] = useState(false);
+    const [announcementImage, setAnnouncementImage] = useState<File | null>(null);
+    const [creatingAnnouncement, setCreatingAnnouncement] = useState(false);
     const [newsModalMode, setNewsModalMode] = useState<'create' | 'edit'>('create');
     const [editingNewsId, setEditingNewsId] = useState<string | null>(null);
     const [newsForm, setNewsForm] = useState({ title: '', body: '', link: '', priority: 0, draft: false });
@@ -206,7 +214,7 @@ const AdminDashboard = () => {
 
     const [toast, setToast] = useState<string | null>(null);
     const confirm = useConfirm();
-    const createLocksRef = useRef({ event: false, job: false, alumni: false });
+    const createLocksRef = useRef({ event: false, job: false, alumni: false, announcement: false });
 
     // Action locks to prevent double-submit
     const actionLocksRef = useRef<Set<string>>(new Set());
@@ -634,6 +642,61 @@ const AdminDashboard = () => {
         } finally {
             createLocksRef.current.job = false;
             setCreatingJob(false);
+        }
+    };
+ // ==================== CREATE ANNOUNCEMENT ====================
+    const handleAdminCreateAnnouncement = async () => {
+        if (createLocksRef.current.announcement) return;
+        if (!announcementTitle.trim()) { setToast('Title is required'); return; }
+        createLocksRef.current.announcement = true;
+        setCreatingAnnouncement(true);
+        try {
+            let imageUrl: string | undefined;
+            if (announcementImage) {
+                const fd = new FormData();
+                fd.append('image', announcementImage);
+                const up = await api.post('/upload/announcement-image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+                imageUrl = up.data.relative || up.data.url;
+            }
+            const payload = {
+                title: announcementTitle,
+                subtitle: announcementSubtitle,
+                template: announcementTemplate,
+                message: announcementMessage,
+                image: imageUrl,
+                draft: announcementDraft,
+                audienceMode: 'all',
+            };
+            const res = await api.post('/public/announcements', payload);
+            if (res.data.item || res.data) setAllAnnouncements(prev => [res.data.item || res.data, ...prev]);
+            setAnnouncementTitle('');
+            setAnnouncementSubtitle('');
+            setAnnouncementMessage('');
+            setAnnouncementTemplate('general');
+            setAnnouncementDraft(false);
+            setAnnouncementImage(null);
+            setShowCreateAnnouncementModal(false);
+            setToast(announcementDraft ? 'Announcement saved as draft' : 'Announcement published');
+        } catch (err: any) {
+            setToast(err.response?.data?.message || 'Failed to create announcement');
+        } finally {
+            createLocksRef.current.announcement = false;
+            setCreatingAnnouncement(false);
+        }
+    };
+
+    const handleDeleteAnnouncement = async (id: string) => {
+        if (!lock('handleDeleteAnnouncement')) return;
+        try {
+            await api.delete(`/public/announcements/${id}`);
+            setAllAnnouncements(prev => prev.filter(a => a._id !== id));
+            setShowAnnouncementModal(false);
+            setSelectedAnnouncement(null);
+            setToast('Announcement deleted');
+        } catch (err: any) {
+            setToast(err.response?.data?.message || 'Failed to delete announcement');
+        } finally {
+            unlock('handleDeleteAnnouncement');
         }
     };
 
@@ -1493,7 +1556,7 @@ const AdminDashboard = () => {
                             </Button>
                         )}
                         {activeTab === 'announcements' && (
-                            <Button onClick={() => window.location.href = '/admin/announcements'} className="flex items-center gap-2">
+                            <Button onClick={() => setShowCreateAnnouncementModal(true)} className="flex items-center gap-2">
                                 <Megaphone size={18} /> Send Announcement
                             </Button>
                         )}
@@ -2386,6 +2449,58 @@ const AdminDashboard = () => {
                     </div>
                 )}
 
+                {/* Create Announcement Modal */}
+                {showCreateAnnouncementModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 modal-overlay">
+                        <div className="bg-[var(--bg-secondary)] w-full max-w-lg modal-content max-h-[90vh] overflow-y-auto">
+                            <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between sticky top-0 bg-[var(--bg-secondary)] z-10">
+                                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Send Announcement</h3>
+                                <button onClick={() => setShowCreateAnnouncementModal(false)} className="p-1 text-[var(--text-muted)]"><X size={18} /></button>
+                            </div>
+                            <div className="p-4 space-y-4">
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Template</label>
+                                    <select value={announcementTemplate} onChange={e => setAnnouncementTemplate(e.target.value as any)} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]">
+                                        <option value="general">General</option>
+                                        <option value="celebration">Celebration</option>
+                                        <option value="festival">Festival</option>
+                                        <option value="event">Event</option>
+                                        <option value="regards">Regards</option>
+                                        <option value="custom">Custom</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Title *</label>
+                                    <input value={announcementTitle} onChange={e => setAnnouncementTitle(e.target.value)} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" placeholder="Announcement title" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Subtitle</label>
+                                    <input value={announcementSubtitle} onChange={e => setAnnouncementSubtitle(e.target.value)} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" placeholder="Optional subtitle" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Message</label>
+                                    <textarea value={announcementMessage} onChange={e => setAnnouncementMessage(e.target.value)} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] h-24 resize-none" placeholder="Optional message body" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-[var(--text-muted)] mb-1">Image (optional)</label>
+                                    <input type="file" accept="image/*" onChange={e => setAnnouncementImage(e.target.files?.[0] || null)} className="text-sm text-[var(--text-primary)]" />
+                                    {announcementImage && (
+                                        <img src={URL.createObjectURL(announcementImage)} alt="preview" className="mt-2 w-full h-36 object-contain bg-[var(--bg-tertiary)] rounded" />
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <input type="checkbox" id="announcementDraft" checked={announcementDraft} onChange={e => setAnnouncementDraft(e.target.checked)} className="w-4 h-4 cursor-pointer" />
+                                    <label htmlFor="announcementDraft" className="text-sm text-[var(--text-muted)] cursor-pointer">Save as draft</label>
+                                </div>
+                            </div>
+                            <div className="p-4 border-t border-[var(--border-color)] flex justify-end gap-2">
+                                <button onClick={() => setShowCreateAnnouncementModal(false)} className="px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]">Cancel</button>
+                                <Button onClick={handleAdminCreateAnnouncement} disabled={creatingAnnouncement || !announcementTitle.trim()} isLoading={creatingAnnouncement}>{announcementDraft ? 'Save Draft' : 'Publish'}</Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Create Album Modal */}
                 {showCreateAlbumModal && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 modal-overlay">
@@ -2981,61 +3096,93 @@ const AdminDashboard = () => {
                 {/* Announcement Detail Modal */}
                 {showAnnouncementModal && selectedAnnouncement && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 modal-overlay">
-                        <div className="bg-[var(--bg-secondary)] w-full max-w-2xl modal-content">
-                            <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between sticky top-0 bg-[var(--bg-secondary)] z-10">
-                                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Announcement Details</h3>
-                                <button onClick={() => { setShowAnnouncementModal(false); setSelectedAnnouncement(null); }} className="p-1 text-[var(--text-muted)]"><X size={18} /></button>
-                            </div>
-                            <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
-                                {selectedAnnouncement.image && (
-                                    <CachedImage src={selectedAnnouncement.image} alt="" className="w-full h-64 object-cover rounded-lg" wrapperClassName="w-full" compact />
-                                )}
+                        <div className="bg-[var(--bg-secondary)] w-full max-w-3xl modal-content max-h-[90vh] overflow-y-auto rounded-2xl">
+                            <div className="p-6 border-b border-[var(--border-color)] flex items-center justify-between sticky top-0 bg-[var(--bg-secondary)] z-10 rounded-t-2xl">
                                 <div>
-                                    <div className="flex items-center gap-2 flex-wrap mb-2">
-                                        <h2 className="text-2xl font-bold text-[var(--text-primary)]">{selectedAnnouncement.title}</h2>
-                                        <span className={`text-xs px-2 py-0.5 rounded ${selectedAnnouncement.draft ? 'bg-yellow-500/10 text-yellow-400' : 'bg-green-500/10 text-green-400'}`}>
-                                            {selectedAnnouncement.draft ? 'DRAFT' : 'PUBLISHED'}
+                                    <h3 className="text-xl font-semibold text-[var(--text-primary)]">Announcement Preview</h3>
+                                    <p className="text-xs text-[var(--text-muted)] mt-1">Created on {new Date(selectedAnnouncement.createdAt).toLocaleDateString()}</p>
+                                </div>
+                                <button onClick={() => { setShowAnnouncementModal(false); setSelectedAnnouncement(null); }} className="p-1 text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] rounded">
+                                    <X size={20} />
+                                </button>
+                            </div>
+                            <div className="p-6 space-y-6">
+                                {selectedAnnouncement.image && (
+                                    <div className="w-full rounded-xl overflow-hidden border border-[var(--border-color)] bg-[var(--bg-tertiary)]">
+                                        <CachedImage src={selectedAnnouncement.image} alt="" className="w-full h-auto max-h-96 sm:max-h-[500px] object-contain" wrapperClassName="w-full flex items-center justify-center" compact />
+                                    </div>
+                                )}
+                                <div className="space-y-3">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="flex-1">
+                                            <h2 className="text-3xl font-bold text-[var(--text-primary)]">{selectedAnnouncement.title}</h2>
+                                            {selectedAnnouncement.subtitle && (
+                                                <p className="text-lg text-[var(--text-secondary)] mt-2">{selectedAnnouncement.subtitle}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className={`text-xs px-3 py-1.5 rounded-full font-medium ${selectedAnnouncement.draft ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 'bg-green-500/20 text-green-400 border border-green-500/30'}`}>
+                                            {selectedAnnouncement.draft ? '🔒 DRAFT' : '✓ PUBLISHED'}
                                         </span>
-                                        <span className="text-xs px-2 py-0.5 bg-[var(--accent)]/10 text-[var(--accent)] rounded capitalize">
+                                        <span className="text-xs px-3 py-1.5 bg-[var(--accent)]/15 text-[var(--accent)] rounded-full border border-[var(--accent)]/30 capitalize font-medium">
                                             {selectedAnnouncement.template || 'general'} template
                                         </span>
                                     </div>
-                                    {selectedAnnouncement.subtitle && (
-                                        <p className="text-lg text-[var(--text-secondary)] mb-3">{selectedAnnouncement.subtitle}</p>
-                                    )}
-                                    <div className="flex items-center gap-4 text-sm text-[var(--text-muted)] mb-4">
-                                        <span>📧 {selectedAnnouncement.audienceMode === 'specific' ? `${selectedAnnouncement.recipientIds?.length || 0} specific users` : 'All users'}</span>
-                                        <span>👁️ {selectedAnnouncement.readers || 0} readers</span>
-                                        <span>📅 {new Date(selectedAnnouncement.publishedAt || selectedAnnouncement.createdAt).toLocaleDateString()}</span>
+                                    <div className="grid grid-cols-3 gap-3 pt-2 border-t border-[var(--border-color)]">
+                                        <div className="text-center">
+                                            <p className="text-2xl font-bold text-[var(--accent)]">{selectedAnnouncement.readers || 0}</p>
+                                            <p className="text-xs text-[var(--text-muted)] mt-1">👁️ Readers</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-2xl font-bold text-[var(--text-secondary)]">{selectedAnnouncement.audienceMode === 'specific' ? selectedAnnouncement.recipientIds?.length || 0 : '∞'}</p>
+                                            <p className="text-xs text-[var(--text-muted)] mt-1">📧 {selectedAnnouncement.audienceMode === 'specific' ? 'Specific Users' : 'All Users'}</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-2xl font-bold text-[var(--text-secondary)]">{selectedAnnouncement.priority || 0}</p>
+                                            <p className="text-xs text-[var(--text-muted)] mt-1">📌 Priority</p>
+                                        </div>
                                     </div>
                                 </div>
+
                                 {selectedAnnouncement.message && (
-                                    <div className="bg-[var(--bg-tertiary)] p-4 rounded-lg">
-                                        <h4 className="text-sm font-semibold text-[var(--text-secondary)] mb-2">Message</h4>
-                                        <p className="text-[var(--text-primary)] whitespace-pre-wrap">{selectedAnnouncement.message}</p>
+                                    <div className="bg-[var(--bg-tertiary)]/60 p-5 rounded-xl border border-[var(--border-color)]/50">
+                                        <h4 className="text-sm font-semibold text-[var(--text-secondary)] mb-3 uppercase tracking-wide">📝 Message</h4>
+                                        <p className="text-[var(--text-primary)] whitespace-pre-wrap leading-relaxed">{selectedAnnouncement.message}</p>
                                     </div>
                                 )}
+
                                 {selectedAnnouncement.ctaLabel && (
-                                    <div className="bg-[var(--bg-tertiary)] p-4 rounded-lg">
-                                        <h4 className="text-sm font-semibold text-[var(--text-secondary)] mb-2">Call to Action</h4>
-                                        <p className="text-[var(--text-primary)] mb-2">{selectedAnnouncement.ctaLabel}</p>
+                                    <div className="bg-[var(--accent)]/10 p-5 rounded-xl border border-[var(--accent)]/30">
+                                        <h4 className="text-sm font-semibold text-[var(--accent)] mb-2 uppercase tracking-wide">🔗 Call to Action</h4>
+                                        <p className="text-[var(--text-primary)] font-medium mb-2">{selectedAnnouncement.ctaLabel}</p>
                                         {selectedAnnouncement.ctaLink && (
-                                            <p className="text-sm text-[var(--accent)] truncate">{selectedAnnouncement.ctaLink}</p>
+                                            <p className="text-sm text-[var(--accent)] truncate break-all">{selectedAnnouncement.ctaLink}</p>
                                         )}
                                     </div>
                                 )}
-                                {selectedAnnouncement.link && (
-                                    <div className="bg-[var(--bg-tertiary)] p-4 rounded-lg">
-                                        <h4 className="text-sm font-semibold text-[var(--text-secondary)] mb-2">Link</h4>
-                                        <p className="text-sm text-[var(--accent)] truncate">{selectedAnnouncement.link}</p>
+
+                                {selectedAnnouncement.link && !selectedAnnouncement.ctaLink && (
+                                    <div className="bg-[var(--bg-tertiary)]/60 p-5 rounded-xl border border-[var(--border-color)]/50">
+                                        <h4 className="text-sm font-semibold text-[var(--text-secondary)] mb-2 uppercase tracking-wide">🌐 Link</h4>
+                                        <p className="text-sm text-[var(--accent)] truncate break-all">{selectedAnnouncement.link}</p>
                                     </div>
                                 )}
                             </div>
-                            <div className="p-4 border-t border-[var(--border-color)] flex justify-between items-center">
-                                <button onClick={() => window.location.href = `/admin/announcements?edit=${selectedAnnouncement._id}`} className="flex items-center gap-2 px-4 py-2 text-[var(--accent)] hover:bg-[var(--bg-tertiary)] rounded">
-                                    <Edit2 size={16} /> Edit
-                                </button>
-                                <button onClick={() => { setShowAnnouncementModal(false); setSelectedAnnouncement(null); }} className="px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]">Close</button>
+                            <div className="p-6 border-t border-[var(--border-color)] flex justify-between items-center gap-2 bg-[var(--bg-primary)] rounded-b-2xl">
+                                <div className="flex items-center gap-2">
+                                    <Button size="sm" variant="outline" onClick={() => { setShowAnnouncementModal(false); setSelectedAnnouncement(null); }}>
+                                        Close
+                                    </Button>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button size="sm" variant="destructive" onClick={() => handleDeleteAnnouncement(selectedAnnouncement._id)}>
+                                        <Trash2 size={14} className="mr-1" /> Delete
+                                    </Button>
+                                    <Button size="sm" variant="outline" onClick={() => { setShowAnnouncementModal(false); setSelectedAnnouncement(null); window.location.href = `/admin/announcements?edit=${selectedAnnouncement._id}`; }}>
+                                        <Edit2 size={14} className="mr-1" /> Edit
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </div>

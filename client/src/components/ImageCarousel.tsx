@@ -124,7 +124,7 @@ export default function ImageCarousel({ media, normalizeMediaUrl, priorityFirstI
     if (total <= 1) {
         const m = media[0];
         return m.type === 'image' ? (
-            <OptimizedImage src={normalizeMediaUrl(m.url)} alt="" className="w-full max-h-[480px] object-cover" priority={priorityFirstImage} />
+            <OptimizedImage src={normalizeMediaUrl(m.url)} alt="" className="w-full max-h-[480px] object-contain" priority={priorityFirstImage} />
         ) : (
             <video src={normalizeMediaUrl(m.url)} controls preload="metadata" className="w-full max-h-[480px]" onError={e => { (e.target as HTMLVideoElement).style.display = 'none'; }} />
         );
@@ -153,7 +153,7 @@ export default function ImageCarousel({ media, normalizeMediaUrl, priorityFirstI
                             <OptimizedImage
                                 src={normalizeMediaUrl(m.url)}
                                 alt=""
-                                className="w-full max-h-[480px] object-cover"
+                                className="w-full max-h-[480px] object-contain"
                                 draggable={false}
                                 priority={priorityFirstImage && idx === 0}
                             />

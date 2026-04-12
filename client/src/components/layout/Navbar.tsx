@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
     Menu, X, Sun, Moon, LogOut, Bell,
-    Home, Rss, Users, Briefcase, Calendar, Image,
+    Home, Users, Briefcase, Calendar, Image, Rss,
     Settings, Shield, ChevronDown, Bookmark, Mail
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,7 +19,6 @@ const authLinks = [
     { name: 'Home', href: '/feed', icon: Home },
     { name: 'Network', href: '/directory', icon: Users },
     { name: 'Events', href: '/events', icon: Calendar },
-    { name: 'Announcements', href: '/announcements', icon: Rss },
     { name: 'Gallery', href: '/gallery', icon: Image },
     { name: 'Jobs', href: '/jobs', icon: Briefcase },
 ];
@@ -27,7 +26,6 @@ const authLinks = [
 const mobileAuthLinks = [
     { name: 'Home', href: '/feed', icon: Home },
     { name: 'Network', href: '/directory', icon: Users },
-    { name: 'Announcements', href: '/announcements', icon: Rss },
     { name: 'Jobs', href: '/jobs', icon: Briefcase },
     { name: 'Alerts', href: '/notifications', icon: Bell },
 ];
@@ -223,16 +221,30 @@ const Navbar = () => {
 
                                 {/* Admin Link (visible for admins) */}
                                 {user?.role === 'admin' && (
-                                    <Link to="/admin"
-                                        className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[13px] font-medium rounded-xl transition-all ${
-                                            isActive('/admin')
-                                                ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
-                                                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
-                                        }`}
-                                    >
-                                        <Shield size={16} />
-                                        Admin
-                                    </Link>
+                                    <>
+                                        <Link to="/admin"
+                                            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[13px] font-medium rounded-xl transition-all ${
+                                                isActive('/admin')
+                                                    ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
+                                                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
+                                            }`}
+                                        >
+                                            <Shield size={16} />
+                                            Admin
+                                        </Link>
+
+                                        {/* Announcements (admin only) */}
+                                        <Link to="/admin/announcements"
+                                            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[13px] font-medium rounded-xl transition-all ${
+                                                isActive('/admin/announcements')
+                                                    ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
+                                                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
+                                            }`}
+                                        >
+                                            <Rss size={16} />
+                                            Announcements
+                                        </Link>
+                                    </>
                                 )}
 
                                 <div className="w-px h-5 bg-[var(--border-color)]/40 mx-0.5" />
@@ -429,12 +441,20 @@ const Navbar = () => {
                                             </Link>
 
                                             {user?.role === 'admin' && (
-                                                <Link to="/admin" onClick={() => setMobileOpen(false)}
-                                                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60"
-                                                >
-                                                    <Shield size={20} className="text-[var(--text-secondary)]" />
-                                                    <span className="font-medium">Admin Dashboard</span>
-                                                </Link>
+                                                <>
+                                                    <Link to="/admin" onClick={() => setMobileOpen(false)}
+                                                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60"
+                                                    >
+                                                        <Shield size={20} className="text-[var(--text-secondary)]" />
+                                                        <span className="font-medium">Admin Dashboard</span>
+                                                    </Link>
+                                                    <Link to="/admin/announcements" onClick={() => setMobileOpen(false)}
+                                                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60"
+                                                    >
+                                                        <Rss size={20} className="text-[var(--text-secondary)]" />
+                                                        <span className="font-medium">Announcements</span>
+                                                    </Link>
+                                                </>
                                             )}
 
                                             <Link to="/settings" onClick={() => setMobileOpen(false)}
