@@ -2485,7 +2485,9 @@ const AdminDashboard = () => {
                                     <label className="block text-sm text-[var(--text-muted)] mb-1">Image (optional)</label>
                                     <input type="file" accept="image/*" onChange={e => setAnnouncementImage(e.target.files?.[0] || null)} className="text-sm text-[var(--text-primary)]" />
                                     {announcementImage && (
-                                        <img src={URL.createObjectURL(announcementImage)} alt="preview" className="mt-2 w-full h-36 object-contain bg-[var(--bg-tertiary)] rounded" />
+                                        <div className="mt-2 bg-[var(--bg-tertiary)] rounded border border-[var(--border-color)] flex items-center justify-center max-h-[400px]">
+                                            <img src={URL.createObjectURL(announcementImage)} alt="preview" className="w-full h-auto object-contain" />
+                                        </div>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-2">
