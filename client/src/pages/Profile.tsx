@@ -503,10 +503,10 @@ const Profile = () => {
                     <motion.div 
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 overflow-visible shadow-md shadow-black/5"
+                        className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 rounded-t-2xl overflow-hidden shadow-md shadow-black/5"
                     >
                         {/* Cover Photo */}
-                        <div className={`h-[180px] sm:h-[230px] md:h-[270px] relative overflow-hidden ${!coverPreview && !profileUser?.coverImage ? 'bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)]' : ''}`}>
+                        <div className={`h-[180px] sm:h-[230px] md:h-[270px] relative overflow-hidden -m-0 ${!coverPreview && !profileUser?.coverImage ? 'bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)]' : ''}`}>
                             {coverPreview || profileUser?.coverImage ? (
                                 <CachedImage
                                     src={coverPreview || resolveMediaUrl(profileUser?.coverImage)}
@@ -517,9 +517,9 @@ const Profile = () => {
                                 />
                             ) : null}
                             {/* Gradient overlay for text readability */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none z-0" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none z-[5]" />
                             {isOwnProfile && (
-                                <label className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-[var(--bg-primary)]/90 backdrop-blur-sm hover:bg-[var(--bg-primary)] transition-colors cursor-pointer shadow-md flex items-center justify-center z-10">
+                                <label className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-[var(--bg-primary)]/90 backdrop-blur-sm hover:bg-[var(--bg-primary)] transition-colors cursor-pointer shadow-md flex items-center justify-center z-20 pointer-events-auto">
                                     <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                                         const f = e.target.files?.[0] || null;
                                         if (f) {
