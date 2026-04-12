@@ -512,7 +512,7 @@ const Profile = () => {
                                     src={coverPreview || resolveMediaUrl(profileUser?.coverImage)}
                                     alt="cover"
                                     className="w-full h-full object-cover block"
-                                    wrapperClassName="w-full h-full bg-transparent"
+                                    wrapperClassName="w-full h-full !bg-transparent"
                                     priority
                                 />
                             ) : null}
