@@ -408,9 +408,9 @@ const Directory = () => {
                             className="group bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl hover:border-[var(--border-color)]/60 transition-all"
                         >
                             {/* Card Header */}
-                            <div className="h-20 bg-gradient-to-r from-[var(--accent)]/10 via-[var(--accent)]/5 to-transparent overflow-hidden rounded-t-2xl">
+                            <div className={`h-20 overflow-hidden rounded-t-2xl ${!person.coverImage ? 'bg-gradient-to-r from-[var(--accent)]/10 via-[var(--accent)]/5 to-transparent' : ''}`}>
                                 {person.coverImage && (
-                                    <CachedImage src={person.coverImage} alt="" className="w-full h-full object-cover" wrapperClassName="w-full h-full" compact />
+                                    <CachedImage src={person.coverImage} alt="" className="w-full h-full object-cover block" wrapperClassName="w-full h-full !bg-transparent" compact />
                                 )}
                             </div>
 
