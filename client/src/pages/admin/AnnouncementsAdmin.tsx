@@ -29,6 +29,10 @@ interface RecipientUser {
     email: string;
     avatar?: string;
     headline?: string;
+    rollNumber?: string;
+    degree?: string;
+    department?: string;
+    graduationYear?: number;
 }
 
 const templates: Record<TemplateKey, { title: string; subtitle: string; message: string }> = {
@@ -208,7 +212,7 @@ const AnnouncementAdmin = () => {
             } else {
                 const res = await api.post('/public/announcements', payload);
                 setItems(prev => [res.data.item, ...prev]);
-                toast.show('Announcement published', 'success');
+                toast.show('Announcement sent', 'success');
             }
 
             resetForm();
@@ -445,9 +449,17 @@ const AnnouncementAdmin = () => {
                                                 <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-[var(--bg-tertiary)]">
                                                     {user.avatar ? <CachedImage src={resolveMediaUrl(user.avatar)} alt={user.name} className="w-full h-full object-cover block" wrapperClassName="w-full h-full !bg-transparent" compact /> : null}
                                                 </div>
-                                                <div className="min-w-0">
+                                                <div className="min-w-0 flex-1">
                                                     <div className="text-sm font-medium text-[var(--text-primary)] truncate">{user.name}</div>
-                                                    <div className="text-xs text-[var(--text-muted)] truncate">{user.email}{user.headline ? ` • ${user.headline}` : ''}</div>
+                                                    <div className="text-xs text-[var(--text-muted)] truncate">
+                                                        {user.rollNumber ? `${user.rollNumber} • ` : ''}{user.email}
+                                                        {user.headline ? ` • ${user.headline}` : ''}
+                                                    </div>
+                                                    {(user.degree || user.department) && (
+                                                        <div className="text-xs text-[var(--text-muted)] truncate">
+                                                            {user.degree}{user.department ? ` • ${user.department}` : ''}{user.graduationYear ? ` • ${user.graduationYear}` : ''}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </button>
                                         ))}
@@ -457,19 +469,36 @@ const AnnouncementAdmin = () => {
                                 ) : null}
 
                                 {selectedRecipients.length > 0 && (
-                                    <div className="space-y-2">
-                                        <div className="text-xs font-medium text-[var(--text-secondary)]">Selected people</div>
-                                        <div className="flex flex-wrap gap-2">
+                                    <div className="space-y-3">
+                                        <div className="text-xs font-medium text-[var(--text-secondary)]">Selected people ({selectedRecipients.length})</div>
+                                        <div className="space-y-2 max-h-64 overflow-y-auto">
                                             {selectedRecipients.map(user => (
-                                                <span key={user._id} className="inline-flex items-center gap-2 rounded-full border border-[var(--border-color)]/40 bg-[var(--bg-secondary)] px-3 py-1.5 text-xs text-[var(--text-primary)]">
-                                                    <span className="w-5 h-5 rounded-full overflow-hidden bg-[var(--bg-tertiary)] flex-shrink-0">
+                                                <div key={user._id} className="flex items-center gap-3 p-3 rounded-lg border border-[var(--border-color)]/30 bg-[var(--bg-primary)]/60 hover:bg-[var(--bg-tertiary)]/40 transition-colors">
+                                                    <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-[var(--bg-tertiary)] border border-[var(--border-color)]/40">
                                                         {user.avatar ? <CachedImage src={resolveMediaUrl(user.avatar)} alt={user.name} className="w-full h-full object-cover block" wrapperClassName="w-full h-full !bg-transparent" compact /> : null}
-                                                    </span>
-                                                    <span className="max-w-[180px] truncate">{user.name}</span>
-                                                    <button type="button" onClick={() => removeRecipient(user._id)} className="text-[var(--text-muted)] hover:text-[var(--error)]">
-                                                        <X size={12} />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="text-sm font-semibold text-[var(--text-primary)]">{user.name}</div>
+                                                        <div className="text-xs text-[var(--text-muted)]">
+                                                            {user.rollNumber && <span>{user.rollNumber}</span>}
+                                                            {user.email && <span>{user.rollNumber ? ' • ' : ''}{user.email}</span>}
+                                                        </div>
+                                                        {(user.degree || user.department || user.graduationYear) && (
+                                                            <div className="text-xs text-[var(--text-muted)] mt-0.5">
+                                                                {user.degree && <span>{user.degree}</span>}
+                                                                {user.department && <span>{user.degree ? ' • ' : ''}{user.department}</span>}
+                                                                {user.graduationYear && <span>{user.degree || user.department ? ' • ' : ''}{user.graduationYear}</span>}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => removeRecipient(user._id)} 
+                                                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] hover:text-[var(--error)] transition-colors flex-shrink-0"
+                                                    >
+                                                        <X size={16} />
                                                     </button>
-                                                </span>
+                                                </div>
                                             ))}
                                         </div>
                                     </div>
@@ -483,7 +512,7 @@ const AnnouncementAdmin = () => {
                     </label>
 
                     <div className="flex flex-wrap gap-3">
-                        <Button onClick={handleSubmit} isLoading={submitting}>{editingId ? 'Update Announcement' : 'Publish Announcement'}</Button>
+                        <Button onClick={handleSubmit} isLoading={submitting}>{editingId ? 'Update Announcement' : 'Send Announcement'}</Button>
                         <Button variant="secondary" onClick={resetForm}>Reset</Button>
                         <span className="text-xs text-[var(--text-muted)] self-center">Template: {selectedTemplate.title || 'Custom'}</span>
                     </div>
