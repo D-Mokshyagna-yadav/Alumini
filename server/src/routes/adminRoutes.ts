@@ -7,6 +7,7 @@ import Notification from '../models/Notification';
 import SiteSettings, { getSettings } from '../models/SiteSettings';
 import NotableAlumni from '../models/NotableAlumni';
 import Administration from '../models/Administration';
+import Announcement from '../models/Announcement';
 import { cacheMiddleware, TTL } from '../config/cache';
 import { sendApprovedEmail } from '../config/email';
 import { requireAdmin } from '../middleware/auth';
@@ -778,6 +779,17 @@ router.post('/administration/seed', requireAdmin, async (req, res) => {
         ];
         const members = await Administration.insertMany(defaults);
         res.json({ message: 'Seeded successfully', members });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// GET /api/admin/announcements - Get all announcements for admin dashboard
+router.get('/announcements', requireAdmin, cacheMiddleware(TTL.SHORT), async (req, res) => {
+    try {
+        const announcements = await Announcement.find().sort({ createdAt: -1 }).lean();
+        res.json({ announcements });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error' });

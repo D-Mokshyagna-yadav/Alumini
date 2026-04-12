@@ -18,8 +18,7 @@ async function getAnnouncementRecipients(mode: AnnouncementAudienceMode, recipie
         if (mode === 'specific') {
             query._id = { $in: recipientIds };
         }
-
-        return User.find(query).select('name email').lean();
+        return User.find(query).select('name email role').lean();
     } catch (error) {
         console.error('Failed to load announcement recipients', error);
         return [];
@@ -42,8 +41,6 @@ async function dispatchAnnouncementEmails(announcement: any) {
                 message: announcement.message,
                 image: announcement.image,
                 link: announcement.link,
-                ctaLabel: announcement.ctaLabel,
-                ctaLink: announcement.ctaLink,
                 publishedAt: announcement.publishedAt || announcement.createdAt,
             }).catch((error: any) => {
                 console.error('Announcement email failed for recipient', recipient.email, error);
@@ -229,58 +226,28 @@ router.delete('/news/:id', requireAdmin, async (req, res) => {
     }
 });
 
-// GET /api/public/announcements - list announcements
+// GET /api/public/announcements - get announcements (public shows non-draft only, admin sees all)
 router.get('/announcements', cacheMiddleware(TTL.MEDIUM), async (req, res) => {
     try {
-        let query: any = {};
-        if (req.session && req.session.userId) {
-            const user = await User.findById(req.session.userId).lean();
-            if (!user || user.role !== 'admin') {
-                query.draft = { $ne: true };
-            }
-        } else {
-            query.draft = { $ne: true };
-        }
-
-        const items = await Announcement.find(query).sort({ priority: -1, publishedAt: -1, createdAt: -1 }).lean();
-        return res.json({ announcements: items });
+        // Admin users see all announcements, regular users see only published (non-draft)
+        const isAdmin = req.session?.userRole === 'admin';
+        const query = isAdmin ? {} : { draft: { $ne: true } };
+        
+        const announcements = await Announcement.find(query)
+            .sort({ createdAt: -1 })
+            .lean();
+        
+        return res.json({ announcements });
     } catch (error) {
-        console.error('Announcements list degraded:', error);
-        return res.json({ announcements: [], degraded: true });
-    }
-});
-
-// GET /api/public/announcements/:id - get single announcement
-router.get('/announcements/:id', cacheMiddleware(TTL.MEDIUM), async (req, res) => {
-    try {
-        const id = req.params.id;
-        const item = await Announcement.findById(id);
-        if (!item) return res.status(404).json({ message: 'Not found' });
-
-        let isAdmin = false;
-        if (req.session && req.session.userId) {
-            const user = await User.findById(req.session.userId).lean();
-            if (user && user.role === 'admin') isAdmin = true;
-        }
-
-        if (item.draft && !isAdmin) return res.status(404).json({ message: 'Not found' });
-
-        if (!isAdmin) {
-            const updated = await Announcement.findByIdAndUpdate(id, { $inc: { readers: 1 } }, { new: true }).lean();
-            return res.json({ item: updated });
-        }
-
-        return res.json({ item: item.toObject() });
-    } catch (error) {
-        console.error('Announcement details failed:', error);
-        return res.status(503).json({ message: 'Announcement service temporarily unavailable' });
+        console.error(error);
+        return res.status(500).json({ message: 'Server error' });
     }
 });
 
 // POST /api/public/announcements - create announcement (admin only)
 router.post('/announcements', requireAdmin, async (req, res) => {
     try {
-        const { title, subtitle, template, message, image, link, ctaLabel, ctaLink, readers, publishedAt, priority, draft, audienceMode, recipientIds } = req.body;
+        const { title, subtitle, template, message, image, link, draft, audienceMode, recipientIds } = req.body;
         if (!title || typeof title !== 'string') return res.status(400).json({ message: 'Title is required' });
 
         const payload: any = { title };
@@ -289,13 +256,8 @@ router.post('/announcements', requireAdmin, async (req, res) => {
         if (message) payload.message = message;
         if (image) payload.image = image;
         if (link) payload.link = link;
-        if (ctaLabel) payload.ctaLabel = ctaLabel;
-        if (ctaLink) payload.ctaLink = ctaLink;
         payload.audienceMode = audienceMode === 'specific' ? 'specific' : 'all';
         payload.recipientIds = Array.isArray(recipientIds) ? recipientIds.filter(Boolean) : [];
-        if (typeof readers !== 'undefined') payload.readers = Number(readers) || 0;
-        if (publishedAt) payload.publishedAt = new Date(publishedAt);
-        if (typeof priority !== 'undefined') payload.priority = Number(priority) || 0;
         if (typeof draft !== 'undefined') payload.draft = Boolean(draft);
 
         if (payload.audienceMode === 'specific' && payload.recipientIds.length === 0 && !payload.draft) {
@@ -304,6 +266,7 @@ router.post('/announcements', requireAdmin, async (req, res) => {
 
         const created = await Announcement.create(payload);
         invalidatePrefix('/api/public/announcements');
+        invalidatePrefix('/api/admin/announcements');
         try { const io = (req as any).io; if (io) io.emit('announcements_updated', { item: created }); } catch (e) { }
 
         // Fire-and-forget email delivery so the announcement workflow remains resilient.
@@ -324,7 +287,7 @@ router.post('/announcements', requireAdmin, async (req, res) => {
 router.put('/announcements/:id', requireAdmin, async (req, res) => {
     try {
         const id = req.params.id;
-        const { title, subtitle, template, message, image, link, ctaLabel, ctaLink, readers, publishedAt, priority, draft, audienceMode, recipientIds } = req.body;
+        const { title, subtitle, template, message, image, link, draft, audienceMode, recipientIds } = req.body;
         const update: any = {};
         if (title) update.title = title;
         if (subtitle !== undefined) update.subtitle = subtitle;
@@ -332,13 +295,8 @@ router.put('/announcements/:id', requireAdmin, async (req, res) => {
         if (message !== undefined) update.message = message;
         if (image !== undefined) update.image = image;
         if (link !== undefined) update.link = link;
-        if (ctaLabel !== undefined) update.ctaLabel = ctaLabel;
-        if (ctaLink !== undefined) update.ctaLink = ctaLink;
         if (audienceMode) update.audienceMode = audienceMode === 'specific' ? 'specific' : 'all';
         if (Array.isArray(recipientIds)) update.recipientIds = recipientIds.filter(Boolean);
-        if (typeof readers !== 'undefined') update.readers = Number(readers) || 0;
-        if (publishedAt) update.publishedAt = new Date(publishedAt);
-        if (typeof priority !== 'undefined') update.priority = Number(priority) || 0;
         if (typeof draft !== 'undefined') update.draft = Boolean(draft);
 
         const nextAudienceMode = update.audienceMode || 'all';
@@ -350,6 +308,7 @@ router.put('/announcements/:id', requireAdmin, async (req, res) => {
         const updated = await Announcement.findByIdAndUpdate(id, update, { new: true });
         if (!updated) return res.status(404).json({ message: 'Not found' });
         invalidatePrefix('/api/public/announcements');
+        invalidatePrefix('/api/admin/announcements');
         try { const io = (req as any).io; if (io) io.emit('announcements_updated', { item: updated }); } catch (e) { }
 
         setImmediate(() => {

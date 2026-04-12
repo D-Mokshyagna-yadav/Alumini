@@ -327,8 +327,32 @@ function announcementBody(data: AnnouncementEmailData, recipientName: string): s
   const message = escapeHtml(data.message || '');
   const publishedAt = data.publishedAt ? new Date(data.publishedAt).toLocaleDateString() : '';
   const imageUrl = data.image ? toAbsoluteUploadsUrl(data.image) : '';
-  const ctaHref = data.ctaLink || data.link || '';
-  const ctaLabel = data.ctaLabel || 'View details';
+  const ctaHref = data.link || ''; // Use link field only, removed ctaLink fallback
+  const ctaLabel = 'Learn More';
+
+  // Personalized greeting based on template type
+  const greetings: Record<AnnouncementTemplate, string> = {
+    celebration: `Dear <strong>${escapeHtml(recipientName)}</strong>,\n\nWishing you joy and happiness!`,
+    festival: `Dear <strong>${escapeHtml(recipientName)}</strong>,\n\nWishing you a wonderful and prosperous celebration!`,
+    event: `Dear <strong>${escapeHtml(recipientName)}</strong>,\n\nWe're excited to invite you to this special event!`,
+    regards: `Dear <strong>${escapeHtml(recipientName)}</strong>,\n\nWarm regards and best wishes from the college community.`,
+    general: `Dear <strong>${escapeHtml(recipientName)}</strong>,\n\nPlease find important information below.`,
+    custom: `Dear <strong>${escapeHtml(recipientName)}</strong>,`,
+  };
+
+  const greeting = greetings[data.template || 'general'] || greetings.general;
+
+  // Personalized closing based on template type
+  const closings: Record<AnnouncementTemplate, string> = {
+    celebration: `With warm wishes,\n${BRAND.collegeName}`,
+    festival: `Warm greetings,\n${BRAND.collegeName}`,
+    event: `Looking forward to seeing you,\n${BRAND.collegeName}`,
+    regards: `With warm regards,\n${BRAND.collegeName}`,
+    general: `Best regards,\n${BRAND.collegeName}`,
+    custom: `Sincerely,\n${BRAND.collegeName}`,
+  };
+
+  const closing = closings[data.template || 'general'] || closings.general;
 
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 14px;">
@@ -337,21 +361,21 @@ function announcementBody(data: AnnouncementEmailData, recipientName: string): s
       </tr>
     </table>
     <h2 style="margin:0 0 8px;text-align:center;font-size:24px;font-weight:700;color:${BRAND.textPrimary};">${title}</h2>
-    <p style="margin:0 0 24px;text-align:center;font-size:14px;line-height:1.6;color:${BRAND.textSecondary};">Hello <strong>${escapeHtml(recipientName)}</strong>, here is an update from the college administration.</p>
+    ${subtitle ? `<p style="margin:0 0 24px;text-align:center;font-size:15px;line-height:1.6;color:${BRAND.textSecondary};">${subtitle}</p>` : ''}
+    <p style="margin:0 0 24px;font-size:14px;line-height:1.8;color:${BRAND.textSecondary};white-space:pre-wrap;">${greeting}</p>
     ${imageUrl ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;border-radius:14px;overflow:hidden;"><tr><td><img src="${imageUrl}" alt="${title}" width="100%" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:14px;object-fit:cover;" /></td></tr></table>` : ''}
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;background:${theme.soft};border:1px solid ${theme.accent}22;border-radius:14px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;background:${theme.soft};border:1px solid ${theme.accent}22;border-radius:14px;">
       <tr>
         <td style="padding:18px 18px 16px;">
           <p style="margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:${theme.accent};">${theme.label}</p>
-          ${subtitle ? `<p style="margin:0 0 10px;font-size:15px;font-weight:700;color:${BRAND.textPrimary};">${subtitle}</p>` : ''}
           <p style="margin:0;font-size:14px;line-height:1.7;color:${BRAND.textSecondary};white-space:pre-wrap;">${message}</p>
         </td>
       </tr>
     </table>
-    ${ctaHref ? `<p style="margin:0 0 22px;text-align:center;"><a href="${ctaHref}" style="display:inline-block;padding:12px 28px;background:${theme.accent};color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;border-radius:12px;">${escapeHtml(ctaLabel)}</a></p>` : ''}
-    ${publishedAt ? `<p style="margin:0 0 10px;text-align:center;font-size:12px;color:${BRAND.textMuted};">Published ${escapeHtml(publishedAt)}</p>` : ''}
-    <hr style="border:none;border-top:1px solid ${BRAND.border};margin:0 0 18px;" />
-    <p style="margin:0;text-align:center;font-size:12px;line-height:1.6;color:${BRAND.textMuted};">This message is part of the ${BRAND.platformName} announcement system.</p>
+    ${ctaHref ? `<p style="margin:0 0 22px;text-align:center;"><a href="${ctaHref}" style="display:inline-block;padding:12px 28px;background:${theme.accent};color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;border-radius:12px;">${ctaLabel}</a></p>` : ''}
+    ${publishedAt ? `<p style="margin:0 0 18px;text-align:center;font-size:12px;color:${BRAND.textMuted};">Published ${escapeHtml(publishedAt)}</p>` : ''}
+    <p style="margin:0 0 24px;font-size:13px;line-height:1.8;color:${BRAND.textSecondary};white-space:pre-wrap;border-top:1px solid ${BRAND.border};padding-top:18px;">${closing}</p>
+    <p style="margin:0;text-align:center;font-size:12px;line-height:1.6;color:${BRAND.textMuted};">This is an automated message from ${BRAND.platformName}. Please do not reply to this email.</p>
   `;
 }
 
