@@ -357,6 +357,38 @@ if (!fs.existsSync(clientDistPath)) {
     logger.log(`[static] serving client from: ${clientDistPath}`);
 }
 
+// Deployment safety net: if a stale HTML shell asks for an old hashed bundle
+// (e.g. /assets/index-OLDHASH.js), remap it to the latest matching asset.
+app.use((req, _res, next) => {
+    if (!req.path.startsWith('/assets/')) return next();
+
+    const [rawPath, rawQuery = ''] = req.url.split('?');
+    const requestedFile = path.basename(rawPath);
+    const requestedPath = path.join(clientDistPath, rawPath);
+
+    if (fs.existsSync(requestedPath)) return next();
+
+    const m = requestedFile.match(/^(.+)-[A-Za-z0-9_-]{6,}\.(js|css)$/);
+    if (!m) return next();
+
+    const [, prefix, ext] = m;
+    const assetsDir = path.join(clientDistPath, 'assets');
+    if (!fs.existsSync(assetsDir)) return next();
+
+    const candidates = fs.readdirSync(assetsDir).filter((f) => f.startsWith(`${prefix}-`) && f.endsWith(`.${ext}`));
+    if (candidates.length === 0) return next();
+
+    const bestMatch = candidates
+        .map((f) => ({ f, mtime: fs.statSync(path.join(assetsDir, f)).mtimeMs }))
+        .sort((a, b) => b.mtime - a.mtime)[0]?.f;
+
+    if (!bestMatch) return next();
+
+    req.url = `/assets/${bestMatch}${rawQuery ? `?${rawQuery}` : ''}`;
+    logger.warn(`[static] remapped missing asset ${requestedFile} -> ${bestMatch}`);
+    next();
+});
+
 app.use(express.static(clientDistPath, {
     maxAge: '1y',
     immutable: true,

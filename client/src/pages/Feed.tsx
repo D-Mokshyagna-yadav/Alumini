@@ -572,7 +572,7 @@ const Feed = () => {
                 {isAuthenticated && (
                     <aside className="hidden lg:block">
                         <div className={`${glass} overflow-hidden sticky top-[72px]`}>
-                            <div className={`h-16 rounded-t-2xl overflow-hidden ${user?.coverImage ? 'bg-[var(--bg-tertiary)]' : 'bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)]'}`}>
+                            <div className={`h-16 rounded-t-2xl overflow-hidden ${!user?.coverImage ? 'bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)]' : ''}`}>
                                 {user?.coverImage && (
                                     <img src={normalizeMediaUrl(user.coverImage)} alt="" className="w-full h-full object-cover block" loading="lazy" decoding="async" />
                                 )}
