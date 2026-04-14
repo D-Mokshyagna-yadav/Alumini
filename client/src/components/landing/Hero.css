@@ -38,6 +38,12 @@ HERO BACKGROUND
     background-color: #0b1422;
 }
 
+.hero-bg picture {
+    position: absolute;
+    inset: 0;
+    display: contents;
+}
+
 .hero-bg-image {
     position: absolute;
     inset: 0;
