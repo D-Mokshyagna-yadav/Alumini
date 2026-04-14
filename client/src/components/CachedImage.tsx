@@ -77,12 +77,12 @@ const CachedImage = memo(function CachedImage({
     }
 
     return (
-        <div className={`relative overflow-hidden bg-[var(--bg-tertiary)] ${wrapperClassName}`}>
+        <div className={`relative overflow-hidden bg-[var(--bg-tertiary)] gpu contain-paint ${wrapperClassName}`}>
             {/* Skeleton shimmer while loading */}
             {!loaded && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 overflow-hidden z-[1]">
                     <div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--bg-secondary)]/40 to-transparent animate-[shimmer_1.5s_infinite]"
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--bg-secondary)]/40 to-transparent animate-[shimmer_1.5s_infinite] gpu"
                     />
                     {!compact && (
                         <ImageIcon size={24} className="text-[var(--text-muted)]/30 relative z-[2]" />
@@ -94,7 +94,7 @@ const CachedImage = memo(function CachedImage({
                 ref={imgRef}
                 src={resolved}
                 alt={alt}
-                className={`${className} transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+                className={`${className} transition-opacity duration-300 gpu will-animate ${loaded ? 'opacity-100' : 'opacity-0'}`}
                 loading={priority ? 'eager' : 'lazy'}
                 decoding="async"
                 fetchPriority={priority ? 'high' : 'low'}

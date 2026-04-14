@@ -6,8 +6,12 @@ import { SocketProvider } from './context/SocketContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { ToastProvider } from './context/ToastContext'
 import { ConfirmProvider } from './context/ConfirmContext'
+import { initializePerformanceOptimizations } from './lib/performance'
 import App from './App.tsx'
 import './index.css'
+
+// Initialize performance optimizations immediately
+initializePerformanceOptimizations()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

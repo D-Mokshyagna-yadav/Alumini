@@ -119,6 +119,45 @@ app.use(cors(corsOptions));
 app.use(compression()); // Enable gzip/brotli compression for faster responses
 app.use(express.json());
 
+// Cache control middleware
+app.use((req, res, next) => {
+    // Static assets (1 year)
+    if (/\.(js|css|png|jpg|jpeg|gif|ico|svg|webp|woff|woff2|ttf|eot)$/.test(req.path)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        res.setHeader('ETag', 'W/"static"');
+    }
+    // HTML (no cache, must revalidate)
+    else if (req.path.endsWith('.html') || req.path === '/') {
+        res.setHeader('Cache-Control', 'no-cache, must-revalidate, max-age=3600');
+    }
+    // API responses (cache based on route)
+    else if (req.path.startsWith('/api/')) {
+        // Public endpoints can be cached
+        if (req.path.includes('/public/')) {
+            res.setHeader('Cache-Control', 'public, max-age=300'); // 5 minutes
+        }
+        // Protected endpoints with longer cache
+        else if (req.path.includes('/notifications') || req.path.includes('/directory')) {
+            res.setHeader('Cache-Control', 'private, max-age=60'); // 1 minute
+        }
+        // Other APIs - no cache
+        else {
+            res.setHeader('Cache-Control', 'no-cache');
+        }
+    }
+
+    // Performance headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    
+    // Enable compression for all responses
+    res.setHeader('Accept-Encoding', 'gzip, deflate, br');
+
+    next();
+});
+
 // Session Middleware
 
 const sessionStore = MongoStore.create({

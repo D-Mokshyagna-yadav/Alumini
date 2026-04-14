@@ -1638,6 +1638,300 @@
 }
 
 /* ============================================
+   GPU/CPU ACCELERATION & PERFORMANCE OPTIMIZATION
+   ============================================ */
+
+/* GPU Acceleration for Modern Browsers */
+@supports (transform: translateZ(0)) {
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* High-performance elements */
+  button, a, [role="button"], .btn,
+  .card, [role="article"],
+  .modal, [role="dialog"],
+  img,
+  input, textarea, select,
+  nav, [role="navigation"],
+  ul, ol, li,
+  .animate-in, .animate-out, [data-animate="true"] {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Interactive elements */
+  button:hover, a:hover, [role="button"]:hover,
+  input:focus, textarea:focus, select:focus {
+    will-change: transform, box-shadow, background-color;
+  }
+
+  /* Animation optimization */
+  .framer-motion, [class*="animate"],
+  .transition-all, .transition-fast,
+  .transition-medium, .transition-slow {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+  }
+
+  /* Scrolling optimization */
+  [role="region"][aria-label="scrollable"], 
+  .scrollable, 
+  .overflow-y-auto,
+  .overflow-x-auto {
+    will-change: scroll-position;
+    transform: translateZ(0);
+  }
+
+  /* Modal and overlay optimization */
+  .fixed-modal, .modal-backdrop,
+  .dropdown-menu, .popover,
+  .tooltip, .notification {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  /* Image rendering optimization */
+  img {
+    image-rendering: auto;
+    image-rendering: crisp-edges;
+    will-change: opacity;
+  }
+
+  /* Form elements */
+  input, textarea, select {
+    transform: translateZ(0);
+  }
+
+  /* List/Grid items */
+  li, .list-item, .grid-item {
+    contain: layout style paint;
+  }
+
+  /* Navigation bars */
+  nav, .navbar, .nav-bar {
+    contain: layout style paint;
+    will-change: background-color, transform;
+  }
+}
+
+/* CPU Acceleration Fallback */
+@supports not (transform: translateZ(0)) {
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  button, a:hover,
+  input:focus {
+    transition: all 0.2s ease-out;
+  }
+
+  img {
+    transition: opacity 0.3s ease;
+  }
+}
+
+/* Motion Preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Safe animations for all devices */
+  .transition-smooth {
+    transition: all var(--motion-duration-medium) var(--motion-ease-smooth);
+  }
+
+  .transition-fast {
+    transition: all var(--motion-duration-fast) var(--motion-ease);
+  }
+
+  .transition-slow {
+    transition: all var(--motion-duration-slow) var(--motion-ease-smooth);
+  }
+
+  /* Optimized hover states */
+  @media (hover: hover) and (pointer: fine) {
+    button:hover, a:hover {
+      will-change: auto;
+      transform: translateZ(0);
+    }
+  }
+
+  /* Scroll optimization */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Performance Utilities */
+@layer utilities {
+  .gpu {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  .gpu-hover:hover {
+    transform: translateZ(0) scale(1.05);
+  }
+
+  .gpu-active:active {
+    transform: translateZ(0) scale(0.95);
+  }
+
+  .contain-paint {
+    contain: paint;
+  }
+
+  .contain-layout {
+    contain: layout;
+  }
+
+  .contain-size {
+    contain: size;
+  }
+
+  .will-animate {
+    will-change: transform, opacity;
+  }
+
+  .will-scroll {
+    will-change: scroll-position;
+  }
+
+  .content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 500px;
+  }
+
+  .img-lazy {
+    loading: lazy;
+    decoding: async;
+  }
+
+  .img-eager {
+    loading: eager;
+    decoding: sync;
+  }
+}
+
+/* ============================================
+   GPU/CPU ACCELERATION & PERFORMANCE OPTIMIZATION
+   ============================================ */
+@supports (transform: translateZ(0)) {
+  /* GPU-accelerated elements (modern browsers) */
+  @layer components {
+    /* Button interactions with GPU acceleration */
+    button,
+    a[role="button"],
+    .btn {
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Smooth transitions with GPU acceleration */
+    button:hover,
+    a:hover,
+    .interactive {
+      will-change: transform, box-shadow, background-color;
+    }
+
+    /* Modal/drawer animations */
+    [role="dialog"],
+    .modal,
+    .drawer,
+    .popover,
+    .dropdown {
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      perspective: 1000px;
+    }
+
+    /* Animated elements */
+    .animate-in,
+    .animate-out,
+    [data-animate="true"] {
+      transform: translateZ(0);
+      will-change: transform, opacity;
+      backface-visibility: hidden;
+    }
+
+    /* Cards and containers */
+    .card,
+    [role="article"],
+    .container {
+      transform: translateZ(0);
+      backface-visibility: hidden;
+    }
+
+    /* Scrollable content optimization */
+    [role="region"][aria-label="scrollable"],
+    .scrollable,
+    .scroll-smooth {
+      transform: translateZ(0);
+      will-change: scroll-position;
+      backface-visibility: hidden;
+    }
+
+    /* Image optimization */
+    img {
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      will-change: opacity;
+    }
+
+    /* Text rendering optimization */
+    h1, h2, h3, h4, h5, h6,
+    p, span, div {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+  }
+}
+
+/* CPU-accelerated fallback (older browsers) */
+@supports not (transform: translateZ(0)) {
+  @layer components {
+    /* Fallback for older browsers */
+    button,
+    a[role="button"],
+    .btn {
+      will-change: auto;
+      transition: all 0.2s ease-out;
+    }
+
+    * {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+  }
+}
+
+/* Motion and animation optimization */
+@layer components {
+  /* Respect user motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================
    ORIENTATION-SPECIFIC STYLES
    ============================================ */
 @media (orientation: landscape) and (max-height: 500px) {

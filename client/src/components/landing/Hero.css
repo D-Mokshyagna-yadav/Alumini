@@ -175,3 +175,65 @@ RESPONSIVE HERO
         font-size: 1rem;
     }
 }
+
+/* =========================
+GPU ACCELERATION FOR HERO
+========================= */
+
+.hero-bg {
+    contain: layout style paint;
+}
+
+.hero-bg picture {
+    transform: translateZ(0);
+}
+
+.hero-bg-image {
+    image-rendering: auto;
+    image-rendering: crisp-edges;
+}
+
+/* Beam animation GPU acceleration */
+.beam-drop,
+.beam-impact,
+.beam-ripple,
+.spotlight {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+@keyframes beam-drop-optimized {
+    from {
+        transform: translateZ(0) translateY(-100%);
+        opacity: 1;
+    }
+    to {
+        transform: translateZ(0) translateY(0);
+        opacity: 0;
+    }
+}
+
+@keyframes shimmer-gpu {
+    0% {
+        transform: translateZ(0) translateX(-100%);
+    }
+    100% {
+        transform: translateZ(0) translateX(100%);
+    }
+}
+
+/* Marquee GPU optimization */
+@keyframes marqueeScroll-gpu {
+    from {
+        transform: translateZ(0) translateX(0);
+    }
+    to {
+        transform: translateZ(0) translateX(-50%);
+    }
+}
+
+.industry-marquee {
+    animation: marqueeScroll-gpu 25s linear infinite;
+    will-change: transform;
+}
