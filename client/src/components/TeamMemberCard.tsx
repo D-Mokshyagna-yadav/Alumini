@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Mail, Linkedin, Github, ExternalLink } from 'lucide-react';
+import { Mail, Code, ExternalLink } from 'lucide-react';
 import Avatar from './ui/Avatar';
 
 interface TeamMemberCardProps {
@@ -89,7 +89,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
                             title="LinkedIn"
                             className="w-9 h-9 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[#0A66C2]/20 flex items-center justify-center text-[var(--text-secondary)] hover:text-[#0A66C2] transition-all"
                         >
-                            <Linkedin size={16} />
+                            <Code size={16} />
                         </a>
                     )}
                     {github && (
@@ -100,7 +100,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
                             title="GitHub"
                             className="w-9 h-9 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--text-primary)]/20 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
                         >
-                            <Github size={16} />
+                            <Code size={16} />
                         </a>
                     )}
                     {portfolio && (
