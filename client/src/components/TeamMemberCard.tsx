@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Mail, ExternalLink } from 'lucide-react';
+import { Mail, Briefcase } from 'lucide-react';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
 import Avatar from './ui/Avatar';
 
@@ -112,7 +112,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
                             title="Portfolio"
                             className="w-9 h-9 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--accent)]/20 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--accent)] transition-all"
                         >
-                            <ExternalLink size={16} />
+                            <Briefcase size={16} />
                         </a>
                     )}
                 </div>
