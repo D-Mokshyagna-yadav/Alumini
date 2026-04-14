@@ -42,7 +42,7 @@ const DeveloperRecognition = () => {
             title: 'Developer',
             bio: 'Practical developer who focuses on readable code and real projects — great for students looking for project ideas and clear implementation examples.',
             avatar: 'https://api.dicebear.com/7.x/lorelei/svg?seed=god',
-            portfolio: 'https://avinash.dev',
+            portfolio: '#',
             github: 'https://github.com/avinash',
             linkedin: 'https://www.linkedin.com/in/ch-avinash-7726aa1b3/',
         },
