@@ -45,6 +45,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Only handle same-origin requests in the service worker. This avoids
+  // intercepting cross-origin resources (like DiceBear) which can trigger
+  // CSP/connect-src errors and opaque responses that cause clone issues.
+  const isSameOrigin = url.origin === self.location.origin;
+  if (!isSameOrigin) {
+    return; // let the browser handle cross-origin requests directly
+  }
+
   // Cache-first strategy for static assets
   if (
     /\.(js|css|png|jpg|jpeg|gif|ico|svg|webp|woff|woff2|ttf|eot)$/.test(url.pathname)
@@ -56,52 +64,59 @@ self.addEventListener('fetch', (event) => {
           return response;
         }
 
-        return fetch(request).then((response) => {
-          // Cache successful responses
-          if (response.ok) {
-            const cache = caches.open(CACHE_VERSION);
-            cache.then((c) => c.put(request, response.clone()));
+        return fetch(request).then((resp) => {
+          // Cache successful, same-origin responses only
+          if (resp && resp.ok) {
+            caches.open(CACHE_VERSION).then((c) => {
+              try {
+                // Only cache "basic" responses (same-origin) to avoid opaque/cors issues
+                if (resp.type === 'basic') c.put(request, resp.clone());
+              } catch (e) {
+                console.warn('[Service Worker] Failed to cache response:', e);
+              }
+            });
           }
-          return response;
+          return resp;
         });
       })
     );
   }
   // Network-first strategy for API calls
   else if (url.pathname.startsWith('/api/')) {
+    // Network-first for API calls (same-origin only)
     event.respondWith(
       fetch(request)
-        .then((response) => {
-          // Cache successful API responses
-          if (response.ok) {
-            const cache = caches.open(CACHE_VERSION);
-            cache.then((c) => c.put(request, response.clone()));
+        .then((resp) => {
+          if (resp && resp.ok) {
+            caches.open(CACHE_VERSION).then((c) => {
+              try {
+                if (resp.type === 'basic' || resp.type === 'cors') c.put(request, resp.clone());
+              } catch (e) {
+                console.warn('[Service Worker] Failed to cache API response:', e);
+              }
+            });
           }
-          return response;
+          return resp;
         })
-        .catch(() => {
-          // Fall back to cache if network fails
-          return caches.match(request);
-        })
+        .catch(() => caches.match(request))
     );
   }
   // Network-first for HTML
   else {
     event.respondWith(
       fetch(request)
-        .then((response) => {
-          // Don't cache error responses
-          if (!response.ok) {
-            return response;
-          }
-          const cache = caches.open(CACHE_VERSION);
-          cache.then((c) => c.put(request, response.clone()));
-          return response;
+        .then((resp) => {
+          if (!resp || !resp.ok) return resp;
+          caches.open(CACHE_VERSION).then((c) => {
+            try {
+              if (resp.type === 'basic') c.put(request, resp.clone());
+            } catch (e) {
+              console.warn('[Service Worker] Failed to cache HTML response:', e);
+            }
+          });
+          return resp;
         })
-        .catch(() => {
-          // Fall back to cached version if available
-          return caches.match(request);
-        })
+        .catch(() => caches.match(request))
     );
   }
 });
