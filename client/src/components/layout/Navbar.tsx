@@ -165,6 +165,26 @@ const Navbar = () => {
                                 </Link>
                             );
                         })}
+                        
+                        {/* Announcements (admin only) - beside Gallery */}
+                        {isAuthenticated && user?.role === 'admin' && (
+                            <Link to="/admin/announcements"
+                                className={`relative flex flex-col items-center px-4 lg:px-5 py-2 rounded-xl transition-all group ${
+                                    isActive('/admin/announcements')
+                                        ? 'text-[var(--accent)]'
+                                        : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
+                                }`}
+                            >
+                                <Rss size={20} strokeWidth={isActive('/admin/announcements') ? 2.5 : 1.5} />
+                                <span className="text-[11px] mt-0.5 font-medium">Announcements</span>
+                                {isActive('/admin/announcements') && (
+                                    <motion.div
+                                        layoutId="nav-underline"
+                                        className="absolute -bottom-[9px] left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[var(--accent)]"
+                                    />
+                                )}
+                            </Link>
+                        )}
                     </nav>
 
                     {/* ─── Right Side Actions ─── */}
@@ -242,20 +262,6 @@ const Navbar = () => {
                                 >
                                     <Mail size={16} />
                                 </Link>
-
-                                {/* Announcements (admin only) - beside Jobs */}
-                                {user?.role === 'admin' && (
-                                    <Link to="/admin/announcements"
-                                        className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[13px] font-medium rounded-xl transition-all ${
-                                            isActive('/admin/announcements')
-                                                ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
-                                                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
-                                        }`}
-                                    >
-                                        <Rss size={16} />
-                                        Announcements
-                                    </Link>
-                                )}
 
                                 {/* Admin Link (visible for admins) */}
                                 {user?.role === 'admin' && (
