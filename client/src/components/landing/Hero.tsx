@@ -22,7 +22,6 @@ const Hero = ({ data }: { data?: HeroData }) => {
     return (
         <div className="relative min-h-[100dvh] flex flex-col items-center justify-center overflow-hidden bg-[var(--bg-primary)] hero-bg">
             <picture>
-                <source srcSet="/hero_image.webp" type="image/webp" />
                 <source srcSet="/hero_image.jpg" type="image/jpeg" />
                 <img
                     src="/hero_image.jpg"
