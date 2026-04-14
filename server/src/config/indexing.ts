@@ -101,11 +101,9 @@ export const createAllIndexes = async () => {
         logger.info('✅ SavedCollection indexes created');
 
         // ─── NEWS ITEM INDEXES ───────────────────────────────────
+        // Text search index is handled by the model schema (news_text_search_idx)
+        // to avoid conflicts. See src/models/NewsItem.ts for text index definition.
         await NewsItem.collection.createIndex({ draft: 1, priority: -1, publishedAt: -1, createdAt: -1 });
-        await NewsItem.collection.createIndex({
-            title: 'text',
-            content: 'text',
-        }, { name: 'news_text_search' });
         await NewsItem.collection.createIndex({ publishedAt: -1 });
         logger.info('✅ NewsItem indexes created');
 
