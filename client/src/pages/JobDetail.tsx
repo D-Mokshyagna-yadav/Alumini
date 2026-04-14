@@ -267,10 +267,10 @@ const JobDetail = () => {
                 <span>Go back</span>
             </button>
 
-            <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-2xl shadow-sm p-6">
+            <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-2xl shadow-sm p-4 sm:p-6">
                 {/* Job image */}
                 {job.image && (
-                    <div className="-mx-6 -mt-6 mb-6 rounded-t-2xl overflow-hidden bg-[var(--bg-tertiary)]">
+                    <div className="-mx-4 sm:-mx-6 -mt-4 sm:-mt-6 mb-6 rounded-t-2xl overflow-hidden bg-[var(--bg-tertiary)]">
                         <img
                             src={resolveMediaUrl(job.image)}
                             alt={job.title}
@@ -299,7 +299,7 @@ const JobDetail = () => {
                         )}
                     </div>
 
-                    <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-1">{job.title}</h1>
+                    <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-1">{job.title}</h1>
                     <p className="text-lg text-[var(--text-primary)] mb-2">{job.company}</p>
                     <p className="text-sm text-[var(--text-secondary)]">
                         Posted {new Date(job.postedAt).toLocaleDateString()} • Apply by Dec 08, 2026 • {job.applicants || 0} views
@@ -307,7 +307,7 @@ const JobDetail = () => {
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex items-center gap-3 mb-6 pb-6 border-b border-[var(--border-color)]">
+                <div className="flex flex-wrap items-center gap-3 mb-6 pb-6 border-b border-[var(--border-color)]">
                     <button 
                         onClick={handleApply} 
                         className={`px-8 py-2 font-medium ${

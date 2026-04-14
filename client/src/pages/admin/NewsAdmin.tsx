@@ -223,7 +223,7 @@ const NewsAdmin = () => {
     return (
         <div className="min-h-screen bg-transparent py-8">
             <div className="max-w-4xl mx-auto px-4">
-                <h1 className="text-2xl font-semibold text-[var(--text-primary)] mb-4">Admin — Manage News</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)] mb-4">Admin — Manage News</h1>
 
                 <div className="bg-[var(--bg-secondary)] p-4 border border-[var(--border-color)] rounded-2xl mb-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

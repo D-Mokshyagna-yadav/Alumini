@@ -57,8 +57,8 @@ const Footer = () => {
                 <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-[var(--gradient-end)]/[0.05] blur-3xl rounded-full" />
             </div>
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20 relative">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6 md:gap-12 mb-16">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14 md:py-20 relative">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6 md:gap-12 mb-8 md:mb-16">
                     {/* Brand */}
                     <div className="col-span-2">
                         <Link to="/" className="flex items-center gap-3 mb-6 group">
@@ -143,7 +143,7 @@ const Footer = () => {
 
                 {/* Contact Bar */}
                 <div
-                    className="bg-[var(--bg-tertiary)]/60 backdrop-blur-sm p-6 mb-12 border border-[var(--border-color)] rounded-2xl"
+                    className="bg-[var(--bg-tertiary)]/60 backdrop-blur-sm p-4 sm:p-6 mb-8 sm:mb-12 border border-[var(--border-color)] rounded-2xl"
                 >
                     <div className="flex flex-wrap justify-center gap-4 sm:gap-8 text-sm">
                         <a href={`mailto:${branding.contactEmail || 'alumni@mictech.ac.in'}`} className="flex items-center gap-3 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors group">

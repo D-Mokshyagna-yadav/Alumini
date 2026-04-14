@@ -30,7 +30,7 @@ const TelemetryAdmin = () => {
   return (
     <div className="max-w-7xl mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Telemetry — Shares</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)]">Telemetry — Shares</h1>
         <div className="flex items-center gap-2">
           <input value={q} onChange={e => setQ(e.target.value)} placeholder="search action/channel/resource/url" className="p-2 border border-[var(--border-color)] rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30" />
           <button onClick={() => load(1, limit, q)} className="px-3 py-2 bg-[var(--accent)] text-[var(--bg-primary)] rounded-xl">Search</button>

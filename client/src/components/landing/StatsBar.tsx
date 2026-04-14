@@ -14,7 +14,7 @@ const StatsBar = ({ stats }: { stats?: { id?: number; name: string; value: strin
             {/* Subtle blue gradient accent */}
             <div className="absolute inset-0 bg-gradient-to-r from-[var(--gradient-start)]/[0.04] via-transparent to-[var(--gradient-end)]/[0.03] pointer-events-none" />
             <div className="max-w-screen-xl mx-auto px-6 sm:px-8 lg:px-16">
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     {items.map((stat: { id?: number; name: string; value: string; icon?: React.ComponentType<{ className?: string; size?: number }> }, index: number) => (
                         <motion.div
                             key={stat.id || stat.name}

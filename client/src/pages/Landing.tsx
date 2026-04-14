@@ -173,7 +173,7 @@ const Landing = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent)]/[0.03] via-transparent to-[var(--gradient-end)]/[0.02] pointer-events-none" />
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <h2 className="text-2xl sm:text-3xl font-heading font-bold text-[var(--text-primary)] text-center mb-12">Our Core Values</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 mb-20">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 mb-20">
                         {values.map((value, index) => (
                             <motion.div
                                 key={value.title}

@@ -559,7 +559,7 @@ const Profile = () => {
                             <div className="mt-3">
                                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                                     <div className="flex-1">
-                                        <h1 className="text-2xl font-bold text-[var(--text-primary)]">{profileUser?.name || 'Alumni User'}</h1>
+                                        <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">{profileUser?.name || 'Alumni User'}</h1>
                                         {editMode ? (
                                             <input 
                                                 value={headline} 
@@ -630,7 +630,7 @@ const Profile = () => {
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
                                             onClick={() => setEditMode(true)}
-                                            className="px-6 py-2.5 bg-[var(--accent)] text-[var(--bg-primary)] font-semibold shadow-sm shadow-[var(--accent)]/25 hover:shadow-[var(--accent)]/40 transition-all"
+                                            className="px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base bg-[var(--accent)] text-[var(--bg-primary)] font-semibold shadow-sm shadow-[var(--accent)]/25 hover:shadow-[var(--accent)]/40 transition-all"
                                         >
                                             Edit Profile
                                         </motion.button>
@@ -641,7 +641,7 @@ const Profile = () => {
                                                 whileTap={{ scale: 0.98 }}
                                                 onClick={handleSave} 
                                                 disabled={saving}
-                                                className="px-6 py-2.5 bg-[var(--accent)] text-[var(--bg-primary)] font-semibold shadow-sm disabled:opacity-50 flex items-center gap-2"
+                                                className="px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base bg-[var(--accent)] text-[var(--bg-primary)] font-semibold shadow-sm disabled:opacity-50 flex items-center gap-2"
                                             >
                                                 <Check size={18} />
                                                 {saving ? 'Saving...' : 'Save'}
@@ -1641,9 +1641,9 @@ const Profile = () => {
                                         <mask id="cropMask">
                                             <rect width="100%" height="100%" fill="white" />
                                             {cropType === 'avatar' ? (
-                                                <circle cx="50%" cy="50%" r="150" fill="black" />
+                                                <circle cx="50%" cy="50%" r="40%" fill="black" />
                                             ) : (
-                                                <rect x="50%" y="50%" width="600" height="300" transform="translate(-300, -150)" fill="black" />
+                                                <rect x="10%" y="25%" width="80%" height="50%" fill="black" />
                                             )}
                                         </mask>
                                     </defs>

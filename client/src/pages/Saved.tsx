@@ -54,6 +54,7 @@ const Saved = () => {
     const [allSavedPostIds, setAllSavedPostIds] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [showMobileSidebar, setShowMobileSidebar] = useState(false);
     const [showNewCollectionModal, setShowNewCollectionModal] = useState(false);
     const [newCollectionName, setNewCollectionName] = useState('');
     const [collectionCreating, setCollectionCreating] = useState(false);
@@ -296,8 +297,15 @@ const Saved = () => {
 
     return (
         <div className="max-w-[1200px] mx-auto px-4 py-6">
+            <button 
+                onClick={() => setShowMobileSidebar(!showMobileSidebar)} 
+                className="lg:hidden mb-3 flex items-center gap-2 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors w-full"
+            >
+                <Bookmark size={16} /> 
+                {showMobileSidebar ? 'Hide Collections' : 'Show Collections'}
+            </button>
             <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-                <aside className="lg:sticky lg:top-[76px] lg:h-fit">
+                <aside className={`${showMobileSidebar ? 'block' : 'hidden'} lg:block`}>
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -451,7 +459,7 @@ const Saved = () => {
                             </Link>
                         </motion.div>
                     ) : viewMode === 'grid' ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                             <AnimatePresence>
                                 {posts.map((post, index) => (
                                     <motion.div

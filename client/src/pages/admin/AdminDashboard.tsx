@@ -1592,7 +1592,7 @@ const AdminDashboard = () => {
 
                 {/* Analytics Cards */}
                 {analytics && (
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-8">
                         {[
                             { label: 'Total Users', value: analytics.totalUsers, icon: Users, color: 'text-[var(--accent)]' },
                             { label: 'Pending', value: analytics.pendingUsers, icon: Clock, color: 'text-[var(--text-secondary)]' },
@@ -2350,7 +2350,7 @@ const AdminDashboard = () => {
                                     <input value={newEvent.title} onChange={e => setNewEvent({ ...newEvent, title: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" placeholder="Alumni Meetup 2026" />
                                 </div>
                                 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm text-[var(--text-muted)] mb-1">Date *</label>
                                         <input type="date" value={newEvent.date} onChange={e => setNewEvent({ ...newEvent, date: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
@@ -2397,7 +2397,7 @@ const AdminDashboard = () => {
                                     <label className="block text-sm text-[var(--text-muted)] mb-1">Job Title *</label>
                                     <input value={newJob.title} onChange={e => setNewJob({ ...newJob, title: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm text-[var(--text-muted)] mb-1">Company *</label>
                                         <input value={newJob.company} onChange={e => setNewJob({ ...newJob, company: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
@@ -2718,7 +2718,7 @@ const AdminDashboard = () => {
                                     <label className="block text-sm text-[var(--text-muted)] mb-1">External Link</label>
                                     <input value={newsForm.link} onChange={e => setNewsForm({ ...newsForm, link: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" placeholder="https://..." />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm text-[var(--text-muted)] mb-1">Priority</label>
                                         <input type="number" min={0} value={newsForm.priority} onChange={e => setNewsForm({ ...newsForm, priority: parseInt(e.target.value) || 0 })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
@@ -2765,7 +2765,7 @@ const AdminDashboard = () => {
                                     <label className="block text-sm text-[var(--text-muted)] mb-1">Role / Title *</label>
                                     <input value={alumniForm.role} onChange={e => setAlumniForm({ ...alumniForm, role: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" placeholder="e.g. Software Developer, CEO" />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm text-[var(--text-muted)] mb-1">Batch / Class *</label>
                                         <input value={alumniForm.batch} onChange={e => setAlumniForm({ ...alumniForm, batch: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" placeholder="e.g. 2015" />
@@ -2972,7 +2972,7 @@ const AdminDashboard = () => {
                                     <label className="block text-sm text-[var(--text-muted)] mb-1">Event Title *</label>
                                     <input value={editEventForm.title} onChange={e => setEditEventForm({ ...editEventForm, title: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm text-[var(--text-muted)] mb-1">Date *</label>
                                         <input type="date" value={editEventForm.date} onChange={e => setEditEventForm({ ...editEventForm, date: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
@@ -3019,7 +3019,7 @@ const AdminDashboard = () => {
                                     <label className="block text-sm text-[var(--text-muted)] mb-1">Job Title *</label>
                                     <input value={editJobForm.title} onChange={e => setEditJobForm({ ...editJobForm, title: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm text-[var(--text-muted)] mb-1">Company *</label>
                                         <input value={editJobForm.company} onChange={e => setEditJobForm({ ...editJobForm, company: e.target.value })} className="w-full p-2 bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)]" />

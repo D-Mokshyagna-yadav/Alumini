@@ -42,7 +42,7 @@ const NewsDetail = () => {
 
     return (
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-            <h1 className="text-2xl font-semibold mb-3">{item.title}</h1>
+            <h1 className="text-xl sm:text-2xl font-semibold mb-2 sm:mb-3">{item.title}</h1>
             <p className="text-xs text-[var(--text-muted)] mb-4">{item.publishedAt ? new Date(item.publishedAt).toLocaleString() : new Date(item.createdAt).toLocaleString()}</p>
             {item.image && (
                 <CachedImage src={item.image} alt="" className="w-full max-h-96 object-cover" wrapperClassName="w-full rounded-lg mb-4" priority />

@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
     Menu, X, Sun, Moon, LogOut, Bell,
     Home, Users, Briefcase, Calendar, Image, Rss,
-    Settings, Shield, ChevronDown, Bookmark, Mail
+    Settings, Shield, ChevronDown, Bookmark, Mail, Code
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Avatar from '../ui/Avatar';
@@ -197,6 +197,30 @@ const Navbar = () => {
                                     )}
                                 </Link>
 
+                                {/* Developer Recognition */}
+                                <Link to="/developers"
+                                    className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition-all ${
+                                        isActive('/developers')
+                                            ? 'text-[var(--accent)] bg-[var(--accent)]/10'
+                                            : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
+                                    }`}
+                                    title="Developer Recognition"
+                                >
+                                    <Code size={18} />
+                                </Link>
+
+                                {/* Team */}
+                                <Link to="/team"
+                                    className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition-all ${
+                                        isActive('/team')
+                                            ? 'text-[var(--accent)] bg-[var(--accent)]/10'
+                                            : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
+                                    }`}
+                                    title="Team"
+                                >
+                                    <Users size={18} />
+                                </Link>
+
                                 {/* Saved */}
                                 <Link to="/saved"
                                     className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${
@@ -208,7 +232,7 @@ const Navbar = () => {
                                     <Bookmark size={18} />
                                 </Link>
 
-                                 {/* Contact Link */}
+                                {/* Contact Link */}
                                 <Link to="/contact"
                                     className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[13px] font-medium rounded-xl transition-all ${
                                         isActive('/contact')
@@ -219,32 +243,32 @@ const Navbar = () => {
                                     <Mail size={16} />
                                 </Link>
 
+                                {/* Announcements (admin only) - beside Jobs */}
+                                {user?.role === 'admin' && (
+                                    <Link to="/admin/announcements"
+                                        className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[13px] font-medium rounded-xl transition-all ${
+                                            isActive('/admin/announcements')
+                                                ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
+                                                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
+                                        }`}
+                                    >
+                                        <Rss size={16} />
+                                        Announcements
+                                    </Link>
+                                )}
+
                                 {/* Admin Link (visible for admins) */}
                                 {user?.role === 'admin' && (
-                                    <>
-                                        <Link to="/admin"
-                                            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[13px] font-medium rounded-xl transition-all ${
-                                                isActive('/admin')
-                                                    ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
-                                                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
-                                            }`}
-                                        >
-                                            <Shield size={16} />
-                                            Admin
-                                        </Link>
-
-                                        {/* Announcements (admin only) */}
-                                        <Link to="/admin/announcements"
-                                            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[13px] font-medium rounded-xl transition-all ${
-                                                isActive('/admin/announcements')
-                                                    ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
-                                                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
-                                            }`}
-                                        >
-                                            <Rss size={16} />
-                                            Announcements
-                                        </Link>
-                                    </>
+                                    <Link to="/admin"
+                                        className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[13px] font-medium rounded-xl transition-all ${
+                                            isActive('/admin')
+                                                ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
+                                                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
+                                        }`}
+                                    >
+                                        <Shield size={16} />
+                                        Admin
+                                    </Link>
                                 )}
 
                                 <div className="w-px h-5 bg-[var(--border-color)]/40 mx-0.5" />
@@ -424,6 +448,20 @@ const Navbar = () => {
                                 <div className="border-t border-[var(--border-color)] my-2 pt-2">
                                     {isAuthenticated ? (
                                         <>
+                                            <Link to="/developers" onClick={() => setMobileOpen(false)}
+                                                className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60"
+                                            >
+                                                <Code size={20} className="text-[var(--text-secondary)]" />
+                                                <span className="font-medium">Developer Recognition</span>
+                                            </Link>
+
+                                            <Link to="/team" onClick={() => setMobileOpen(false)}
+                                                className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60"
+                                            >
+                                                <Users size={20} className="text-[var(--text-secondary)]" />
+                                                <span className="font-medium">Team</span>
+                                            </Link>
+
                                             <Link to="/contact" onClick={() => setMobileOpen(false)}
                                                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60"
                                             >

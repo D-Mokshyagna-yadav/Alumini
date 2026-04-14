@@ -9,7 +9,7 @@ const Leaders = ({ data }: { data?: any }) => {
                     <div className="w-16 h-1 bg-[var(--accent)] mx-auto rounded-full"></div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-start">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-start">
                     {/* Chairman's Message */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}

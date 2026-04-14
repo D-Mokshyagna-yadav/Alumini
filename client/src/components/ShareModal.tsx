@@ -83,7 +83,7 @@ export default function ShareModal({ open, onClose, url, resourceType, resourceI
 
                             <div>
                                 <div className="text-sm font-medium text-[var(--text-primary)] mb-3">Share link via</div>
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-2">
                                     <button onClick={() => openShare('facebook')} className="flex items-center gap-2 p-2.5 border border-[var(--border-color)] rounded-xl text-sm text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]">
                                         <FaFacebook size={18} className="text-[var(--accent)]" /> <span>Facebook post</span>
                                     </button>

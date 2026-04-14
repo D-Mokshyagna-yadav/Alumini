@@ -249,9 +249,9 @@ const Gallery = () => {
 
     if (loading) {
         return (
-            <div className="max-w-[1400px] mx-auto px-4 py-8">
+            <div className="max-w-[1400px] mx-auto px-4 py-4 sm:py-8">
                 {/* Header skeleton */}
-                <div className="bg-[var(--bg-primary)]/80 backdrop-blur-2xl border border-[var(--border-color)]/30 p-6 mb-8 shadow-md shadow-black/5">
+                <div className="bg-[var(--bg-primary)]/80 backdrop-blur-2xl border border-[var(--border-color)]/30 p-4 sm:p-6 mb-4 sm:mb-8 shadow-md shadow-black/5">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="space-y-2">
                             <div className="h-6 w-40 rounded bg-[var(--bg-tertiary)] animate-pulse" />
@@ -279,12 +279,12 @@ const Gallery = () => {
     }
 
     return (
-        <div className="max-w-[1400px] mx-auto px-4 py-8">
+        <div className="max-w-[1400px] mx-auto px-4 py-4 sm:py-8">
             <motion.div 
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="bg-[var(--bg-primary)]/80/80 backdrop-blur-2xl border border-[var(--border-color)]/30 p-6 mb-8 shadow-md shadow-black/5"
+                className="bg-[var(--bg-primary)]/80/80 backdrop-blur-2xl border border-[var(--border-color)]/30 p-4 sm:p-6 mb-4 sm:mb-8 shadow-md shadow-black/5"
             >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
@@ -385,7 +385,7 @@ const Gallery = () => {
 
             {!selectedAlbum ? (
                 filteredAlbums.length === 0 ? (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         className="bg-[var(--bg-primary)]/80/80 backdrop-blur-2xl border border-[var(--border-color)]/30 p-16 text-center shadow-md"
@@ -398,7 +398,7 @@ const Gallery = () => {
                         >
                             <Sparkles size={48} className="text-[var(--accent)]" />
                         </motion.div>
-                        <h3 className="text-2xl font-bold text-[var(--text-primary)]">No albums yet</h3>
+                        <h3 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">No albums yet</h3>
                         <p className="text-[var(--text-muted)] mt-3 max-w-md mx-auto">Create your first album to start organizing photos and videos from events</p>
                         {isAdmin && (
                             <motion.button
@@ -502,7 +502,7 @@ const Gallery = () => {
                         >
                             <Upload size={48} className="text-[var(--accent)]" />
                         </motion.div>
-                        <h3 className="text-2xl font-bold text-[var(--text-primary)]">Empty Album</h3>
+                        <h3 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">Empty Album</h3>
                         <p className="text-[var(--text-muted)] mt-3">Upload photos and videos to this album</p>
                         {isAdmin && (
                             <motion.button
@@ -616,7 +616,7 @@ const Gallery = () => {
                                 onClick={() => openLightbox(index)}
                             >
                                 <div className="flex gap-5 p-5">
-                                    <div className="w-40 h-28 overflow-hidden flex-shrink-0 relative">
+                                    <div className="w-24 sm:w-40 h-20 sm:h-28 overflow-hidden flex-shrink-0 relative">
                                         {media.type === 'video' ? (
                                             <>
                                                 <video src={resolveMediaUrl(media.url)} className="w-full h-full object-cover" muted />
