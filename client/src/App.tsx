@@ -152,7 +152,7 @@ function App() {
         <Route path="/settings/change-password" element={<ProfessionalRoute><ChangePassword /></ProfessionalRoute>} />
         <Route path="/settings/notifications" element={<ProfessionalRoute><NotificationPreferences /></ProfessionalRoute>} />
         <Route path="/saved" element={<ProfessionalRoute><Saved /></ProfessionalRoute>} />
-        <Route path="/developers" element={<ProfessionalRoute><DeveloperRecognition /></ProfessionalRoute>} />
+        <Route path="/developers" element={<PublicProfessionalRoute><DeveloperRecognition /></PublicProfessionalRoute>} />
         <Route path="/team" element={<ProfessionalRoute><Team /></ProfessionalRoute>} />
         <Route path="/contact" element={<PublicProfessionalRoute><Contact /></PublicProfessionalRoute>} />
 

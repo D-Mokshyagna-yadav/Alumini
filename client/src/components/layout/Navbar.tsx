@@ -13,7 +13,9 @@ import api from '../../lib/api';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 
-const guestLinks: { name: string; href: string; icon: typeof Home }[] = [];
+const guestLinks: { name: string; href: string; icon: typeof Home }[] = [
+    { name: 'Developers', href: '/developers', icon: Code },
+];
 
 const authLinks = [
     { name: 'Home', href: '/feed', icon: Home },
@@ -199,6 +201,18 @@ const Navbar = () => {
                             ) : theme === 'light' ? <Sun size={18} /> : <Moon size={18} />}
                         </button>
 
+                        {/* Developer Recognition (visible to all users) */}
+                        <Link to="/developers"
+                            className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition-all ${
+                                isActive('/developers')
+                                    ? 'text-[var(--accent)] bg-[var(--accent)]/10'
+                                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
+                            }`}
+                            title="Developer Recognition"
+                        >
+                            <Code size={18} />
+                        </Link>
+
                         {isAuthenticated ? (
                             <>
                                 {/* Notifications */}
@@ -215,18 +229,6 @@ const Navbar = () => {
                                             {unreadCount > 99 ? '99+' : unreadCount}
                                         </span>
                                     )}
-                                </Link>
-
-                                {/* Developer Recognition */}
-                                <Link to="/developers"
-                                    className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition-all ${
-                                        isActive('/developers')
-                                            ? 'text-[var(--accent)] bg-[var(--accent)]/10'
-                                            : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
-                                    }`}
-                                    title="Developer Recognition"
-                                >
-                                    <Code size={18} />
                                 </Link>
 
                                 {/* Saved */}

@@ -18,33 +18,33 @@ const DeveloperRecognition = () => {
     const developers: Developer[] = [
         {
             _id: '1',
-            name: 'D. MOKSHYAGNA YADAV',
+            name: 'DONTIBOINA MOKSHYAGNA YADAV',
             title: 'Team Lead',
-            bio: 'Architect of scalable solutions with expertise in full-stack development and team leadership.',
+            bio: 'Lead developer who enjoys mentoring students — builds clear, well-documented projects and helps others learn full‑stack development.',
             avatar: 'https://api.dicebear.com/7.x/lorelei/svg?seed=mokshyagna',
             portfolio: 'https://sensui-moksha.github.io/',
             github: 'https://github.com/D-Mokshyagna-yadav',
-            linkedin: 'https://linkedin.com/in/mokshyagna',
+            linkedin: 'https://linkedin.com/in/mokshyagnayadav',
         },
         {
             _id: '2',
-            name: 'NEIL NAGA SAI',
+            name: 'NANDURI NEELA NAGA SAI',
             title: 'Senior Developer',
-            bio: 'Passionate full-stack engineer crafting innovative solutions with modern web technologies.',
-            avatar: 'https://api.dicebear.com/7.x/lorelei/svg?seed=neil',
+            bio: 'Friendly senior dev who enjoys teaching web fundamentals — shares approachable tips for portfolios, interviews, and learning new stacks.',
+            avatar: 'https://api.dicebear.com/7.x/lorelei/svg?seed=rain',
             portfolio: 'https://amevrynx.github.io/',
             github: 'https://github.com/Amevrynx',
-            linkedin: 'https://linkedin.com/in/neil-naga-sai',
+            linkedin: 'https://linkedin.com/in/nagasainanduri',
         },
         {
             _id: '3',
             name: 'CHIRUMAMILLA AVINASH',
             title: 'Developer',
-            bio: 'Developer focused on building quality solutions.',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=avinash',
+            bio: 'Practical developer who focuses on readable code and real projects — great for students looking for project ideas and clear implementation examples.',
+            avatar: 'https://api.dicebear.com/7.x/lorelei/svg?seed=god',
             portfolio: 'https://avinash.dev',
             github: 'https://github.com/avinash',
-            linkedin: 'https://linkedin.com/in/avinash',
+            linkedin: 'https://www.linkedin.com/in/ch-avinash-7726aa1b3/',
         },
     ];
 
@@ -79,7 +79,7 @@ const DeveloperRecognition = () => {
                             Celebrate Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent)] to-blue-500">Developers</span>
                         </h1>
                         <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto">
-                            Recognizing the talented developers who are building amazing projects and contributing to our tech community
+                            Recognizing the talented developers who are building amazing projects and contributing to our community
                         </p>
                     </motion.div>
                 </div>
@@ -99,25 +99,21 @@ const DeveloperRecognition = () => {
                             >
                                 {/* Avatar */}
                                 <div className="flex justify-center mb-4">
-                                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--accent)] to-blue-500 p-1 shadow-lg">
+                                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[var(--accent)] to-blue-500 p-1 shadow-lg">
                                         <div className="w-full h-full rounded-full bg-[var(--bg-primary)] flex items-center justify-center overflow-hidden">
-                                            <Avatar src={dev.avatar} iconSize={24} />
+                                            <Avatar src={dev.avatar} iconSize={28} />
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Name & Title */}
-                                <h3 className="text-lg font-bold text-[var(--text-primary)] text-center">{dev.name}</h3>
-                                <p className="text-sm font-semibold text-[var(--accent)] text-center mt-1">
+                                <h3 className="text-xl font-bold text-[var(--text-primary)] text-center">{dev.name}</h3>
+                                <p className="text-xs font-semibold uppercase text-[var(--accent)] text-center mt-2 tracking-wide">
                                     {dev.title}
                                 </p>
 
                                 {/* Bio */}
-                                {dev.bio && (
-                                    <p className="text-sm text-[var(--text-secondary)] text-center mt-3 line-clamp-2">
-                                        {dev.bio}
-                                    </p>
-                                )}
+                                {/* Descriptions intentionally hidden for a cleaner, card-first layout */}
 
                                 {/* Divider */}
                                 {(dev.portfolio || dev.github || dev.linkedin) && (
