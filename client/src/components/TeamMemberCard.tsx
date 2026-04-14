@@ -89,7 +89,8 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
                             rel="noopener noreferrer"
                             title="LinkedIn"
                             className="w-9 h-9 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[#0A66C2]/20 flex items-center justify-center text-[var(--text-secondary)] hover:text-[#0A66C2] transition-all"
-                        >FaLinkedin size={16} />
+                        >
+                            <FaLinkedin size={16} />
                         </a>
                     )}
                     {github && (
@@ -100,8 +101,7 @@ const TeamMemberCard: React.FC<TeamMemberCardProps> = ({
                             title="GitHub"
                             className="w-9 h-9 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--text-primary)]/20 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
                         >
-                            <FaGithub
-                            <GitBranch size={16} />
+                            <FaGithub size={16} />
                         </a>
                     )}
                     {portfolio && (
