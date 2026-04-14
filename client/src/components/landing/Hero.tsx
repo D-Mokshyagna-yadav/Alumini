@@ -31,6 +31,9 @@ const Hero = ({ data }: { data?: HeroData }) => {
                     loading="eager"
                     decoding="async"
                     fetchPriority="high"
+                    width="1920"
+                    height="1080"
+                    sizes="100vw"
                 />
             </picture>
             <div className="hero-overlay" />

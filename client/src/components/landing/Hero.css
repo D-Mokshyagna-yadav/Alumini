@@ -55,6 +55,9 @@ HERO BACKGROUND
     pointer-events: none;
     content-visibility: auto;
     will-change: transform;
+    contain: paint;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
 .hero-overlay {
@@ -62,6 +65,9 @@ HERO BACKGROUND
     inset: 0;
     background: rgba(0, 0, 0, 0.45);
     z-index: 1;
+    pointer-events: none;
+    contain: paint;
+    will-change: opacity;
 }
 
 .hero-content {

@@ -229,18 +229,6 @@ const Navbar = () => {
                                     <Code size={18} />
                                 </Link>
 
-                                {/* Team */}
-                                <Link to="/team"
-                                    className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition-all ${
-                                        isActive('/team')
-                                            ? 'text-[var(--accent)] bg-[var(--accent)]/10'
-                                            : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
-                                    }`}
-                                    title="Team"
-                                >
-                                    <Users size={18} />
-                                </Link>
-
                                 {/* Saved */}
                                 <Link to="/saved"
                                     className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${
@@ -459,13 +447,6 @@ const Navbar = () => {
                                             >
                                                 <Code size={20} className="text-[var(--text-secondary)]" />
                                                 <span className="font-medium">Developer Recognition</span>
-                                            </Link>
-
-                                            <Link to="/team" onClick={() => setMobileOpen(false)}
-                                                className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60"
-                                            >
-                                                <Users size={20} className="text-[var(--text-secondary)]" />
-                                                <span className="font-medium">Team</span>
                                             </Link>
 
                                             <Link to="/contact" onClick={() => setMobileOpen(false)}
