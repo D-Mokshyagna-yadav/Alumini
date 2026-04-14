@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ExternalLink, Sparkles } from 'lucide-react';
+import { Briefcase, Sparkles } from 'lucide-react';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
 import Avatar from '../components/ui/Avatar';
 
@@ -135,7 +135,7 @@ const DeveloperRecognition = () => {
                                                 title="Portfolio"
                                                 className="w-9 h-9 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--accent)]/20 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--accent)] transition-all"
                                             >
-                                                <ExternalLink size={16} />
+                                                <Briefcase size={16} />
                                             </a>
                                         )}
                                         {dev.github && (

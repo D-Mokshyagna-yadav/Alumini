@@ -37,7 +37,6 @@ import Saved from './pages/Saved';
 import ForgotPassword from './pages/ForgotPassword';
 import UploadProgressToast from './components/UploadProgressToast';
 import About from './pages/About';
-import DeveloperRecognition from './pages/DeveloperRecognition';
 import Team from './pages/Team';
 
 // Basic logging hook
@@ -152,8 +151,7 @@ function App() {
         <Route path="/settings/change-password" element={<ProfessionalRoute><ChangePassword /></ProfessionalRoute>} />
         <Route path="/settings/notifications" element={<ProfessionalRoute><NotificationPreferences /></ProfessionalRoute>} />
         <Route path="/saved" element={<ProfessionalRoute><Saved /></ProfessionalRoute>} />
-        <Route path="/developers" element={<ProfessionalRoute><DeveloperRecognition /></ProfessionalRoute>} />
-        <Route path="/team" element={<ProfessionalRoute><Team /></ProfessionalRoute>} />
+        <Route path="/developers" element={<ProfessionalRoute><Team /></ProfessionalRoute>} />
         <Route path="/contact" element={<PublicProfessionalRoute><Contact /></PublicProfessionalRoute>} />
 
         {/* Admin Route */}
