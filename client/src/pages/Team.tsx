@@ -10,10 +10,9 @@ interface TeamMember {
     bio?: string;
     avatar?: string;
     department?: string;
-    email?: string;
-    linkedin?: string;
-    github?: string;
     portfolio?: string;
+    github?: string;
+    linkedin?: string;
 }
 
 const Team = () => {
@@ -24,9 +23,10 @@ const Team = () => {
             title: 'Team Lead',
             department: 'Development',
             bio: 'Team lead with experience in software development.',
-            email: 'mokshyagna@alumni.com',
-            linkedin: 'https://www.linkedin.com/in/mokshyagnayadav',
-            github: 'https://github.com/Sensui-moksha',
+            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mokshyagna',
+            portfolio: 'https://sensui-moksha.github.io/',
+            github: 'https://github.com/D-Mokshyagna-yadav',
+            linkedin: 'https://linkedin.com/in/mokshyagna',
         },
         {
             id: '2',
@@ -34,9 +34,10 @@ const Team = () => {
             title: 'Senior Developer',
             department: 'Development',
             bio: 'Full-stack developer with experience in web technologies.',
-            email: 'neil@alumni.com',
-            linkedin: 'https://www.linkedin.com/in/nagasainanduri',
+            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=neil',
+            portfolio: 'https://amevrynx.github.io/',
             github: 'https://github.com/Amevrynx',
+            linkedin: 'https://linkedin.com/in/neil-naga-sai',
         },
         {
             id: '3',
@@ -44,9 +45,10 @@ const Team = () => {
             title: 'Developer',
             department: 'Development',
             bio: 'Developer focused on building quality solutions.',
-            email: 'avinash@alumni.com',
-            linkedin: 'https://www.linkedin.com/in/ch-avinash-7726aa1b3/',
-            github: 'https://github.com/Avinash657333',
+            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=avinash',
+            portfolio: 'https://avinash.dev',
+            github: 'https://github.com/avinash',
+            linkedin: 'https://linkedin.com/in/avinash',
         },
     ]);
 

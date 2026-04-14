@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { Mail, ExternalLink, GitBranch, Sparkles } from 'lucide-react';
+import { ExternalLink, Sparkles } from 'lucide-react';
+import { FaGithub, FaLinkedin } from 'react-icons/fa';
 import Avatar from '../components/ui/Avatar';
 
 interface Developer {
@@ -8,9 +9,9 @@ interface Developer {
     title: string;
     bio?: string;
     avatar?: string;
-    email?: string;
-    linkedin?: string;
+    portfolio?: string;
     github?: string;
+    linkedin?: string;
 }
 
 const DeveloperRecognition = () => {
@@ -20,27 +21,30 @@ const DeveloperRecognition = () => {
             name: 'D. MOKSHYAGNA YADAV',
             title: 'Team Lead',
             bio: 'Team lead with experience in software development.',
-            email: 'mokshyagna@alumni.com',
-            linkedin: 'https://www.linkedin.com/in/mokshyagnayadav',
-            github: 'https://github.com/Sensui-moksha',
+            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mokshyagna',
+            portfolio: 'https://sensui-moksha.github.io/',
+            github: 'https://github.com/D-Mokshyagna-yadav',
+            linkedin: 'https://linkedin.com/in/mokshyagna',
         },
         {
             _id: '2',
             name: 'NEIL NAGA SAI',
             title: 'Senior Developer',
             bio: 'Full-stack developer with experience in web technologies.',
-            email: 'neil@alumni.com',
-            linkedin: 'https://www.linkedin.com/in/nagasainanduri',
+            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=neil',
+            portfolio: 'https://amevrynx.github.io/',
             github: 'https://github.com/Amevrynx',
+            linkedin: 'https://linkedin.com/in/neil-naga-sai',
         },
         {
             _id: '3',
             name: 'CHIRUMAMILLA AVINASH',
             title: 'Developer',
             bio: 'Developer focused on building quality solutions.',
-            email: 'avinash@alumni.com',
-            linkedin: 'https://www.linkedin.com/in/ch-avinash-7726aa1b3/',
-            github: 'https://github.com/Avinash657333',
+            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=avinash',
+            portfolio: 'https://avinash.dev',
+            github: 'https://github.com/avinash',
+            linkedin: 'https://linkedin.com/in/avinash',
         },
     ];
 
@@ -116,29 +120,20 @@ const DeveloperRecognition = () => {
                                 )}
 
                                 {/* Divider */}
-                                {(dev.email || dev.linkedin || dev.github) && (
+                                {(dev.portfolio || dev.github || dev.linkedin) && (
                                     <div className="border-t border-[var(--border-color)]/30 my-4" />
                                 )}
 
                                 {/* Social Links */}
-                                {(dev.email || dev.linkedin || dev.github) && (
+                                {(dev.portfolio || dev.github || dev.linkedin) && (
                                     <div className="flex items-center justify-center gap-3">
-                                        {dev.email && (
+                                        {dev.portfolio && (
                                             <a
-                                                href={`mailto:${dev.email}`}
-                                                title="Email"
-                                                className="w-9 h-9 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--accent)]/20 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--accent)] transition-all"
-                                            >
-                                                <Mail size={16} />
-                                            </a>
-                                        )}
-                                        {dev.linkedin && (
-                                            <a
-                                                href={dev.linkedin}
+                                                href={dev.portfolio}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                title="LinkedIn"
-                                                className="w-9 h-9 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[#0A66C2]/20 flex items-center justify-center text-[var(--text-secondary)] hover:text-[#0A66C2] transition-all"
+                                                title="Portfolio"
+                                                className="w-9 h-9 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--accent)]/20 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--accent)] transition-all"
                                             >
                                                 <ExternalLink size={16} />
                                             </a>
@@ -149,9 +144,20 @@ const DeveloperRecognition = () => {
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 title="GitHub"
-                                                className="w-9 h-9 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--text-primary)]/20 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
+                                                className="w-9 h-9 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--accent)]/20 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--accent)] transition-all"
                                             >
-                                                <GitBranch size={16} />
+                                                <FaGithub size={16} />
+                                            </a>
+                                        )}
+                                        {dev.linkedin && (
+                                            <a
+                                                href={dev.linkedin}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                title="LinkedIn"
+                                                className="w-9 h-9 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--accent)]/20 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--accent)] transition-all"
+                                            >
+                                                <FaLinkedin size={16} />
                                             </a>
                                         )}
                                     </div>
