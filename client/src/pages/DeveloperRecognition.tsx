@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Trophy, Star, Code } from 'lucide-react';
+import { Mail, ExternalLink, GitBranch, Sparkles } from 'lucide-react';
 import Avatar from '../components/ui/Avatar';
 
 interface Developer {
@@ -61,7 +61,7 @@ const DeveloperRecognition = () => {
                         className="mb-6"
                     >
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--accent)]/10 border border-[var(--accent)]/20 mb-4">
-                            <Code size={18} className="text-[var(--accent)]" />
+                            <Sparkles size={18} className="text-[var(--accent)]" />
                             <span className="text-sm font-semibold text-[var(--accent)]">Developer Spotlight</span>
                         </div>
                     </motion.div>
@@ -93,13 +93,6 @@ const DeveloperRecognition = () => {
                                 transition={{ delay: idx * 0.1 }}
                                 className="group relative bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-2xl p-6 hover:border-[var(--accent)]/50 transition-all duration-300 hover:shadow-xl hover:shadow-[var(--accent)]/10"
                             >
-                                {/* Badge */}
-                                {idx < 3 && (
-                                    <div className="absolute -top-3 -right-3 w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-full flex items-center justify-center shadow-lg">
-                                        <Trophy size={20} className="text-white" />
-                                    </div>
-                                )}
-
                                 {/* Avatar */}
                                 <div className="flex justify-center mb-4">
                                     <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--accent)] to-blue-500 p-1 shadow-lg">
@@ -136,7 +129,7 @@ const DeveloperRecognition = () => {
                                                 title="Email"
                                                 className="w-9 h-9 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--accent)]/20 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--accent)] transition-all"
                                             >
-                                                <Code size={16} />
+                                                <Mail size={16} />
                                             </a>
                                         )}
                                         {dev.linkedin && (
@@ -147,7 +140,7 @@ const DeveloperRecognition = () => {
                                                 title="LinkedIn"
                                                 className="w-9 h-9 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[#0A66C2]/20 flex items-center justify-center text-[var(--text-secondary)] hover:text-[#0A66C2] transition-all"
                                             >
-                                                <Code size={16} />
+                                                <ExternalLink size={16} />
                                             </a>
                                         )}
                                         {dev.github && (
@@ -158,7 +151,7 @@ const DeveloperRecognition = () => {
                                                 title="GitHub"
                                                 className="w-9 h-9 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--text-primary)]/20 flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
                                             >
-                                                <Code size={16} />
+                                                <GitBranch size={16} />
                                             </a>
                                         )}
                                     </div>
