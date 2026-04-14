@@ -1733,6 +1733,52 @@
   img {
     transition: opacity 0.3s ease;
   }
+
+  /* Disable expensive properties on no-GPU devices */
+  .backdrop-blur {
+    background-color: rgba(255, 255, 255, 0.85);
+    backdrop-filter: none;
+  }
+
+  /* Simplify animations */
+  [class*="animate"] {
+    animation: none;
+  }
+
+  /* Use will-change sparingly */
+  .will-animate,
+  .will-scroll {
+    will-change: auto;
+  }
+
+  /* Optimize form inputs */
+  input, textarea, select {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+  }
+
+  /* Remove expensive shadow effects */
+  .shadow-lg,
+  .shadow-xl {
+    box-shadow: none;
+  }
+
+  /* Simplify transitions */
+  * {
+    transition-duration: 0.15s;
+  }
+}
+
+/* GPU-specific enhancements */
+html.gpu-accelerated {
+  /* Full GPU acceleration enabled */
+}
+
+html.gpu-fallback {
+  /* CPU optimization mode */
+  --motion-duration-fast: 100ms;
+  --motion-duration-medium: 150ms;
+  --motion-duration-slow: 200ms;
 }
 
 /* Motion Preferences */
@@ -1928,6 +1974,7 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
+    }
   }
 }
 

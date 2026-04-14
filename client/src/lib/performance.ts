@@ -64,8 +64,21 @@ export const applyGPUAcceleration = () => {
   // Add class for GPU-accelerated browsers
   if (gpu.supportsTransformZ) {
     html.classList.add('gpu-accelerated');
+    console.debug('[GPU] Hardware acceleration enabled');
   } else {
     html.classList.add('gpu-fallback');
+    console.debug('[GPU] Fallback mode - using CPU optimization');
+  }
+
+  // Log capabilities for debugging
+  if (process.env.NODE_ENV === 'development') {
+    console.debug('[GPU Capabilities]', {
+      webgl: gpu.supportsWebGL,
+      webgl2: gpu.supportsWebGL2,
+      transforms: gpu.supportsTransformZ,
+      backdrop: gpu.supportsBackdropFilter,
+      vendor: gpu.gpuVendor,
+    });
   }
 };
 
