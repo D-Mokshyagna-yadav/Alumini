@@ -13,9 +13,7 @@ import api from '../../lib/api';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 
-const guestLinks: { name: string; href: string; icon: typeof Home }[] = [
-    { name: 'Developers', href: '/developers', icon: Code },
-];
+const guestLinks: { name: string; href: string; icon: typeof Home }[] = [];
 
 const authLinks = [
     { name: 'Home', href: '/feed', icon: Home },

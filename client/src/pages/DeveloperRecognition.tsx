@@ -23,7 +23,7 @@ const DeveloperRecognition = () => {
             bio: 'Lead developer who enjoys mentoring students — builds clear, well-documented projects and helps others learn full‑stack development.',
             avatar: 'https://api.dicebear.com/7.x/lorelei/svg?seed=mokshyagna',
             portfolio: 'https://sensui-moksha.github.io/',
-            github: 'https://github.com/D-Mokshyagna-yadav',
+            github: 'https://github.com/Sensui-moksha',
             linkedin: 'https://linkedin.com/in/mokshyagnayadav',
         },
         {
@@ -42,7 +42,7 @@ const DeveloperRecognition = () => {
             title: 'Developer',
             bio: 'Practical developer who focuses on readable code and real projects — great for students looking for project ideas and clear implementation examples.',
             avatar: 'https://api.dicebear.com/7.x/lorelei/svg?seed=god',
-            portfolio: '#',
+            portfolio: '',
             github: 'https://github.com/avinash',
             linkedin: 'https://www.linkedin.com/in/ch-avinash-7726aa1b3/',
         },
