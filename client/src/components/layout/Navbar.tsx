@@ -498,6 +498,13 @@ const Navbar = () => {
                                         </>
                                     ) : (
                                         <>
+                                            <Link to="/developers" onClick={() => setMobileOpen(false)}
+                                                className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60"
+                                            >
+                                                <Code size={20} className="text-[var(--text-secondary)]" />
+                                                <span className="font-medium">Developer Recognition</span>
+                                            </Link>
+
                                             <Link to="/login" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]">
                                                 <span className="font-medium">Sign In</span>
                                             </Link>
