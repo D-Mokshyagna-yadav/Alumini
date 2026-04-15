@@ -368,6 +368,18 @@ const Navbar = () => {
                                 <span className={`w-4 h-4 text-[9px] font-bold rounded flex items-center justify-center ${isTransparent ? 'bg-white/20 text-white' : 'bg-[var(--accent)] text-[var(--bg-primary)]'}`}>A</span>
                             ) : theme === 'light' ? <Sun size={16} /> : <Moon size={16} />}
                         </button>
+
+                        <Link to="/developers"
+                            className={`w-8 h-8 flex items-center justify-center rounded-xl transition-all ${
+                                isActive('/developers')
+                                    ? 'text-[var(--accent)] bg-[var(--accent)]/10'
+                                    : isTransparent ? 'text-white/80 hover:bg-white/10' : 'text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)]/60'
+                            }`}
+                            title="Developer Recognition"
+                        >
+                            <Code size={16} />
+                        </Link>
+
                         <button onClick={() => setMobileOpen(!mobileOpen)}
                             className={`w-8 h-8 flex items-center justify-center rounded-xl transition-all ${isTransparent ? 'text-white hover:bg-white/10' : 'text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'}`}
                             aria-label="Toggle menu"
@@ -498,13 +510,6 @@ const Navbar = () => {
                                         </>
                                     ) : (
                                         <>
-                                            <Link to="/developers" onClick={() => setMobileOpen(false)}
-                                                className="flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60"
-                                            >
-                                                <Code size={20} className="text-[var(--text-secondary)]" />
-                                                <span className="font-medium">Developer Recognition</span>
-                                            </Link>
-
                                             <Link to="/login" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]">
                                                 <span className="font-medium">Sign In</span>
                                             </Link>
