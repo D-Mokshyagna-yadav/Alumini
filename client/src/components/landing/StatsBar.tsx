@@ -22,10 +22,10 @@ const StatsBar = ({ stats }: { stats?: { id?: number; name: string; value: strin
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: index * 0.08, duration: 0.4 }}
-                            className="flex flex-col items-center justify-center py-8 sm:py-10 bg-[var(--card-bg)] backdrop-blur-xl rounded-2xl border border-[var(--border-color)] shadow-sm hover:shadow-md transition-shadow duration-200 cursor-default"
+                            className={`flex flex-col items-center justify-center py-8 sm:py-10 bg-[var(--card-bg)] backdrop-blur-xl rounded-2xl border border-[var(--border-color)] shadow-sm hover:shadow-md transition-shadow duration-200 cursor-default card-animated hover-lift stagger-delay-${index + 1}`}
                         >
                             <div className="p-3 mb-3 bg-[var(--accent)]/10 rounded-lg">
-                                {stat.icon && <stat.icon size={24} className="text-[var(--accent)]" />}
+                                {stat.icon && <stat.icon size={24} className="text-[var(--accent)] animate-bounce" />}
                             </div>
                             <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--text-primary)] mb-1 tracking-tight">{stat.value}</p>
                             <p className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-[0.15em]">{stat.name}</p>

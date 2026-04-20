@@ -825,12 +825,15 @@ const Jobs = () => {
                 {/* Right: Job List */}
                 <div className="space-y-3">
                     <div className="text-sm text-[var(--text-secondary)] mb-4">Showing {filteredJobs.length} opportunities</div>
-                    {filteredJobs.map((job) => (
+                    {filteredJobs.map((job, index) => (
                         <motion.div
                             key={job.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05, duration: 0.3 }}
                             whileHover={{ scale: 1.01 }}
                             onClick={() => navigate(`/jobs/${job.id}`)}
-                            className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-xl shadow-sm p-4 cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5"
+                            className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-xl shadow-sm p-4 cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 card-animated hover-lift stagger-item"
                         >
                             <div className="flex gap-3">
                                 <div className="w-14 h-14 sm:w-20 sm:h-20 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">

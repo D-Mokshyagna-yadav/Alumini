@@ -52,16 +52,22 @@ const Settings = () => {
     };
 
     const SettingsSection = ({ title, children }: { title: string, children: React.ReactNode }) => (
-        <div className="mb-8">
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mb-8"
+        >
             <h3 className="text-xl font-semibold mb-4 text-[var(--text-primary)]">{title}</h3>
-            <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl overflow-hidden">
+            <div className="bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl overflow-hidden card-animated hover-lift">
                 {children}
             </div>
-        </div>
+        </motion.div>
     );
 
     const SettingsItem = ({ label, value, onClick }: { label: string, value?: string, onClick?: () => void }) => (
-        <div
+        <motion.div
+            whileHover={{ x: 2 }}
             onClick={onClick}
             className="flex items-center justify-between p-4 border-b border-[var(--border-color)] last:border-0 hover:bg-[var(--bg-tertiary)] cursor-pointer transition-colors"
         >
@@ -70,7 +76,7 @@ const Settings = () => {
                 {value && <span className="text-[var(--text-muted)] text-sm">{value}</span>}
                 <ChevronRight size={18} className="text-[var(--text-muted)]" />
             </div>
-        </div>
+        </motion.div>
     );
 
     return (

@@ -467,7 +467,7 @@ const Saved = () => {
                                         initial={{ opacity: 0, scale: 0.9 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         transition={{ delay: index * 0.05 }}
-                                        className="relative aspect-square bg-[var(--bg-tertiary)] overflow-hidden group cursor-pointer"
+                                        className="relative aspect-square bg-[var(--bg-tertiary)] overflow-hidden group cursor-pointer card-animated hover-lift stagger-item"
                                         onClick={() => navigate(`/feed?post=${post._id}`)}
                                     >
                                         {post.media && post.media.length > 0 ? (
@@ -526,7 +526,7 @@ const Saved = () => {
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: index * 0.05 }}
-                                        className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 overflow-hidden shadow-md shadow-black/5 rounded-xl"
+                                        className="bg-[var(--bg-secondary)]/70 backdrop-blur-xl border border-[var(--border-color)]/50 overflow-hidden shadow-md shadow-black/5 rounded-xl card-animated hover-lift stagger-item"
                                     >
                                         <div className="p-5">
                                             <div className="flex items-start justify-between mb-4">

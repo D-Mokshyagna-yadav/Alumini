@@ -227,7 +227,7 @@ const Notifications = () => {
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
-                                className={`flex gap-4 p-4 border-b border-[var(--border-color)]/30 last:border-b-0 hover:bg-[var(--bg-tertiary)]/50 transition-colors ${!notification.isRead ? 'bg-[var(--accent-light)]/30' : ''
+                                className={`flex gap-4 p-4 border-b border-[var(--border-color)]/30 last:border-b-0 hover:bg-[var(--bg-tertiary)]/50 transition-colors card-animated hover-lift stagger-item ${!notification.isRead ? 'bg-[var(--accent-light)]/30' : ''
                                     }`}
                             >
                                 <div className="w-12 h-12 bg-[var(--bg-tertiary)] rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">

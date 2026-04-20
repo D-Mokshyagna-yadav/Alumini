@@ -148,7 +148,7 @@ const Navbar = () => {
                             const active = isActive(href);
                             return (
                                 <Link key={name} to={href}
-                                    className={`relative flex flex-col items-center px-4 lg:px-5 py-2 rounded-xl transition-all group ${
+                                    className={`relative flex flex-col items-center px-4 lg:px-5 py-2 rounded-xl transition-all group hover-lift ${
                                         active
                                             ? 'text-[var(--accent)]'
                                             : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
@@ -165,11 +165,11 @@ const Navbar = () => {
                                 </Link>
                             );
                         })}
-                        
+
                         {/* Announcements (admin only) - beside Gallery */}
                         {isAuthenticated && user?.role === 'admin' && (
                             <Link to="/admin/announcements"
-                                className={`relative flex flex-col items-center px-4 lg:px-5 py-2 rounded-xl transition-all group ${
+                                className={`relative flex flex-col items-center px-4 lg:px-5 py-2 rounded-xl transition-all group hover-lift ${
                                     isActive('/admin/announcements')
                                         ? 'text-[var(--accent)]'
                                         : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
@@ -191,7 +191,7 @@ const Navbar = () => {
                     <div className="hidden md:flex items-center gap-1.5">
                         {/* Theme Toggle */}
                         <button onClick={toggleTheme}
-                            className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${isTransparent ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'}`}
+                            className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all hover-lift ${isTransparent ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'}`}
                             aria-label="Toggle theme"
                         >
                             {mode === 'auto' ? (
@@ -201,7 +201,7 @@ const Navbar = () => {
 
                         {/* Developer Recognition (visible to all users) */}
                         <Link to="/developers"
-                            className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition-all ${
+                            className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition-all hover-lift ${
                                 isActive('/developers')
                                     ? 'text-[var(--accent)] bg-[var(--accent)]/10'
                                     : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
@@ -215,7 +215,7 @@ const Navbar = () => {
                             <>
                                 {/* Notifications */}
                                 <Link to="/notifications"
-                                    className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition-all ${
+                                    className={`relative w-9 h-9 flex items-center justify-center rounded-xl transition-all hover-lift ${
                                         isActive('/notifications')
                                             ? 'text-[var(--accent)] bg-[var(--accent)]/10'
                                             : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
@@ -223,7 +223,7 @@ const Navbar = () => {
                                 >
                                     <Bell size={18} />
                                     {unreadCount > 0 && (
-                                        <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-[var(--accent)] text-[var(--bg-primary)] text-[10px] font-bold rounded-full flex items-center justify-center">
+                                        <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-[var(--accent)] text-[var(--bg-primary)] text-[10px] font-bold rounded-full flex items-center justify-center animate-bounce">
                                             {unreadCount > 99 ? '99+' : unreadCount}
                                         </span>
                                     )}
@@ -231,7 +231,7 @@ const Navbar = () => {
 
                                 {/* Saved */}
                                 <Link to="/saved"
-                                    className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all ${
+                                    className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all hover-lift ${
                                         isActive('/saved')
                                             ? 'text-[var(--accent)] bg-[var(--accent)]/10'
                                             : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
@@ -242,7 +242,7 @@ const Navbar = () => {
 
                                 {/* Contact Link */}
                                 <Link to="/contact"
-                                    className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[13px] font-medium rounded-xl transition-all ${
+                                    className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[13px] font-medium rounded-xl transition-all hover-lift ${
                                         isActive('/contact')
                                             ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
                                             : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
@@ -254,7 +254,7 @@ const Navbar = () => {
                                 {/* Admin Link (visible for admins) */}
                                 {user?.role === 'admin' && (
                                     <Link to="/admin"
-                                        className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[13px] font-medium rounded-xl transition-all ${
+                                        className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[13px] font-medium rounded-xl transition-all hover-lift ${
                                             isActive('/admin')
                                                 ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
                                                 : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
@@ -434,19 +434,26 @@ const Navbar = () => {
                                 {(isAuthenticated
                                     ? [...authLinks, { name: 'Alerts', href: '/notifications', icon: Bell }, { name: 'Saved', href: '/saved', icon: Bookmark }]
                                     : guestLinks
-                                ).map(({ name, href, icon: Icon }) => {
+                                ).map(({ name, href, icon: Icon }, index) => {
                                     const active = isActive(href);
                                     return (
-                                        <Link key={name} to={href} onClick={() => setMobileOpen(false)}
-                                            className={`flex items-center gap-3 px-4 py-3 mb-0.5 rounded-xl transition-all ${
-                                                active
-                                                    ? 'bg-[var(--accent)] text-[var(--bg-primary)]'
-                                                    : 'text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
-                                            }`}
+                                        <motion.div
+                                            key={name}
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: index * 0.05, duration: 0.3 }}
                                         >
-                                            <Icon size={20} />
-                                            <span className="font-medium">{name}</span>
-                                        </Link>
+                                            <Link to={href} onClick={() => setMobileOpen(false)}
+                                                className={`flex items-center gap-3 px-4 py-3 mb-0.5 rounded-xl transition-all card-animated hover-lift ${
+                                                    active
+                                                        ? 'bg-[var(--accent)] text-[var(--bg-primary)]'
+                                                        : 'text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/60'
+                                                }`}
+                                            >
+                                                <Icon size={20} />
+                                                <span className="font-medium">{name}</span>
+                                            </Link>
+                                        </motion.div>
                                     );
                                 })}
 
@@ -529,30 +536,38 @@ const Navbar = () => {
             {isAuthenticated && (
                 <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-[var(--bg-primary)]/95 backdrop-blur-xl border-t border-[var(--border-color)]/30 safe-area-inset-bottom">
                     <div className="flex justify-around items-center h-14 px-2">
-                        {mobileAuthLinks.map(({ name, href, icon: Icon }) => {
+                        {mobileAuthLinks.map(({ name, href, icon: Icon }, index) => {
                             const active = isActive(href);
                             return (
-                                <Link key={name} to={href}
-                                    className={`flex flex-col items-center justify-center flex-1 py-1.5 transition-colors relative ${
-                                        active ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'
-                                    }`}
+                                <motion.div
+                                    key={name}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.05, duration: 0.3 }}
+                                    className="flex-1"
                                 >
-                                    <div className="relative">
-                                        <Icon size={20} strokeWidth={active ? 2.5 : 1.5} />
-                                        {name === 'Alerts' && unreadCount > 0 && (
-                                            <span className="absolute -top-1.5 -right-2 min-w-[14px] h-3.5 px-0.5 bg-[var(--accent)] text-[var(--bg-primary)] text-[9px] font-bold rounded-full flex items-center justify-center">
-                                                {unreadCount > 99 ? '99+' : unreadCount}
-                                            </span>
+                                    <Link to={href}
+                                        className={`flex flex-col items-center justify-center flex-1 py-1.5 transition-colors relative card-animated hover-lift ${
+                                            active ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'
+                                        }`}
+                                    >
+                                        <div className="relative">
+                                            <Icon size={20} strokeWidth={active ? 2.5 : 1.5} />
+                                            {name === 'Alerts' && unreadCount > 0 && (
+                                                <span className="absolute -top-1.5 -right-2 min-w-[14px] h-3.5 px-0.5 bg-[var(--accent)] text-[var(--bg-primary)] text-[9px] font-bold rounded-full flex items-center justify-center animate-bounce">
+                                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <span className="text-[10px] mt-0.5 font-medium">{name}</span>
+                                        {active && (
+                                            <motion.div
+                                                layoutId="mobile-nav-indicator"
+                                                className="absolute bottom-0 w-8 h-0.5 bg-[var(--accent)]"
+                                            />
                                         )}
-                                    </div>
-                                    <span className="text-[10px] mt-0.5 font-medium">{name}</span>
-                                    {active && (
-                                        <motion.div
-                                            layoutId="mobile-nav-indicator"
-                                            className="absolute bottom-0 w-8 h-0.5 bg-[var(--accent)]"
-                                        />
-                                    )}
-                                </Link>
+                                    </Link>
+                                </motion.div>
                             );
                         })}
                     </div>

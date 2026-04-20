@@ -420,7 +420,7 @@ const Gallery = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.08, duration: 0.4 }}
                                 whileHover={{ y: -8, scale: 1.02 }}
-                                className="bg-[var(--bg-primary)]/80/80 backdrop-blur-xl border border-[var(--border-color)]/30 overflow-hidden shadow-md hover:shadow-md transition-all cursor-pointer group"
+                                className="bg-[var(--bg-primary)]/80/80 backdrop-blur-xl border border-[var(--border-color)]/30 overflow-hidden shadow-md hover:shadow-md transition-all cursor-pointer group card-animated hover-lift stagger-item"
                                 onClick={() => setSelectedAlbum(album)}
                             >
                                 <div className="aspect-[4/3] relative bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--accent)]/10">

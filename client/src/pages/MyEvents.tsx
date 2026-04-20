@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import api from '../lib/api';
 import resolveMediaUrl from '../lib/media';
 import { useConfirm } from '../context/ConfirmContext';
@@ -159,8 +160,14 @@ const MyEvents = () => {
                 <div className="text-sm text-[var(--text-muted)]">You have not created any events yet.</div>
             ) : (
                 <div className="space-y-4">
-                    {events.map((e: any) => (
-                        <div key={e._id} className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-xl shadow-sm p-4">
+                    {events.map((e: any, index: number) => (
+                        <motion.div
+                            key={e._id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05, duration: 0.3 }}
+                            className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-xl shadow-sm p-4 card-animated hover-lift stagger-item"
+                        >
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="font-semibold text-[var(--text-primary)]">{e.title}</p>
@@ -177,7 +184,7 @@ const MyEvents = () => {
                             {e.rejectionReason && (
                                 <div className="mt-2 text-sm text-[var(--text-muted)]">Reason: {e.rejectionReason}</div>
                             )}
-                        </div>
+                        </motion.div>
                     ))}
                 </div>
             )}

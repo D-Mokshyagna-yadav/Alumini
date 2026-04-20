@@ -405,7 +405,7 @@ const Directory = () => {
                             initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: Math.min(index * 0.03, 0.5) }}
-                            className="group bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl hover:border-[var(--border-color)]/60 transition-all"
+                            className="group bg-[var(--bg-secondary)]/60 backdrop-blur-xl border border-[var(--border-color)]/30 rounded-2xl hover:border-[var(--border-color)]/60 transition-all card-animated hover-lift stagger-item"
                         >
                             {/* Card Header */}
                             <div className={`h-20 overflow-hidden rounded-t-2xl ${!person.coverImage ? 'bg-gradient-to-r from-[var(--accent)]/10 via-[var(--accent)]/5 to-transparent' : ''}`}>

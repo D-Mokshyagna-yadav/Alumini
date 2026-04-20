@@ -573,7 +573,7 @@ const Events = () => {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.1 }}
                                     onClick={() => navigate(`/events/${event.id}`)}
-                                    className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-xl shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+                                    className="bg-[var(--bg-secondary)]/60 backdrop-blur-sm border border-[var(--border-color)]/30 rounded-xl shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer card-animated hover-lift stagger-item"
                                 >
                                     <div className="flex flex-col sm:flex-row">
                                         {/* Image */}

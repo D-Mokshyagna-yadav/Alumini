@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import api from '../../lib/api';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { FaFacebook, FaLinkedin, FaInstagram, FaYoutube } from 'react-icons/fa';
@@ -60,51 +61,74 @@ const Footer = () => {
             <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14 md:py-20 relative">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6 md:gap-12 mb-8 md:mb-16">
                     {/* Brand */}
-                    <div className="col-span-2">
-                        <Link to="/" className="flex items-center gap-3 mb-6 group">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5 }}
+                        className="col-span-2 animate-fadeInUp"
+                    >
+                        <Link to="/" className="flex items-center gap-3 mb-6 group hover-lift">
                             <img src="/logo-small.png" alt="Logo" className="w-12 h-12 rounded-xl object-contain" />
                             <div>
-                                <span className="font-bold text-lg text-[var(--text-primary)] block leading-tight group-hover:text-[var(--accent)] transition-colors">
+                                <span className="font-bold text-lg text-[var(--text-primary)] block leading-tight group-hover:text-[var(--accent)] transition-colors animate-fadeInLeft">
                                     {branding.name || 'Alumni Network'}
                                 </span>
-                                <span className="text-xs text-[var(--text-muted)]">{branding.estYear ? `Est. ${branding.estYear}` : ''}</span>
+                                <span className="text-xs text-[var(--text-muted)] animate-fadeInUp">{branding.estYear ? `Est. ${branding.estYear}` : ''}</span>
                             </div>
                         </Link>
-                        <p className="text-[var(--text-secondary)] text-sm leading-relaxed max-w-xs mb-6">
+                        <p className="text-[var(--text-secondary)] text-sm leading-relaxed max-w-xs mb-6 animate-fadeInUp">
                             {branding.tagline || 'Connecting generations of excellence. Building bridges between past, present, and future.'}
                         </p>
 
                         <div className="flex gap-2">
-                            {socialLinks.map((social) => (
-                                <a
+                            {socialLinks.map((social, index) => (
+                                <motion.a
                                     key={social.label}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    whileInView={{ opacity: 1, scale: 1 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: index * 0.06, duration: 0.3 }}
                                     href={branding.social?.[social.label.toLowerCase()] || social.href}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label={social.label}
-                                    className="w-10 h-10 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--bg-primary)] hover:-translate-y-0.5 border border-[var(--border-color)] hover:border-[var(--accent)] transition-all duration-200"
+                                    className="w-10 h-10 bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--accent)] hover:text-[var(--bg-primary)] hover:-translate-y-0.5 border border-[var(--border-color)] hover:border-[var(--accent)] transition-all duration-200 hover-lift hover-glow hover-scale"
                                 >
                                     <social.icon size={18} />
-                                </a>
+                                </motion.a>
                             ))}
                         </div>
-                    </div>
+                    </motion.div>
 
                     {/* Links */}
-                    {Object.entries(footerLinks).map(([title, links]) => (
-                        <div key={title}>
-                            <h3 className="font-bold text-sm text-[var(--text-primary)] uppercase tracking-wider mb-5">
+                    {Object.entries(footerLinks).map(([title, links], sectionIndex) => (
+                        <motion.div
+                            key={title}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: sectionIndex * 0.1, duration: 0.5 }}
+                            className="animate-fadeInUp"
+                        >
+                            <h3 className="font-bold text-sm text-[var(--text-primary)] uppercase tracking-wider mb-5 animate-slideInLeft">
                                 {title}
                             </h3>
                             <ul className="space-y-3">
-                                {links.map((link) => (
-                                    <li key={link.name}>
+                                {links.map((link, linkIndex) => (
+                                    <motion.li
+                                        key={link.name}
+                                        initial={{ opacity: 0, x: -10 }}
+                                        whileInView={{ opacity: 1, x: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: linkIndex * 0.05, duration: 0.3 }}
+                                    >
                                         {link.external ? (
                                             <a
                                                 href={link.href}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors inline-flex items-center gap-1 group"
+                                                className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors inline-flex items-center gap-1 group hover-lift"
                                             >
                                                 <span className="w-0 group-hover:w-2 h-0.5 bg-[var(--accent)] transition-all duration-300" />
                                                 {link.name}
@@ -128,62 +152,108 @@ const Footer = () => {
 
                                                     window.scrollTo({ top: 0, behavior: 'smooth' });
                                                 }}
-                                                className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors inline-flex items-center gap-1 group"
+                                                className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors inline-flex items-center gap-1 group hover-lift"
                                             >
                                                 <span className="w-0 group-hover:w-2 h-0.5 bg-[var(--accent)] transition-all duration-300" />
                                                 {link.name}
                                             </Link>
                                         )}
-                                    </li>
+                                    </motion.li>
                                 ))}
                             </ul>
-                        </div>
+                        </motion.div>
                     ))}
                 </div>
 
                 {/* Contact Bar */}
-                <div
-                    className="bg-[var(--bg-tertiary)]/60 backdrop-blur-sm p-4 sm:p-6 mb-8 sm:mb-12 border border-[var(--border-color)] rounded-2xl"
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5 }}
+                    className="bg-[var(--bg-tertiary)]/60 backdrop-blur-sm p-4 sm:p-6 mb-8 sm:mb-12 border border-[var(--border-color)] rounded-2xl card-animated hover-lift animate-fadeInUp"
                 >
                     <div className="flex flex-wrap justify-center gap-4 sm:gap-8 text-sm">
-                        <a href={`mailto:${branding.contactEmail || 'alumni@mictech.ac.in'}`} className="flex items-center gap-3 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors group">
+                        <motion.a
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0, duration: 0.4 }}
+                            href={`mailto:${branding.contactEmail || 'alumni@mictech.ac.in'}`}
+                            className="flex items-center gap-3 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors group hover-lift"
+                        >
                             <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center group-hover:bg-[var(--accent)] group-hover:text-[var(--bg-primary)] transition-all duration-200">
                                 <Mail size={18} />
                             </div>
                             <span>{branding.contactEmail || 'alumni@mictech.ac.in'}</span>
-                        </a>
-                        <a href={`tel:${branding.contactPhone || '+91 73826 16824'}`} className="flex items-center gap-3 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors group">
+                        </motion.a>
+                        <motion.a
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.1, duration: 0.4 }}
+                            href={`tel:${branding.contactPhone || '+91 73826 16824'}`}
+                            className="flex items-center gap-3 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors group hover-lift"
+                        >
                             <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center group-hover:bg-[var(--accent)] group-hover:text-[var(--bg-primary)] transition-all duration-200">
                                 <Phone size={18} />
                             </div>
                             <span>{branding.contactPhone || '+91 73826 16824'}</span>
-                        </a>
-                        <a
+                        </motion.a>
+                        <motion.a
+                            initial={{ opacity: 0, x: -20 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.2, duration: 0.4 }}
                             href="https://maps.app.goo.gl/At32ZftUx8VvVjVBA"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-3 text-[var(--accent)] underline hover:text-[var(--gradient-end)] transition-colors group"
+                            className="flex items-center gap-3 text-[var(--accent)] underline hover:text-[var(--gradient-end)] transition-colors group hover-lift"
                         >
                             <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center">
                                 <MapPin size={18} className="text-[var(--accent)]" />
                             </div>
                             Kanchikacherla, AP, India
-                        </a>
+                        </motion.a>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Bottom */}
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-8 border-t border-[var(--border-color)]">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5 }}
+                    className="flex flex-col md:flex-row justify-between items-center gap-4 pt-8 border-t border-[var(--border-color)] animate-fadeInUp"
+                >
                     <p className="text-sm text-[var(--text-muted)] flex items-center gap-1">
                         © {new Date().getFullYear()} {branding.name || 'Alumni Association'}.
                         All rights reserved.
                     </p>
                     <div className="flex gap-6 text-sm">
-                        <a href="#" className="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">Privacy Policy</a>
-                        <a href="#" className="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">Terms of Service</a>
-                        <a href="#" className="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors">Cookies</a>
+                        <motion.a
+                            whileHover={{ x: 2 }}
+                            href="#"
+                            className="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors hover-lift"
+                        >
+                            Privacy Policy
+                        </motion.a>
+                        <motion.a
+                            whileHover={{ x: 2 }}
+                            href="#"
+                            className="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors hover-lift"
+                        >
+                            Terms of Service
+                        </motion.a>
+                        <motion.a
+                            whileHover={{ x: 2 }}
+                            href="#"
+                            className="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors hover-lift"
+                        >
+                            Cookies
+                        </motion.a>
                     </div>
-                </div>
+                </motion.div>
             </div>
         </footer>
     );

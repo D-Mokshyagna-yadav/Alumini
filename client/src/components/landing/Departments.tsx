@@ -16,10 +16,10 @@ const Departments = ({ data }: { data?: any }) => {
     return (
         <section className="py-20 sm:py-28 bg-[var(--bg-primary)]">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl sm:text-4xl font-heading font-bold text-[var(--text-primary)] mb-4">Academic Departments</h2>
-                    <div className="w-16 h-1 bg-[var(--accent)] mx-auto rounded-full"></div>
-                    <p className="mt-4 text-sm sm:text-base text-[var(--text-secondary)] max-w-2xl mx-auto">
+                <div className="text-center mb-16 animate-slideInUp">
+                    <h2 className="text-3xl sm:text-4xl font-heading font-bold text-[var(--text-primary)] mb-4 animate-slideInDown">Academic Departments</h2>
+                    <div className="w-16 h-1 bg-[var(--accent)] mx-auto rounded-full animate-scaleIn"></div>
+                    <p className="mt-4 text-sm sm:text-base text-[var(--text-secondary)] max-w-2xl mx-auto animate-fadeInUp">
                         Offering a diverse range of undergraduate and postgraduate programs designed to foster innovation and technical expertise.
                     </p>
                 </div>
@@ -32,13 +32,13 @@ const Departments = ({ data }: { data?: any }) => {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: index * 0.04, duration: 0.4 }}
-                            className="bg-[var(--card-bg)] backdrop-blur-xl p-6 rounded-xl shadow-sm border border-[var(--border-color)] text-center group hover:shadow-md hover:border-[var(--accent)]/30 transition-all duration-200 cursor-default"
+                            className="bg-[var(--card-bg)] backdrop-blur-xl p-6 rounded-xl shadow-sm border border-[var(--border-color)] text-center group hover:shadow-md hover:border-[var(--accent)]/30 transition-all duration-200 cursor-default card-animated hover-lift stagger-item"
                         >
-                            <div className="w-12 h-12 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-[var(--accent)] transition-colors duration-200">
+                            <div className="w-12 h-12 bg-[var(--accent)]/10 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-[var(--accent)] transition-colors duration-200 hover:animate-spin">
                                 <dept.icon className="w-5 h-5 text-[var(--accent)] group-hover:text-[var(--bg-primary)] transition-colors duration-200" />
                             </div>
-                            <h3 className="text-base font-bold text-[var(--text-primary)] mb-1">{dept.short}</h3>
-                            <p className="text-xs text-[var(--text-secondary)] font-medium h-8 flex items-center justify-center">
+                            <h3 className="text-base font-bold text-[var(--text-primary)] mb-1 animate-fadeInLeft">{dept.short}</h3>
+                            <p className="text-xs text-[var(--text-secondary)] font-medium h-8 flex items-center justify-center animate-fadeInUp">
                                 {dept.name}
                             </p>
                         </motion.div>

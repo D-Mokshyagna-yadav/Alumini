@@ -64,11 +64,11 @@ const Hero = ({ data }: { data?: HeroData }) => {
             </div>
 
             {/* Content */}
-            <div className="hero-content relative z-10 w-full pt-20 sm:pt-24 md:pt-28 pb-16 sm:pb-20">
+            <div className="hero-content relative z-10 w-full pt-20 sm:pt-24 md:pt-28 pb-16 sm:pb-20 animate-fadeInUp">
                 <div className="max-w-screen-xl mx-auto px-6 sm:px-8 lg:px-16 text-center">
                     {/* Badge */}
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--card-bg)] backdrop-blur-xl border border-[var(--border-color)] rounded-full mb-8 sm:mb-10 shadow-sm">
-                        <Sparkles size={14} className="text-[var(--accent)]" />
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--card-bg)] backdrop-blur-xl border border-[var(--border-color)] rounded-full mb-8 sm:mb-10 shadow-sm animate-slideInDown stagger-delay-1">
+                        <Sparkles size={14} className="text-[var(--accent)] animate-bounce" />
                         <span className="text-xs sm:text-sm font-medium text-[var(--text-secondary)]">
                             {badge || '🎓 Celebrating Excellence Since 2002'}
                         </span>
@@ -76,7 +76,7 @@ const Hero = ({ data }: { data?: HeroData }) => {
 
                     {/* Main Heading */}
                     <h1
-                        className="hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.05] tracking-tight mb-6 sm:mb-8"
+                        className="hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.05] tracking-tight mb-6 sm:mb-8 animate-slideInUp stagger-delay-2"
                     >
                         <span className="block">{heading?.line1 || 'Where Alumni'}</span>
                         <span className="hero-connect text-gradient inline-block mt-1 sm:mt-2">{heading?.line2 || 'Connect & Thrive'}</span>
@@ -84,7 +84,7 @@ const Hero = ({ data }: { data?: HeroData }) => {
 
                     {/* Subtitle */}
                     <p
-                        className="hero-subtitle text-base sm:text-lg md:text-xl mb-10 sm:mb-12 max-w-sm sm:max-w-xl md:max-w-2xl mx-auto leading-relaxed"
+                        className="hero-subtitle text-base sm:text-lg md:text-xl mb-10 sm:mb-12 max-w-sm sm:max-w-xl md:max-w-2xl mx-auto leading-relaxed animate-fadeInUp stagger-delay-3"
                     >
                         {subtitle || 'Join a thriving community. Build meaningful connections, discover career opportunities, and give back to your alma mater.'}
                     </p>
@@ -93,14 +93,14 @@ const Hero = ({ data }: { data?: HeroData }) => {
                     <div
                         className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center"
                     >
-                        <Link to="/register" className="w-full sm:w-auto">
-                            <button className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-8 sm:px-10 py-3.5 sm:py-4 bg-[var(--accent)] text-[var(--bg-primary)] text-base sm:text-lg font-semibold rounded-xl shadow-lg shadow-[var(--accent)]/20 hover:shadow-xl hover:shadow-[var(--accent)]/30 hover:bg-[var(--accent-hover)] transition-all duration-200">
+                        <Link to="/register" className="w-full sm:w-auto animate-fadeInLeft stagger-delay-4">
+                            <button className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-8 sm:px-10 py-3.5 sm:py-4 bg-[var(--accent)] text-[var(--bg-primary)] text-base sm:text-lg font-semibold rounded-xl shadow-lg shadow-[var(--accent)]/20 hover:shadow-xl hover:shadow-[var(--accent)]/30 hover:bg-[var(--accent-hover)] transition-all duration-200 button-animated hover-lift tap-target">
                                 Join the Network
                                 <ArrowRight size={18} />
                             </button>
                         </Link>
-                        <Link to="/directory" className="w-full sm:w-auto">
-                            <button className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-8 sm:px-10 py-3.5 sm:py-4 text-base sm:text-lg font-semibold text-[var(--text-primary)] bg-[var(--card-bg)] backdrop-blur-xl border border-[var(--border-color)] rounded-xl shadow-sm hover:shadow-md hover:border-[var(--accent)]/30 transition-all duration-200">
+                        <Link to="/directory" className="w-full sm:w-auto animate-fadeInRight stagger-delay-5">
+                            <button className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-8 sm:px-10 py-3.5 sm:py-4 text-base sm:text-lg font-semibold text-[var(--text-primary)] bg-[var(--card-bg)] backdrop-blur-xl border border-[var(--border-color)] rounded-xl shadow-sm hover:shadow-md hover:border-[var(--accent)]/30 transition-all duration-200 button-animated hover-lift tap-target">
                                 Explore Alumni
                             </button>
                         </Link>
